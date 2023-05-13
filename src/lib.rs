@@ -18,11 +18,12 @@ struct CompletionResponseChoice {
     text: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct NativePlantEntry {
     pub common: String,
     pub scientific: String,
     pub description: String,
+    pub image_url: Option<String>,
 }
 
 pub fn fetch_entries(
