@@ -2,6 +2,7 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
+use native_plants::stream_entries;
 use native_plants::NativePlantEntry;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -44,12 +45,19 @@ async fn fetch_entries_handler_sse(
 
     thread::spawn(move || {
         //TODO: Remove me
+        let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
         let mut entries = build_fake_plants();
+        let entries = native_plants::stream_entries(
+            &api_key,
+            &payload.zip,
+            &payload.shade,
+            &payload.moisture,
+        );
 
-        for entry in entries.iter_mut() {
-            //entry.image_url = get_image_link(&entry.scientific);
+        for mut entry in entries {
+            entry.image_url = get_image_link(&entry.scientific);
 
-            let entry_json = serde_json::to_string(entry).unwrap();
+            let entry_json = serde_json::to_string(&entry).unwrap();
             //TODO: Can I get rid of the "block on"?
             //      I think I need this thread to be async?
 
