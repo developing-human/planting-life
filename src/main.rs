@@ -1,7 +1,13 @@
+use actix_cors::Cors;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
+use futures::executor::block_on;
+use native_plants::NativePlantEntry;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 use std::env;
+use std::thread;
+use std::time;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct FetchRequest {
@@ -16,7 +22,51 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
     //TODO: Remove me
-    let mut entries = vec![
+    let mut entries = build_fake_plants();
+
+    let mut entries =
+        native_plants::fetch_entries(&api_key, &payload.zip, &payload.shade, &payload.moisture);
+
+    for entry in entries.iter_mut() {
+        entry.image_url = get_image_link(&entry.scientific);
+    }
+
+    HttpResponse::Ok().json(entries)
+}
+
+#[get("/plants_sse")]
+async fn fetch_entries_handler_sse(
+    web::Query(payload): web::Query<FetchRequest>,
+) -> impl Responder {
+    println!("Received request: {:#?}", payload);
+
+    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(1);
+
+    thread::spawn(move || {
+        //TODO: Remove me
+        let mut entries = build_fake_plants();
+
+        for entry in entries.iter_mut() {
+            //entry.image_url = get_image_link(&entry.scientific);
+
+            let entry_json = serde_json::to_string(entry).unwrap();
+            //TODO: Can I get rid of the "block on"?
+            //      I think I need this thread to be async?
+
+            block_on(sender.send(sse::Data::new(entry_json))).unwrap();
+
+            //TODO: Remove delay
+            thread::sleep(time::Duration::from_secs(1));
+        }
+
+        block_on(sender.send(sse::Data::new("").event("close"))).unwrap();
+    });
+
+    stream.with_keep_alive(time::Duration::from_secs(1))
+}
+
+fn build_fake_plants() -> Vec<NativePlantEntry> {
+    vec![
         native_plants::NativePlantEntry {
             common: "California Wild Strawberry".to_string(),
             scientific: "Fragaria californica".to_string(),
@@ -29,27 +79,43 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
             description: "another kind of long description".to_string(),
             image_url: None,
         },
-    ];
-
-    let mut entries =
-        native_plants::fetch_entries(&api_key, &payload.zip, &payload.shade, &payload.moisture);
-
-    for entry in entries.iter_mut() {
-        entry.image_url = get_image_link(&entry.scientific);
-    }
-
-    HttpResponse::Ok().json(entries)
+        native_plants::NativePlantEntry {
+            common: "Evergreen Huckleberry".to_string(),
+            scientific: "Vaccinium ovatum".to_string(),
+            description: "another kind of long description".to_string(),
+            image_url: None,
+        },
+        native_plants::NativePlantEntry {
+            common: "Evergreen Huckleberry".to_string(),
+            scientific: "Vaccinium ovatum".to_string(),
+            description: "another kind of long description".to_string(),
+            image_url: None,
+        },
+        native_plants::NativePlantEntry {
+            common: "Evergreen Huckleberry".to_string(),
+            scientific: "Vaccinium ovatum".to_string(),
+            description: "another kind of long description".to_string(),
+            image_url: None,
+        },
+    ]
 }
 
-#[actix_rt::main]
+#[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(fetch_entries_handler))
-        .bind("127.0.0.1:8080")?
-        .run()
-        .await
+    HttpServer::new(|| {
+        App::new()
+            //TODO: Don't do this in prod... but it lets me skip using the
+            //      React proxy server which causes issues with streaming events
+            .wrap(Cors::permissive())
+            .service(fetch_entries_handler)
+            .service(fetch_entries_handler_sse)
+    })
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
 
-fn old_main() {
+fn cli_main() {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let entries = native_plants::fetch_entries(&api_key, "43081", "partial shade", "wet soil");
 
