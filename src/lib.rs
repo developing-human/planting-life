@@ -66,10 +66,10 @@ pub fn stream_entries(
     let mut obj_start = None;
 
     // I'm making two simplifying assumptions based on my use case here:
-    // 1) A single chunk cannot contain an entire JSON object.
+    // 1) A single chunk cannot finish two JSON objects
     // 2) Each object is flat (no nested braces)
     response.filter_map(move |chunk| {
-        let mut created_object = None;
+        let mut created_plant = None;
         for c in chunk.chars() {
             accumulated.push(c);
             match c {
@@ -80,10 +80,12 @@ pub fn stream_entries(
                 '}' => {
                     let obj_end = accumulated.len();
 
-                    let one_object = &accumulated[obj_start.unwrap()..obj_end];
-                    println!("Parsing: {}", one_object);
-                    created_object =
-                        Some(serde_json::from_str::<NativePlantEntry>(one_object).unwrap());
+                    let json_object = &accumulated[obj_start.unwrap()..obj_end];
+
+                    println!("Parsing: {}", json_object);
+                    if let Ok(plant) = serde_json::from_str(json_object) {
+                        created_plant = plant;
+                    }
 
                     obj_start = None;
                 }
@@ -91,7 +93,7 @@ pub fn stream_entries(
             }
         }
 
-        created_object
+        created_plant
     })
 }
 
@@ -119,13 +121,8 @@ fn call_model_stream(payload: CompletionRequest, api_key: &str) -> impl Iterator
         std::process::exit(1);
     }
 
-    println!("Creating bufreader");
     let reader = io::BufReader::new(response);
-    //for line in reader.lines() {
-    //    println!("{}", line.unwrap());
-    //}
 
-    println!("Created bufreader");
     reader
         .lines()
         .filter(|line_result| match line_result {
@@ -140,8 +137,6 @@ fn call_model_stream(payload: CompletionRequest, api_key: &str) -> impl Iterator
             parsed.expect("Error parsing inner response")
         })
         .map(|parsed_response| String::from(&parsed_response.choices.get(0).unwrap().text))
-
-    //vec![String::from("foo")].into_iter()
 }
 
 fn call_model(payload: CompletionRequest, api_key: &str) -> CompletionResponse {

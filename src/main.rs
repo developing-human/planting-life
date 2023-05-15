@@ -42,7 +42,7 @@ async fn fetch_entries_handler_sse(
     thread::spawn(move || {
         let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-        //let mut entries = build_fake_plants();
+        let mut entries = build_fake_plants();
 
         let entries = native_plants::stream_entries(
             &api_key,
@@ -52,13 +52,23 @@ async fn fetch_entries_handler_sse(
         );
 
         for mut entry in entries {
-            entry.image_url = get_image_link(&entry.scientific);
+            //entry.image_url = get_image_link(&entry.scientific);
 
             let entry_json = serde_json::to_string(&entry).unwrap();
             //TODO: Can I get rid of the "block on"?
             //      I think I need this thread to be async?
 
             block_on(sender.send(sse::Data::new(entry_json))).unwrap();
+
+            if let Some(image_url) = get_image_link(&entry.scientific) {
+                block_on(
+                    sender.send(
+                        sse::Data::new(format!("{}::{}", entry.scientific, image_url))
+                            .event("image_url"),
+                    ),
+                )
+                .unwrap();
+            }
 
             //thread::sleep(time::Duration::from_secs(1));
         }
@@ -85,6 +95,9 @@ struct Payload {
 }
 
 fn get_image_link(scientific_name: &str) -> Option<String> {
+    //return Some(
+    //    "https://inaturalist-open-data.s3.amazonaws.com/photos/253985271/original.jpeg".to_string(),
+    //);
     // Recent, permissive license, human observation
     let fetch_url = format!("https://api.gbif.org/v1/occurrence/search?scientificName={}&mediaType=StillImage&limit=1&license=CC_0_1_0&basisOfRecord=HUMAN_OBSERVATION&year=2015,2023", scientific_name);
 
@@ -156,7 +169,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             //TODO: Don't do this in prod... but it lets me skip using the
             //      React proxy server which causes issues with streaming events
-            .wrap(Cors::default().allowed_origin("http://localhost:3000"))
+            //.wrap(Cors::default().allowed_origin("http://localhost:3000"))
+            .wrap(Cors::permissive())
             .service(fetch_entries_handler)
             .service(fetch_entries_handler_sse)
     })
