@@ -2,7 +2,6 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
-use native_plants::stream_entries;
 use native_plants::NativePlantEntry;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
@@ -21,9 +20,6 @@ struct FetchRequest {
 async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
     println!("Received request: {:#?}", payload);
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-
-    //TODO: Remove me
-    let mut entries = build_fake_plants();
 
     let mut entries =
         native_plants::fetch_entries(&api_key, &payload.zip, &payload.shade, &payload.moisture);
@@ -44,9 +40,10 @@ async fn fetch_entries_handler_sse(
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(1);
 
     thread::spawn(move || {
-        //TODO: Remove me
         let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-        let mut entries = build_fake_plants();
+
+        //let mut entries = build_fake_plants();
+
         let entries = native_plants::stream_entries(
             &api_key,
             &payload.zip,
@@ -63,14 +60,59 @@ async fn fetch_entries_handler_sse(
 
             block_on(sender.send(sse::Data::new(entry_json))).unwrap();
 
-            //TODO: Remove delay
-            thread::sleep(time::Duration::from_secs(1));
+            //thread::sleep(time::Duration::from_secs(1));
         }
 
         block_on(sender.send(sse::Data::new("").event("close"))).unwrap();
     });
 
     stream.with_keep_alive(time::Duration::from_secs(1))
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ResultItem {
+    media: Vec<MediaItem>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct MediaItem {
+    identifier: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct Payload {
+    results: Vec<ResultItem>,
+}
+
+fn get_image_link(scientific_name: &str) -> Option<String> {
+    // Recent, permissive license, human observation
+    let fetch_url = format!("https://api.gbif.org/v1/occurrence/search?scientificName={}&mediaType=StillImage&limit=1&license=CC_0_1_0&basisOfRecord=HUMAN_OBSERVATION&year=2015,2023", scientific_name);
+
+    let client = reqwest::blocking::Client::new();
+    let response = client.get(fetch_url).send().expect("Error calling model");
+
+    let status = response.status();
+    let response_body = response
+        .text()
+        .expect("Error extracting body from response");
+
+    if status != StatusCode::OK {
+        eprintln!("Error from model endpoint: {response_body}");
+        return None;
+    }
+
+    let parsed_response: Payload =
+        serde_json::from_str(&response_body).expect("Error parsing response");
+
+    for result in parsed_response.results {
+        for media in result.media {
+            if media.identifier.is_some() {
+                return media.identifier;
+            }
+        }
+    }
+
+    None
 }
 
 fn build_fake_plants() -> Vec<NativePlantEntry> {
@@ -114,71 +156,11 @@ async fn main() -> std::io::Result<()> {
         App::new()
             //TODO: Don't do this in prod... but it lets me skip using the
             //      React proxy server which causes issues with streaming events
-            .wrap(Cors::permissive())
+            .wrap(Cors::default().allowed_origin("http://localhost:3000"))
             .service(fetch_entries_handler)
             .service(fetch_entries_handler_sse)
     })
     .bind("127.0.0.1:8080")?
     .run()
     .await
-}
-
-fn cli_main() {
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let entries = native_plants::fetch_entries(&api_key, "43081", "partial shade", "wet soil");
-
-    for (index, entry) in entries.iter().enumerate() {
-        println!("{} ({})", entry.common, entry.scientific);
-        println!("{}", entry.description);
-
-        if index != entries.len() - 1 {
-            println!();
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct ResultItem {
-    media: Vec<MediaItem>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct MediaItem {
-    identifier: Option<String>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Payload {
-    results: Vec<ResultItem>,
-}
-
-fn get_image_link(scientific_name: &str) -> Option<String> {
-    // Recent, permissive license, human observation
-    let fetch_url = format!("https://api.gbif.org/v1/occurrence/search?scientificName={}&mediaType=StillImage&limit=20&license=CC_0_1_0&basisOfRecord=HUMAN_OBSERVATION&year=2015,2023", scientific_name);
-
-    let client = reqwest::blocking::Client::new();
-    let response = client.get(fetch_url).send().expect("Error calling model");
-
-    let status = response.status();
-    let response_body = response
-        .text()
-        .expect("Error extracting body from response");
-
-    if status != StatusCode::OK {
-        eprintln!("Error from model endpoint: {response_body}");
-        std::process::exit(1);
-    }
-
-    let parsed_response: Payload =
-        serde_json::from_str(&response_body).expect("Error parsing response");
-
-    for result in parsed_response.results {
-        for media in result.media {
-            if media.identifier.is_some() {
-                return media.identifier;
-            }
-        }
-    }
-
-    None
 }
