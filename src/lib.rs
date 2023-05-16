@@ -8,6 +8,7 @@ struct CompletionRequest {
     prompt: String,
     max_tokens: u32,
     stream: bool,
+    temperature: f32,
 }
 
 #[derive(Debug, Deserialize)]
@@ -20,10 +21,37 @@ struct CompletionResponseChoice {
     text: String,
 }
 
+#[derive(Debug, Serialize)]
+struct ChatCompletionRequest {
+    model: String,
+    messages: Vec<ChatCompletionMessage>,
+    max_tokens: u32,
+    stream: bool,
+    temperature: f32,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatCompletionResponse {
+    choices: Vec<ChatCompletionResponseChoice>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ChatCompletionResponseChoice {
+    message: Option<ChatCompletionMessage>,
+    delta: Option<ChatCompletionMessage>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct ChatCompletionMessage {
+    role: Option<String>,
+    content: Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NativePlantEntry {
     pub common: String,
     pub scientific: String,
+    pub bloom: String,
     pub description: String,
     pub image_url: Option<String>,
 }
@@ -39,6 +67,7 @@ pub fn fetch_entries(
         prompt: build_prompt(zip, shade, moisture),
         max_tokens: 4000,
         stream: false,
+        temperature: 0.5,
     };
 
     let response = call_model(payload, api_key);
@@ -53,11 +82,24 @@ pub fn stream_entries(
     shade: &str,
     moisture: &str,
 ) -> impl Iterator<Item = NativePlantEntry> {
-    let payload = CompletionRequest {
-        model: String::from("text-davinci-003"),
-        prompt: build_prompt(zip, shade, moisture),
-        max_tokens: 4000,
+    let prompt = build_prompt(zip, shade, moisture);
+    println!("Sending prompt: {}", prompt);
+
+    let payload = ChatCompletionRequest {
+        model: String::from("gpt-3.5-turbo"),
+        messages: vec![
+            ChatCompletionMessage {
+                role: Some(String::from("system")),
+                content: Some(String::from("You are a helpful assistant")),
+            },
+            ChatCompletionMessage {
+                role: Some(String::from("user")),
+                content: Some(prompt),
+            },
+        ],
+        max_tokens: 3000,
         stream: true,
+        temperature: 0.4,
     };
 
     let response = call_model_stream(payload, api_key);
@@ -99,15 +141,37 @@ pub fn stream_entries(
 
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
     format!(
-        r#"[no prose][respond with minified JSON] Suggest 5 plants to plant near zip code {} which would do well in {} and {}.  All suggestions must be native to that area.  Respond like: [ {{ "common": "the common name", "scientific": "the scientific name", "description": "a description of the plant, 25 words or less" }} ]"#,
+        r#"You are a knowledgeable gardener living near zip code {}.
+---
+First, choose native plants to plant in your garden.
+Next, filter to plants that will thrive in {}.
+Next, filter to plants that will thrive in {}.
+Next, filter to plants that support caterpillars and pollinators.
+
+Finally, choose the top five to plant in your garden.
+---
+No prose.  Your entire response will be formatted like:
+```
+[
+  {{
+    "common": "common name",
+    "scientific": "scientific name",
+    "bloom": "season of bloom",
+    "description": "Energetically describe the wildlife it supports"
+  }}
+]
+```"#,
         zip, shade, moisture
     )
 }
 
-fn call_model_stream(payload: CompletionRequest, api_key: &str) -> impl Iterator<Item = String> {
+fn call_model_stream(
+    payload: ChatCompletionRequest,
+    api_key: &str,
+) -> impl Iterator<Item = String> {
     let client = reqwest::blocking::Client::new();
     let response = client
-        .post("https://api.openai.com/v1/completions")
+        .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&payload)
         .send()
@@ -132,11 +196,21 @@ fn call_model_stream(payload: CompletionRequest, api_key: &str) -> impl Iterator
         .map(|line| line.unwrap())
         .map(|line| String::from(&line[6..line.len()]))
         .map(|json| {
-            let parsed: serde_json::Result<CompletionResponse> = serde_json::from_str(&json);
+            let parsed: serde_json::Result<ChatCompletionResponse> = serde_json::from_str(&json);
 
             parsed.expect("Error parsing inner response")
         })
-        .map(|parsed_response| String::from(&parsed_response.choices.get(0).unwrap().text))
+        .filter_map(|parsed_response| {
+            let delta = &parsed_response.choices.get(0).unwrap().delta;
+
+            if let Some(delta) = delta {
+                if let Some(content) = &delta.content {
+                    return Some(String::from(content));
+                }
+            }
+
+            None
+        })
 }
 
 fn call_model(payload: CompletionRequest, api_key: &str) -> CompletionResponse {

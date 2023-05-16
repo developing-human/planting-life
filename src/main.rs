@@ -42,7 +42,7 @@ async fn fetch_entries_handler_sse(
     thread::spawn(move || {
         let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-        let mut entries = build_fake_plants();
+        //let entries = build_fake_plants();
 
         let entries = native_plants::stream_entries(
             &api_key,
@@ -51,9 +51,7 @@ async fn fetch_entries_handler_sse(
             &payload.moisture,
         );
 
-        for mut entry in entries {
-            //entry.image_url = get_image_link(&entry.scientific);
-
+        for entry in entries {
             let entry_json = serde_json::to_string(&entry).unwrap();
             //TODO: Can I get rid of the "block on"?
             //      I think I need this thread to be async?
@@ -128,39 +126,45 @@ fn get_image_link(scientific_name: &str) -> Option<String> {
     None
 }
 
-fn build_fake_plants() -> Vec<NativePlantEntry> {
+fn build_fake_plants() -> impl Iterator<Item = NativePlantEntry> {
     vec![
         native_plants::NativePlantEntry {
             common: "California Wild Strawberry".to_string(),
             scientific: "Fragaria californica".to_string(),
-            description: "the kind of long description".to_string(),
+            description: "The kind of long description".to_string(),
+            bloom: "Early spring".to_string(),
             image_url: None,
         },
         native_plants::NativePlantEntry {
             common: "Evergreen Huckleberry".to_string(),
             scientific: "Vaccinium ovatum".to_string(),
-            description: "another kind of long description".to_string(),
+            description: "Another kind of long description".to_string(),
+            bloom: "Early spring".to_string(),
             image_url: None,
         },
         native_plants::NativePlantEntry {
             common: "Evergreen Huckleberry".to_string(),
             scientific: "Vaccinium ovatum".to_string(),
-            description: "another kind of long description".to_string(),
+            description: "Another kind of long description".to_string(),
+            bloom: "Early spring".to_string(),
             image_url: None,
         },
         native_plants::NativePlantEntry {
             common: "Evergreen Huckleberry".to_string(),
             scientific: "Vaccinium ovatum".to_string(),
-            description: "another kind of long description".to_string(),
+            description: "Another kind of long description".to_string(),
+            bloom: "Early spring".to_string(),
             image_url: None,
         },
         native_plants::NativePlantEntry {
             common: "Evergreen Huckleberry".to_string(),
             scientific: "Vaccinium ovatum".to_string(),
-            description: "another kind of long description".to_string(),
+            description: "Another kind of long description".to_string(),
+            bloom: "Early spring".to_string(),
             image_url: None,
         },
     ]
+    .into_iter()
 }
 
 #[actix_web::main]
