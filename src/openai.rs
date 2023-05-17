@@ -47,6 +47,7 @@ struct ChatCompletionMessage {
     content: Option<String>,
 }
 
+//TODO: Should refactor to move this out of openai code.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NativePlantEntry {
     pub common: String,
@@ -56,26 +57,8 @@ pub struct NativePlantEntry {
     pub image_url: Option<String>,
 }
 
-pub fn fetch_entries(
-    api_key: &str,
-    zip: &str,
-    shade: &str,
-    moisture: &str,
-) -> Vec<NativePlantEntry> {
-    let payload = CompletionRequest {
-        model: String::from("text-davinci-003"),
-        prompt: build_prompt(zip, shade, moisture),
-        max_tokens: 4000,
-        stream: false,
-        temperature: 0.5,
-    };
-
-    let response = call_model(payload, api_key);
-    let parsed_response = &response.choices.get(0).unwrap().text;
-
-    serde_json::from_str(parsed_response).expect("Error parsing inner response")
-}
-
+//TODO: I think this should stream chunks back.  And trickle parser
+//      should turn chunks into events.  Then events go to front end.
 pub fn stream_entries(
     api_key: &str,
     zip: &str,
@@ -185,6 +168,7 @@ fn call_model_stream(
         std::process::exit(1);
     }
 
+    //TODO: I can use a larger buffer by calling with_capacity.  Is this worthwhile?
     let reader = io::BufReader::new(response);
 
     reader
@@ -211,26 +195,4 @@ fn call_model_stream(
 
             None
         })
-}
-
-fn call_model(payload: CompletionRequest, api_key: &str) -> CompletionResponse {
-    let client = reqwest::blocking::Client::new();
-    let response = client
-        .post("https://api.openai.com/v1/completions")
-        .header("Authorization", format!("Bearer {}", api_key))
-        .json(&payload)
-        .send()
-        .expect("Error calling model");
-
-    let status = response.status();
-    let response_body = response
-        .text()
-        .expect("Error extracting body from response");
-
-    if status != StatusCode::OK {
-        eprintln!("Error from model endpoint: {response_body}");
-        std::process::exit(1);
-    }
-
-    serde_json::from_str(&response_body).expect("Error parsing response")
 }
