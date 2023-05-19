@@ -92,6 +92,8 @@ async fn fetch_entries_handler_mock(
     });
 
     stream.with_keep_alive(time::Duration::from_secs(1))
+        .customize()
+        .insert_header(("X-Accel-Buffering", "no"))
 }
 
 fn build_mock_plants() -> impl Iterator<Item = NativePlantEntry> {
@@ -145,7 +147,7 @@ async fn main() -> std::io::Result<()> {
             .service(fetch_entries_handler)
             .service(fetch_entries_handler_mock)
     })
-    .bind("127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }
