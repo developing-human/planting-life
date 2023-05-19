@@ -100,7 +100,7 @@ const Plants = () => {
               />
             </label>
             <button type="submit">
-                Submit
+                Find Native Plants
             </button>
           </form>
 	    <table>
