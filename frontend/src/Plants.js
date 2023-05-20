@@ -20,7 +20,7 @@ const Plants = () => {
     if (!formData) return;
 
     const { zip, shade, moisture } = formData;
-    const sse = new EventSource(`${process.env.REACT_APP_API_URL}/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`);
+    const sse = new EventSource(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`);
 
     sse.onmessage = e => {
         let plant = JSON.parse(e.data);
@@ -61,22 +61,22 @@ const Plants = () => {
 
             return newPlants;
         });
-    });
+      });
 
-    return () => {
-        sse.close();
-    };
+      return () => {
+          sse.close();
+      };
         
-  }, [formData]);
+    }, [formData]);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setFormData({
-      zip: document.getElementById("zip").value,
-      shade: document.getElementById("shade"),
-      moisture: document.getElementById("moisture"),
-    });
-  };
+    const handleSubmit = async (event) => {
+        event.preventDefault();
+        setFormData({
+            zip: document.getElementById('zip').value,
+            shade: document.getElementById('shade').value,
+            moisture: document.getElementById('moisture').value,
+        });
+    }
 
   return (
     <div>

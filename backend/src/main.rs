@@ -1,4 +1,5 @@
-use actix_web::{get, web, App, HttpServer, Responder};
+use actix_cors::Cors;
+use actix_web::{get, http::header, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
 use openai::NativePlantEntry;
@@ -55,7 +56,10 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
         block_on(sender.send(sse::Data::new("").event("close"))).unwrap();
     });
 
-    stream.with_keep_alive(time::Duration::from_secs(1))
+    stream
+        .with_keep_alive(time::Duration::from_secs(1))
+        .customize()
+        .insert_header(("X-Accel-Buffering", "no"))
 }
 
 #[get("/plants_mock")]
@@ -139,7 +143,13 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlantEntry> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
+        let cors = Cors::default()
+            .allowed_origin("https://www.planting.life")
+            .allowed_origin("https://planting.life")
+            .allowed_methods(vec!["GET"]);
+
         App::new()
+            .wrap(cors)
             .service(fetch_entries_handler)
             .service(fetch_entries_handler_mock)
     })
