@@ -1,5 +1,5 @@
 [package]
-name = "native-plants"
+name = "planting-life"
 version = "0.1.0"
 edition = "2021"
 
@@ -14,4 +14,3 @@ actix-cors = "0.6.4"
 actix-web-lab = "0.19.1"
 futures = { version = "0.3.28", features = ["executor"] }
 tokio = "1.18"
-eventsource = "0.5.0"
