@@ -6,13 +6,12 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
 function DropdownSelect( {label, options} ) {
+  // use state to handle selected option
   const [option, setOption] = useState('');
 
   const handleChange = (event) => {
     setOption(event.target.value);
   };
-
-  console.log(option);
 
   return (
     <Box sx={{ minWidth: 120 }}>

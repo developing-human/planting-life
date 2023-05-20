@@ -22,7 +22,7 @@ const Plants = () => {
     const { zip, shade, moisture } = formData;
 
     const sse = new EventSource(
-      `http://localhost:8080/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
+      `https://api.planting.life/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
     );
 
     sse.onmessage = (e) => {
@@ -89,7 +89,7 @@ const Plants = () => {
 
         <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} />
 
-        <button type="submit">Submit</button>
+        <button type="submit">Find Native Plants</button>
       </form>
       <table>
         <tbody>
