@@ -5,10 +5,7 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
-function DropdownSelect( {label, options} ) {
-  // get id from label value
-  const id = label.toLowerCase();
-
+function DropdownSelect( {id, label, options} ) {
   // use state to handle selected option
   const [option, setOption] = useState('');
 
@@ -30,7 +27,7 @@ function DropdownSelect( {label, options} ) {
         >
 
         {options.map(option => {
-            return <MenuItem key={`PART_${option}`} value={option}>{option}</MenuItem>
+            return <MenuItem key={option.toLowerCase()} value={option}>{option}</MenuItem>
         })}
 
         </Select>
