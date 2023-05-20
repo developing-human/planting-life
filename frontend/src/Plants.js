@@ -112,7 +112,7 @@ const Plants = () => {
             <tr>
               <td>
                 <a href={plant.image_url}>
-                  <img src={plant.image_url} width="150" />
+                  <img src={plant.image_url} alt={plant.common} width="150" />
                 </a>
               </td>
               <td>
