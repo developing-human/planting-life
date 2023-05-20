@@ -20,10 +20,7 @@ const Plants = () => {
     if (!formData) return;
 
     const { zip, shade, moisture } = formData;
-
-    const sse = new EventSource(
-      `https://api.planting.life/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
-    );
+    const sse = new EventSource(`${process.env.REACT_APP_API_URL}/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`);
 
     sse.onmessage = (e) => {
       let plant = JSON.parse(e.data);
