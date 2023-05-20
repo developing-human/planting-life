@@ -3,7 +3,7 @@ use actix_web::{get, http::header, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
 use openai::NativePlantEntry;
-use serde::{Deserialize, Serialize};
+use serde::{self, Deserialize, Serialize};
 use std::env;
 use std::thread;
 use std::time;
@@ -14,8 +14,45 @@ mod openai;
 #[derive(Serialize, Deserialize, Debug)]
 struct FetchRequest {
     zip: String,
-    shade: String,
-    moisture: String,
+    shade: Shade,
+    moisture: Moisture,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum Shade {
+    #[serde(rename = "Full Shade")]
+    Full,
+    #[serde(rename = "Partial Shade")]
+    Partial,
+    #[serde(rename = "Full Sun")]
+    No,
+}
+
+impl Shade {
+    fn description(&self) -> &str {
+        match self {
+            Shade::Full => "full shade",
+            Shade::Partial => "partial shade",
+            Shade::No => "full sun",
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+enum Moisture {
+    Low,
+    Medium,
+    High,
+}
+
+impl Moisture {
+    fn description(&self) -> &str {
+        match self {
+            Moisture::Low => "dry soil",
+            Moisture::Medium => "moist soil",
+            Moisture::High => "wet soil",
+        }
+    }
 }
 
 #[get("/plants")]
@@ -31,8 +68,8 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
         let entries = openai::stream_entries(
             &openai_api_key,
             &payload.zip,
-            &payload.shade,
-            &payload.moisture,
+            payload.shade.description(),
+            payload.moisture.description(),
         );
 
         for entry in entries {
