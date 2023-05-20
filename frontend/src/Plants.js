@@ -96,7 +96,11 @@ const Plants = () => {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField id="zip" label="Zip Code" variant="outlined" onChange={handleZipChange}/>
+        <TextField id="zip" 
+                   label="Zip Code" 
+                   variant="outlined" 
+                   onChange={handleZipChange} 
+                   inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
         <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange}/>
         <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange}/>
 
