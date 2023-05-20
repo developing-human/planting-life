@@ -11,6 +11,21 @@ import "./Plants.css";
 const Plants = () => {
   const [plants, setPlants] = useState([]);
   const [formData, setFormData] = useState(null);
+  const [zip, setZip] = useState("");  
+  const [shade, setShade] = useState("");  
+  const [moisture, setMoisture] = useState("");  
+
+  const handleZipChange = (event) => {
+    setZip(event.target.value);
+  };
+  
+  const handleShadeChange = (newValue) => {
+    setShade(newValue);
+  };
+
+  const handleMoistureChange = (newValue) => {
+    setMoisture(newValue);
+  };
 
   // set drop down menu options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -72,20 +87,18 @@ const Plants = () => {
     const handleSubmit = async (event) => {
         event.preventDefault();
         setFormData({
-            zip: document.getElementById('zip').value,
-            shade: document.getElementById('shade').value,
-            moisture: document.getElementById('moisture').value,
+            zip: zip,
+            shade: shade,
+            moisture: moisture,
         });
     }
 
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField id="zip" label="Zip Code" variant="outlined" />
-
-        <DropdownSelect id="shade" label="Shade" options={shadeOptions} />
-
-        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} />
+        <TextField id="zip" label="Zip Code" variant="outlined" onChange={handleZipChange}/>
+        <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange}/>
+        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange}/>
 
         <button type="submit">Find Native Plants</button>
       </form>

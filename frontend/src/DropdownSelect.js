@@ -5,18 +5,22 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
-function DropdownSelect( {id, label, options} ) {
+function DropdownSelect( {id, label, options, onChange} ) {
   // use state to handle selected option
   const [option, setOption] = useState('');
 
   const handleChange = (event) => {
     setOption(event.target.value);
+
+    if (onChange) {
+      onChange(event.target.value);
+    }
   };
 
   return (
     <Box sx={{ minWidth: 120 }}>
       <FormControl fullWidth>
-        <InputLabel id={`${id}-input-label`}>{label}</InputLabel>
+        <InputLabel id={`${id}-input-label`} htmlFor={`${id}-select`}>{label}</InputLabel>
 
         <Select
           labelId={`${id}-input-label`}
