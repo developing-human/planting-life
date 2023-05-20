@@ -1,125 +1,117 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import './Plants.css';
+import React, { useState, useEffect } from "react";
+
+// import material ui for zip code input
+import TextField from "@mui/material/TextField";
+
+// import reusable dropdown select component
+import DropdownSelect from "./DropdownSelect";
+
+import "./Plants.css";
 
 const Plants = () => {
-    const [plants, setPlants] = useState([]);
-    const [formData, setFormData] = useState(null);
+  const [plants, setPlants] = useState([]);
+  const [formData, setFormData] = useState(null);
 
-    useEffect(() => {
-        if (!formData) return;
+  // set drop down menu options
+  const shadeOptions = ["Full Shade", "Partial Shade", "Sun"];
+  const moistureOptions = ["Wet", "Damp", "Dry"];
 
-        const { zip, shade, moisture } = formData;
+  useEffect(() => {
+    if (!formData) return;
 
-        const sse = new EventSource(`http://localhost:8080/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`);
+    const { zip, shade, moisture } = formData;
 
-        sse.onmessage = e => {
-            let plant = JSON.parse(e.data);
-            setPlants((prevPlants) => [...prevPlants, plant]);
-        };
+    const sse = new EventSource(
+      `http://localhost:8080/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
+    );
 
-        sse.addEventListener("close", (event) => {
-            sse.close()
-        });
-
-        sse.addEventListener("image_url", (event) => {
-            console.log(event.data);
-            const splitData = event.data.split("::");
-            const scientificName = splitData[0];
-            const imageUrl = splitData[1];
-
-
-            setPlants((prevPlants) => {
-                console.log("About to update url, plants.length=" + prevPlants.length);
-                const newPlants = prevPlants.map((plant) => {
-                    if (plant.scientific === scientificName) {
-                        console.log("Updating " + plant.scientific + " with url: " + imageUrl);
-                        const updatedPlant = {
-                            ...plant,
-                            image_url: imageUrl
-                        }
-
-                        console.log("Updated plant");
-                        return updatedPlant;
-                    }
-
-                    console.log("Not updating plant, but keeping it");
-                    return plant;
-                });
-
-
-                console.log("Updating newPlants.length=" + prevPlants.length);
-
-                return newPlants;
-            });
-        });
-
-        return () => {
-            sse.close();
-        };
-        
-    }, [formData]);
-
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setFormData({
-            zip: document.getElementById('zip').value,
-            shade: document.getElementById('shade').value,
-            moisture: document.getElementById('moisture').value,
-        });
-
+    sse.onmessage = (e) => {
+      let plant = JSON.parse(e.data);
+      setPlants((prevPlants) => [...prevPlants, plant]);
     };
 
-    return (
-        <div>
-          <form onSubmit={handleSubmit}>
-            <label>
-              Zip Code:
-              <input
-                id="zip"
-                name="zip"
-                type="text"
-              />
-            </label>
+    sse.addEventListener("close", (event) => {
+      sse.close();
+    });
 
-            <label>
-              Shade:
-              <input
-                id="shade"
-                name="shade"
-                type="text"
-              />
-            </label>
+    sse.addEventListener("image_url", (event) => {
+      console.log(event.data);
+      const splitData = event.data.split("::");
+      const scientificName = splitData[0];
+      const imageUrl = splitData[1];
 
-            <label>
-              Moisture:
-              <input
-                id="moisture"
-                name="moisture"
-                type="text"
-              />
-            </label>
-            <button type="submit">
-                Submit
-            </button>
-          </form>
-	    <table>
-                <tbody>
-              {plants.map((plant, index) => (
-                    <tr>
-                        <td><a href={plant.image_url}><img src={plant.image_url} width="150"/></a></td>
-                        <td>
-                            <b>{plant.common}</b> 
-                            <i>{plant.scientific}</i><br /> <br />
-                            Blooms in {plant.bloom.toLowerCase()}. {plant.description}
-                        </td>
-                    </tr>
-             ))}
-                </tbody>
-	    </table>
-        </div>
-    );
+      setPlants((prevPlants) => {
+        console.log("About to update url, plants.length=" + prevPlants.length);
+        const newPlants = prevPlants.map((plant) => {
+          if (plant.scientific === scientificName) {
+            console.log(
+              "Updating " + plant.scientific + " with url: " + imageUrl
+            );
+            const updatedPlant = {
+              ...plant,
+              image_url: imageUrl,
+            };
+
+            console.log("Updated plant");
+            return updatedPlant;
+          }
+
+          console.log("Not updating plant, but keeping it");
+          return plant;
+        });
+
+        console.log("Updating newPlants.length=" + prevPlants.length);
+
+        return newPlants;
+      });
+    });
+
+    return () => {
+      sse.close();
+    };
+  }, [formData]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFormData({
+      zip: document.getElementById("zip").value,
+      shade: document.getElementById("shade"),
+      moisture: document.getElementById("moisture"),
+    });
+  };
+
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <TextField id="zip" label="Zip Code" variant="outlined" />
+
+        <DropdownSelect id="shade" label="Shade" options={shadeOptions} />
+
+        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} />
+
+        <button type="submit">Submit</button>
+      </form>
+      <table>
+        <tbody>
+          {plants.map((plant, index) => (
+            <tr>
+              <td>
+                <a href={plant.image_url}>
+                  <img src={plant.image_url} width="150" />
+                </a>
+              </td>
+              <td>
+                <b>{plant.common}</b>
+                <i>{plant.scientific}</i>
+                <br /> <br />
+                Blooms in {plant.bloom.toLowerCase()}. {plant.description}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
 };
 
 export default Plants;
-
