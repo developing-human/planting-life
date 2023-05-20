@@ -6,6 +6,9 @@ import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
 function DropdownSelect( {label, options} ) {
+  // get id from label value
+  const id = label.toLowerCase();
+
   // use state to handle selected option
   const [option, setOption] = useState('');
 
@@ -16,18 +19,18 @@ function DropdownSelect( {label, options} ) {
   return (
     <Box sx={{ minWidth: 120 }}>
       <FormControl fullWidth>
-        <InputLabel id="demo-simple-select-label">{label}</InputLabel>
+        <InputLabel id={`${id}-input-label`}>{label}</InputLabel>
 
         <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
+          labelId={`${id}-input-label`}
+          id={`${id}-select`}
           value={option}
           label={`${label}`}
           onChange={handleChange}
         >
 
         {options.map(option => {
-            return <MenuItem key={option} value={option}>{option}</MenuItem>
+            return <MenuItem key={`PART_${option}`} value={option}>{option}</MenuItem>
         })}
 
         </Select>

@@ -13,8 +13,8 @@ const Plants = () => {
   const [formData, setFormData] = useState(null);
 
   // set drop down menu options
-  const shadeOptions = ["Full Shade", "Partial Shade", "Sun"];
-  const moistureOptions = ["Wet", "Damp", "Dry"];
+  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
+  const moistureOptions = ["Low", "Medium", "High"];
 
   useEffect(() => {
     if (!formData) return;
