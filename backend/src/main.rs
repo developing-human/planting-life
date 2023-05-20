@@ -1,4 +1,3 @@
-use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
@@ -91,7 +90,8 @@ async fn fetch_entries_handler_mock(
         block_on(sender.send(sse::Data::new("").event("close"))).unwrap();
     });
 
-    stream.with_keep_alive(time::Duration::from_secs(1))
+    stream
+        .with_keep_alive(time::Duration::from_secs(1))
         .customize()
         .insert_header(("X-Accel-Buffering", "no"))
 }
@@ -140,10 +140,6 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlantEntry> {
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
-            //TODO: Don't do this in prod... but it lets me skip using the
-            //      React proxy server which causes issues with streaming events
-            //.wrap(Cors::default().allowed_origin("http://localhost:3000"))
-            .wrap(Cors::permissive())
             .service(fetch_entries_handler)
             .service(fetch_entries_handler_mock)
     })
