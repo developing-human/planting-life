@@ -82,7 +82,7 @@ pub fn stream_entries(
         ],
         max_tokens: 3000,
         stream: true,
-        temperature: 0.4,
+        temperature: 0.7,
     };
 
     let response = call_model_stream(payload, api_key);
@@ -131,7 +131,7 @@ Next, filter to plants that will thrive in {}.
 Next, filter to plants that will thrive in {}.
 Next, filter to plants that support caterpillars and pollinators.
 
-Finally, choose the top five to plant in your garden.
+Finally, choose the top ten to plant in your garden.
 ---
 No prose.  Your entire response will be formatted like:
 ```
@@ -140,7 +140,7 @@ No prose.  Your entire response will be formatted like:
     "common": "common name",
     "scientific": "scientific name",
     "bloom": "season of bloom",
-    "description": "Energetically describe the wildlife it supports"
+    "description": "Energetically describe the wildlife it supports."
   }}
 ]
 ```"#,
