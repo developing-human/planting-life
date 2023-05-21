@@ -61,6 +61,10 @@ const Plants = () => {
       const license = image.license;
       const licenseUrl = image.licenseUrl;
 
+      // set license attribute for css image hover
+      const link = document.querySelector('a'); 
+      link.setAttribute('hover-text', license);
+
       setPlants((prevPlants) => {
         console.log("About to update url, plants.length=" + prevPlants.length);
         const newPlants = prevPlants.map((plant) => {

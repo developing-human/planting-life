@@ -30,7 +30,7 @@ figcaption {
 }
 
 .plantImageContainer:hover::before {
-  content: "Attribution";
+  content: attr(hover-text);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -43,10 +43,12 @@ figcaption {
   background-color: #333;
   opacity: 0.7;
   color: white;
+  z-index: 1;
 }
 
 .plantImage {
   display: block;
   width: 100%;
   height: auto;
+  z-index: 2;
 }
