@@ -11,14 +11,14 @@ import "./Plants.css";
 const Plants = () => {
   const [plants, setPlants] = useState([]);
   const [formData, setFormData] = useState(null);
-  const [zip, setZip] = useState("");  
-  const [shade, setShade] = useState("");  
-  const [moisture, setMoisture] = useState("");  
+  const [zip, setZip] = useState("");
+  const [shade, setShade] = useState("");
+  const [moisture, setMoisture] = useState("");
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
   };
-  
+
   const handleShadeChange = (newValue) => {
     setShade(newValue);
   };
@@ -35,74 +35,98 @@ const Plants = () => {
     if (!formData) return;
 
     const { zip, shade, moisture } = formData;
-    const sse = new EventSource(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`);
+    const sse = new EventSource(
+      `${process.env.REACT_APP_URL_PREFIX}/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
+    );
 
-    sse.onmessage = e => {
-        let plant = JSON.parse(e.data);
-        setPlants((prevPlants) => [...prevPlants, plant]);
+    sse.onmessage = (e) => {
+      let plant = JSON.parse(e.data);
+      setPlants((prevPlants) => [...prevPlants, plant]);
     };
 
     sse.addEventListener("close", (event) => {
-        sse.close()
+      sse.close();
     });
 
-    sse.addEventListener("image_url", (event) => {
-        console.log(event.data);
-        const splitData = event.data.split("::");
-        const scientificName = splitData[0];
-        const imageUrl = splitData[1];
+    sse.addEventListener("image", (event) => {
+      // get JSON image data
+      const image = JSON.parse(event.data);
 
+      // grab image scientific name to compare to AI data
+      const scientificName = image.scientificName;
 
-        setPlants((prevPlants) => {
-            console.log("About to update url, plants.length=" + prevPlants.length);
-            const newPlants = prevPlants.map((plant) => {
-                if (plant.scientific === scientificName) {
-                    console.log("Updating " + plant.scientific + " with url: " + imageUrl);
-                    const updatedPlant = {
-                        ...plant,
-                        image_url: imageUrl
-                    }
+      // grab relevant image and attribution data
+      const imageUrl = image.thumbnailUrl;
+      const author = image.author;
+      const license = image.license;
+      const licenseUrl = image.licenseUrl;
 
-                    console.log("Updated plant");
-                    return updatedPlant;
-                }
+      setPlants((prevPlants) => {
+        console.log("About to update url, plants.length=" + prevPlants.length);
+        const newPlants = prevPlants.map((plant) => {
+          if (plant.scientific) {
+          // if (plant.scientific === scientificName) {
+            console.log(
+              "Updating " + plant.scientific + " with url: " + imageUrl
+            );
+            const updatedPlant = {
+              ...plant,
+              image_url: imageUrl,
+              author: author,
+              license: license,
+              licenseUrl: licenseUrl,
+            };
 
-                console.log("Not updating plant, but keeping it");
-                return plant;
-            });
+            console.log("Updated plant");
+            return updatedPlant;
+          }
 
-
-            console.log("Updating newPlants.length=" + prevPlants.length);
-
-            return newPlants;
+          console.log("Not updating plant, but keeping it");
+          return plant;
         });
+
+        console.log("Updating newPlants.length=" + prevPlants.length);
+
+        return newPlants;
       });
+    });
 
-      return () => {
-          sse.close();
-      };
-        
-    }, [formData]);
+    return () => {
+      sse.close();
+    };
+  }, [formData]);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setFormData({
-            zip: zip,
-            shade: shade,
-            moisture: moisture,
-        });
-    }
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setFormData({
+      zip: zip,
+      shade: shade,
+      moisture: moisture,
+    });
+  };
 
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField id="zip" 
-                   label="Zip Code" 
-                   variant="outlined" 
-                   onChange={handleZipChange} 
-                   inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
-        <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange}/>
-        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange}/>
+        <TextField
+          id="zip"
+          label="Zip Code"
+          variant="outlined"
+          onChange={handleZipChange}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+        />
+        <DropdownSelect
+          id="shade"
+          label="Shade"
+          options={shadeOptions}
+          onChange={handleShadeChange}
+        />
+        <DropdownSelect
+          id="moisture"
+          label="Moisture"
+          options={moistureOptions}
+          onChange={handleMoistureChange}
+        />
 
         <button type="submit">Find Native Plants</button>
       </form>
@@ -111,9 +135,10 @@ const Plants = () => {
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <a href={plant.image_url}>
-                  <img src={plant.image_url} alt={plant.common} width="150" />
+                <a class="plantImageContainer" href={plant.licenseUrl} target="blank">
+                  <img class="plantImage" src={plant.image_url} alt={plant.common} />
                 </a>
+                <figcaption>© Photo by {plant.author}, click for details.</figcaption>
               </td>
               <td>
                 <b>{plant.common}</b>
