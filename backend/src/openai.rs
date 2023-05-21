@@ -3,25 +3,6 @@ use serde::{Deserialize, Serialize};
 use std::io::{self, BufRead};
 
 #[derive(Debug, Serialize)]
-struct CompletionRequest {
-    model: String,
-    prompt: String,
-    max_tokens: u32,
-    stream: bool,
-    temperature: f32,
-}
-
-#[derive(Debug, Deserialize)]
-struct CompletionResponse {
-    choices: Vec<CompletionResponseChoice>,
-}
-
-#[derive(Debug, Deserialize)]
-struct CompletionResponseChoice {
-    text: String,
-}
-
-#[derive(Debug, Serialize)]
 struct ChatCompletionRequest {
     model: String,
     messages: Vec<ChatCompletionMessage>,
@@ -37,7 +18,6 @@ struct ChatCompletionResponse {
 
 #[derive(Debug, Deserialize)]
 struct ChatCompletionResponseChoice {
-    message: Option<ChatCompletionMessage>,
     delta: Option<ChatCompletionMessage>,
 }
 
