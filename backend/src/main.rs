@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use actix_web::{get, http::header, web, App, HttpServer, Responder};
+use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
 use openai::NativePlantEntry;
@@ -85,19 +85,24 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
 
         for entry in entries {
             let entry_json = serde_json::to_string(&entry).unwrap();
+
             //TODO: Can I get rid of the "block on"?
             //      I think I need this thread to be async?
 
             block_on(sender.send(sse::Data::new(entry_json))).unwrap();
 
-            if let Some(image_url) = flickr::get_image_url(&entry.scientific, &flickr_api_key) {
+            if let Some(image) = flickr::get_image(&entry.scientific, &flickr_api_key) {
+                // TODO: Remove image_url event once front end supports image event
                 block_on(
                     sender.send(
-                        sse::Data::new(format!("{}::{}", entry.scientific, image_url))
+                        sse::Data::new(format!("{}::{}", entry.scientific, image.thumbnail_url))
                             .event("image_url"),
                     ),
                 )
                 .unwrap();
+
+                let image_json = serde_json::to_string(&image).unwrap();
+                block_on(sender.send(sse::Data::new(image_json).event("image"))).unwrap();
             }
         }
 
