@@ -44,7 +44,7 @@ const Plants = () => {
 
     const { zip, shade, moisture } = formData;
     const sse = new EventSource(
-      `${process.env.REACT_APP_URL_PREFIX}/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
+      `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
     );
 
     sse.onmessage = (e) => {
@@ -76,8 +76,7 @@ const Plants = () => {
       setPlants((prevPlants) => {
         console.log("About to update url, plants.length=" + prevPlants.length);
         const newPlants = prevPlants.map((plant) => {
-          if (plant.scientific) {
-          // if (plant.scientific === scientificName) {
+          if (plant.scientific === scientificName) {
             console.log(
               "Updating " + plant.scientific + " with url: " + imageUrl
             );
@@ -163,8 +162,20 @@ const Plants = () => {
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
-                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
+                <a href={plant.original_url} target="_blank">
+                  <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
+                </a>
+                {
+                  plant.author ? (
+                    <figcaption>
+                      <AttributionPopover
+                        caption={`© Photo by ${plant.author}`}
+                        title={plant.title}
+                        author={plant.author}
+                        license={plant.license}
+                        link={plant.licenseUrl}/></figcaption>
+                  ) : null
+                }
               </td>
               <td>
                 <b>{plant.common}</b>

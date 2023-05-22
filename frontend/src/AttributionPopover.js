@@ -7,7 +7,8 @@ import Link from "@mui/material/Link";
 import "./AttributionPopover.css";
 
 function AttributionPopover({ caption, title, author, license, link }) {
-  let captionLink = caption.toUpperCase().substring(0,23) + "...";
+  let captionUppercase = caption.toUpperCase();
+  let captionLink = captionUppercase.length > 20 ? captionUppercase.substring(0,20) + "..." : captionUppercase;
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -27,7 +28,7 @@ function AttributionPopover({ caption, title, author, license, link }) {
         underline="none"
         aria-describedby={id}
         onClick={handleClick}
-        sx={{ fontSize: "10px", paddingBottom: "4px" }}
+        sx={{ fontSize: "10px", paddingBottom: "4px", cursor: 'pointer' }}
       >
         {captionLink}
       </Link>

@@ -88,19 +88,29 @@ fn get_license_url(license_id: &str) -> Option<&str> {
 
 pub fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Option<Image> {
     // Remove "spp." from the end if it exists, this is an abbreviation for "species".
-    let scientific_name = &scientific_name.replace(" spp.", "");
+    let truncated_scientific_name = &scientific_name.replace(" spp.", "");
 
     // First, look for this plant in bloom
     let search_term = format!("{} blooming", scientific_name);
     if let Some(response) = image_search(&search_term, api_key) {
-        if let Some(image) = find_best_photo(response, scientific_name, common_name) {
+        if let Some(image) = find_best_photo(
+            response,
+            scientific_name,
+            truncated_scientific_name,
+            common_name,
+        ) {
             return Some(image);
         }
     }
 
     // If it can't be found in bloom, look for any other image of it
     if let Some(response) = image_search(scientific_name, api_key) {
-        if let Some(image) = find_best_photo(response, scientific_name, common_name) {
+        if let Some(image) = find_best_photo(
+            response,
+            scientific_name,
+            truncated_scientific_name,
+            common_name,
+        ) {
             return Some(image);
         }
     }
@@ -150,13 +160,14 @@ fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse>
 fn find_best_photo(
     response: ImageSearchResponse,
     scientific_name: &str,
+    truncated_scientific_name: &str,
     common_name: &str,
 ) -> Option<Image> {
     let mut highest_title_views = -1;
     let mut highest_title = None;
     let mut highest_description_views = -1;
     let mut highest_description = None;
-    let scientific_name_lc = scientific_name.to_lowercase();
+    let scientific_name_lc = truncated_scientific_name.to_lowercase();
     let common_name_lc = common_name.to_lowercase();
 
     // Search for the most viewed photo which has the scientific or common name in the title
