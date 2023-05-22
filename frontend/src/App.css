@@ -9,13 +9,6 @@ body {
   margin: 0 auto;
 }
 
-form {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
-}
-
 label {
   display: flex;
   flex-direction: column;
@@ -23,7 +16,7 @@ label {
 }
 
 button[type="submit"] {
-  grid-column: span 3;
+  width: 100%;
   background-color: #4CAF50;
   color: white;
   font-weight: bold;

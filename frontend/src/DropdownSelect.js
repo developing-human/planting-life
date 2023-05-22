@@ -5,9 +5,9 @@ import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
-function DropdownSelect( {id, label, options, onChange} ) {
+function DropdownSelect( {id, label, options, onChange, value} ) {
   // use state to handle selected option
-  const [option, setOption] = useState('');
+  const [option, setOption] = useState(value);
 
   const handleChange = (event) => {
     setOption(event.target.value);

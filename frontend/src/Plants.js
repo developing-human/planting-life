@@ -2,19 +2,29 @@ import React, { useState, useEffect } from "react";
 
 // import material ui for zip code input
 import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Grid";
 
 // import reusable dropdown select & attribution components
 import DropdownSelect from "./DropdownSelect";
 import AttributionPopover from "./AttributionPopover";
 
 import "./Plants.css";
+import "./spinner.css";
 
 const Plants = () => {
+  // set drop down menu options
+  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
+  const moistureOptions = ["Low", "Medium", "High"];
+
+  const defaultShade = shadeOptions[1];
+  const defaultMoisture = moistureOptions[1];
+
   const [plants, setPlants] = useState([]);
   const [formData, setFormData] = useState(null);
   const [zip, setZip] = useState("");
-  const [shade, setShade] = useState("");
-  const [moisture, setMoisture] = useState("");
+  const [shade, setShade] = useState(defaultShade);
+  const [moisture, setMoisture] = useState(defaultMoisture);
+  const [loading, setLoading] = useState(false);
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -28,9 +38,6 @@ const Plants = () => {
     setMoisture(newValue);
   };
 
-  // set drop down menu options
-  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
-  const moistureOptions = ["Low", "Medium", "High"];
 
   useEffect(() => {
     if (!formData) return;
@@ -46,7 +53,8 @@ const Plants = () => {
     };
 
     sse.addEventListener("close", (event) => {
-      sse.close();
+        setLoading(false);
+        sse.close();
     });
 
     sse.addEventListener("image", (event) => {
@@ -97,12 +105,14 @@ const Plants = () => {
     });
 
     return () => {
+      setLoading(false);
       sse.close();
     };
   }, [formData]);
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
+    event.preventDefault();    
+    setLoading(true);
     setFormData({
       zip: zip,
       shade: shade,
@@ -110,37 +120,48 @@ const Plants = () => {
     });
   };
 
+
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField
-          id="zip"
-          label="Zip Code"
-          variant="outlined"
-          onChange={handleZipChange}
-          inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-        />
-        <DropdownSelect
-          id="shade"
-          label="Shade"
-          options={shadeOptions}
-          onChange={handleShadeChange}
-        />
-        <DropdownSelect
-          id="moisture"
-          label="Moisture"
-          options={moistureOptions}
-          onChange={handleMoistureChange}
-        />
 
-        <button type="submit">Find Native Plants</button>
+        <Grid container spacing={3} style={{display: 'flex'}}>
+          <Grid item xs={12} sm={4}>
+            <TextField 
+              id="zip" 
+              label="Zip Code" 
+              variant="outlined" 
+              onChange={handleZipChange} 
+              sx={{width: '100%'}}
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DropdownSelect 
+              id="shade"
+              label="Shade"
+              options={shadeOptions}
+              onChange={handleShadeChange}
+              value={shade}/>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DropdownSelect 
+              id="moisture"
+              label="Moisture"
+              options={moistureOptions}
+              onChange={handleMoistureChange}
+              value={moisture}/>
+          </Grid>
+          <Grid item xs={12} sm={12}>
+            <button type="submit">Find Native Plants</button>
+          </Grid>
+        </Grid>
       </form>
       <table>
         <tbody>
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <img class="plantImage" src={plant.image_url} alt={plant.common} />
+                <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
                 <figcaption><AttributionPopover caption={`© Photo by ${plant.author}`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
               </td>
               <td>
@@ -153,6 +174,11 @@ const Plants = () => {
           ))}
         </tbody>
       </table>
+      {loading ? (        
+        <div className="spinner">
+          <img src={`${process.env.PUBLIC_URL}/loading-earth.png`} pt="Loading" />
+        </div>
+      ) : null}
     </div>
   );
 };

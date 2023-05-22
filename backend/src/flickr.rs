@@ -20,6 +20,12 @@ struct ImageSearchPhoto {
     title: String,
     license: String,
     ownername: String,
+    description: ImageSearchPhotoDescription,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct ImageSearchPhotoDescription {
+    _content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -80,18 +86,21 @@ fn get_license_url(license_id: &str) -> Option<&str> {
     }
 }
 
-pub fn get_image(scientific_name: &str, api_key: &str) -> Option<Image> {
+pub fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Option<Image> {
+    // Remove "spp." from the end if it exists, this is an abbreviation for "species".
+    let scientific_name = &scientific_name.replace(" spp.", "");
+
     // First, look for this plant in bloom
     let search_term = format!("{} blooming", scientific_name);
     if let Some(response) = image_search(&search_term, api_key) {
-        if let Some(image) = find_best_photo(response, scientific_name) {
+        if let Some(image) = find_best_photo(response, scientific_name, common_name) {
             return Some(image);
         }
     }
 
     // If it can't be found in bloom, look for any other image of it
     if let Some(response) = image_search(scientific_name, api_key) {
-        if let Some(image) = find_best_photo(response, scientific_name) {
+        if let Some(image) = find_best_photo(response, scientific_name, common_name) {
             return Some(image);
         }
     }
@@ -110,7 +119,8 @@ fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse>
             ("media", "photos"),
             ("format", "json"),
             ("nojsoncallback", "1"),
-            ("extras", "views,url_q,license,owner_name"),
+            ("extras", "views,url_q,license,owner_name,description"),
+            ("min_upload_date", "2015-01-01"),
             ("sort", "relevance"),
             // This is everything except "All Rights Reserved"
             // docs here: https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
@@ -137,38 +147,61 @@ fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse>
     }
 }
 
-fn find_best_photo(response: ImageSearchResponse, scientific_name: &str) -> Option<Image> {
-    let mut highest_match_views = -1;
-    let mut highest_match = None;
-    let mut highest_views = -1;
-    let mut highest = None;
+fn find_best_photo(
+    response: ImageSearchResponse,
+    scientific_name: &str,
+    common_name: &str,
+) -> Option<Image> {
+    let mut highest_title_views = -1;
+    let mut highest_title = None;
+    let mut highest_description_views = -1;
+    let mut highest_description = None;
     let scientific_name_lc = scientific_name.to_lowercase();
+    let common_name_lc = common_name.to_lowercase();
 
-    // Search for the most viewed photo which has the scientific name the title
+    // Search for the most viewed photo which has the scientific or common name in the title
     // In case none are found, also track the most viewed overall
-    for photo in response.photos.photo.iter() {
+    'photo: for photo in response.photos.photo.iter() {
         let photo_views = photo.views.parse::<i32>().unwrap();
-        if photo_views > highest_views {
-            highest_views = photo_views;
-            highest = Some(photo);
-        }
-
         let title_lc = photo.title.to_lowercase();
-        if title_lc.contains(&scientific_name_lc) && photo_views > highest_match_views {
-            highest_match_views = photo_views;
-            highest_match = Some(photo);
+        let description_lc = photo.description._content.to_lowercase();
+
+        // Certain words in the description mean we should ignore this, usually because
+        // they are hand drawn rather than photos
+        for banned_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
+            if description_lc.contains(banned_word) {
+                continue 'photo;
+            }
+        }
+
+        if (title_lc.contains(&scientific_name_lc) || title_lc.contains(&common_name_lc))
+            && photo_views > highest_title_views
+        {
+            highest_title_views = photo_views;
+            highest_title = Some(photo);
+        }
+
+        if (description_lc.contains(&scientific_name_lc)
+            || description_lc.contains(&common_name_lc))
+            && photo_views > highest_description_views
+        {
+            highest_description_views = photo_views;
+            highest_description = Some(photo);
         }
     }
 
-    // If any had scientific name, return most viewed of those
-    if let Some(photo) = highest_match {
+    // If any had scientific or common name, return most viewed of those
+    if let Some(photo) = highest_title {
         return Image::from_photo(photo, scientific_name);
     }
 
-    // Otherwise, return most viewed overall
-    if let Some(photo) = highest {
+    // If any had scientific or common name, return most viewed of those
+    if let Some(photo) = highest_description {
         return Image::from_photo(photo, scientific_name);
     }
+
+    // Don't try returning photos without a common/scientific name match
+    // That tends to choose popular photos that are of a different plant.
 
     None // No image found :(
 }

@@ -62,7 +62,7 @@ pub fn stream_entries(
         ],
         max_tokens: 3000,
         stream: true,
-        temperature: 0.7,
+        temperature: 0.5,
     };
 
     let response = call_model_stream(payload, api_key);
