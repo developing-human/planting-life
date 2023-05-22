@@ -3,8 +3,9 @@ import React, { useState, useEffect } from "react";
 // import material ui for zip code input
 import TextField from "@mui/material/TextField";
 
-// import reusable dropdown select component
+// import reusable dropdown select & attribution components
 import DropdownSelect from "./DropdownSelect";
+import AttributionPopover from "./AttributionPopover";
 
 import "./Plants.css";
 
@@ -57,7 +58,9 @@ const Plants = () => {
 
       // grab relevant image and attribution data
       const imageUrl = image.thumbnailUrl;
+      const originalUrl = image.originalUrl;
       const author = image.author;
+      const title = image.title;
       const license = image.license;
       const licenseUrl = image.licenseUrl;
 
@@ -72,6 +75,8 @@ const Plants = () => {
             const updatedPlant = {
               ...plant,
               image_url: imageUrl,
+              original_url: originalUrl,
+              title: title,
               author: author,
               license: license,
               licenseUrl: licenseUrl,
@@ -135,10 +140,10 @@ const Plants = () => {
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <a class="plantImageContainer" href={plant.licenseUrl} target="blank" hover-text={plant.license}>
+                <a class="plantImageContainer" href={plant.original_url} target="blank">
                   <img class="plantImage" src={plant.image_url} alt={plant.common} />
                 </a>
-                <figcaption>© Photo by {plant.author}, click for details.</figcaption>
+                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}, click for details.`} title={plant.title} author={plant.author} license={plant.license}/></figcaption>
               </td>
               <td>
                 <b>{plant.common}</b>
