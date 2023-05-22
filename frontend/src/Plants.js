@@ -9,11 +9,18 @@ import DropdownSelect from "./DropdownSelect";
 import "./Plants.css";
 
 const Plants = () => {
+  // set drop down menu options
+  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
+  const moistureOptions = ["Low", "Medium", "High"];
+
+  const defaultShade = shadeOptions[1];
+  const defaultMoisture = moistureOptions[1];
+
   const [plants, setPlants] = useState([]);
   const [formData, setFormData] = useState(null);
   const [zip, setZip] = useState("");  
-  const [shade, setShade] = useState("");  
-  const [moisture, setMoisture] = useState("");  
+  const [shade, setShade] = useState(defaultShade);  
+  const [moisture, setMoisture] = useState(defaultMoisture);  
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -27,9 +34,6 @@ const Plants = () => {
     setMoisture(newValue);
   };
 
-  // set drop down menu options
-  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
-  const moistureOptions = ["Low", "Medium", "High"];
 
   useEffect(() => {
     if (!formData) return;
@@ -101,8 +105,8 @@ const Plants = () => {
                    variant="outlined" 
                    onChange={handleZipChange} 
                    inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
-        <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange}/>
-        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange}/>
+        <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange} value={shade}/>
+        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange} value={moisture}/>
 
         <button type="submit">Find Native Plants</button>
       </form>
