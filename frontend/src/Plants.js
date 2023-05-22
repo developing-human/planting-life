@@ -7,6 +7,7 @@ import TextField from "@mui/material/TextField";
 import DropdownSelect from "./DropdownSelect";
 
 import "./Plants.css";
+import "./spinner.css";
 
 const Plants = () => {
   // set drop down menu options
@@ -21,6 +22,7 @@ const Plants = () => {
   const [zip, setZip] = useState("");  
   const [shade, setShade] = useState(defaultShade);  
   const [moisture, setMoisture] = useState(defaultMoisture);  
+  const [loading, setLoading] = useState(false);
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -47,6 +49,7 @@ const Plants = () => {
     };
 
     sse.addEventListener("close", (event) => {
+        setLoading(false);
         sse.close()
     });
 
@@ -83,6 +86,7 @@ const Plants = () => {
       });
 
       return () => {
+          setLoading(false);
           sse.close();
       };
         
@@ -90,6 +94,7 @@ const Plants = () => {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
+        setLoading(true);
         setFormData({
             zip: zip,
             shade: shade,
@@ -129,6 +134,11 @@ const Plants = () => {
           ))}
         </tbody>
       </table>
+      {loading ? (        
+        <div className="spinner">
+          <img src={`${process.env.PUBLIC_URL}/loading-earth.png`} pt="Loading" />
+        </div>
+      ) : null}
     </div>
   );
 };
