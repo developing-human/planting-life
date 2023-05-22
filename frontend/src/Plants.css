@@ -16,3 +16,10 @@ table th {
   color: black;
   font-weight: bold;
 }
+
+figcaption {
+  font-size: 8px;
+  padding: none;
+  margin: none;
+  max-width: 150px;
+}

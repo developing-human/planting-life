@@ -4,8 +4,9 @@ import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 
-// import reusable dropdown select component
+// import reusable dropdown select & attribution components
 import DropdownSelect from "./DropdownSelect";
+import AttributionPopover from "./AttributionPopover";
 
 import "./Plants.css";
 import "./spinner.css";
@@ -20,15 +21,15 @@ const Plants = () => {
 
   const [plants, setPlants] = useState([]);
   const [formData, setFormData] = useState(null);
-  const [zip, setZip] = useState("");  
-  const [shade, setShade] = useState(defaultShade);  
-  const [moisture, setMoisture] = useState(defaultMoisture);  
+  const [zip, setZip] = useState("");
+  const [shade, setShade] = useState(defaultShade);
+  const [moisture, setMoisture] = useState(defaultMoisture);
   const [loading, setLoading] = useState(false);
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
   };
-  
+
   const handleShadeChange = (newValue) => {
     setShade(newValue);
   };
@@ -42,99 +43,126 @@ const Plants = () => {
     if (!formData) return;
 
     const { zip, shade, moisture } = formData;
-    const sse = new EventSource(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`);
+    const sse = new EventSource(
+      `${process.env.REACT_APP_URL_PREFIX}/plants_mock?zip=${zip}&shade=${shade}&moisture=${moisture}`
+    );
 
-    sse.onmessage = e => {
-        let plant = JSON.parse(e.data);
-        setPlants((prevPlants) => [...prevPlants, plant]);
+    sse.onmessage = (e) => {
+      let plant = JSON.parse(e.data);
+      setPlants((prevPlants) => [...prevPlants, plant]);
     };
 
     sse.addEventListener("close", (event) => {
         setLoading(false);
-        sse.close()
+        sse.close();
     });
 
-    sse.addEventListener("image_url", (event) => {
-        console.log(event.data);
-        const splitData = event.data.split("::");
-        const scientificName = splitData[0];
-        const imageUrl = splitData[1];
+    sse.addEventListener("image", (event) => {
+      // get JSON image data
+      const image = JSON.parse(event.data);
 
+      // grab image scientific name to compare to AI data
+      const scientificName = image.scientificName;
 
-        setPlants((prevPlants) => {
-            console.log("About to update url, plants.length=" + prevPlants.length);
-            const newPlants = prevPlants.map((plant) => {
-                if (plant.scientific === scientificName) {
-                    console.log("Updating " + plant.scientific + " with url: " + imageUrl);
-                    const updatedPlant = {
-                        ...plant,
-                        image_url: imageUrl
-                    }
+      // grab relevant image and attribution data
+      const imageUrl = image.thumbnailUrl;
+      const originalUrl = image.originalUrl;
+      const author = image.author;
+      const title = image.title;
+      const license = image.license;
+      const licenseUrl = image.licenseUrl;
 
-                    console.log("Updated plant");
-                    return updatedPlant;
-                }
+      setPlants((prevPlants) => {
+        console.log("About to update url, plants.length=" + prevPlants.length);
+        const newPlants = prevPlants.map((plant) => {
+          if (plant.scientific) {
+          // if (plant.scientific === scientificName) {
+            console.log(
+              "Updating " + plant.scientific + " with url: " + imageUrl
+            );
+            const updatedPlant = {
+              ...plant,
+              image_url: imageUrl,
+              original_url: originalUrl,
+              title: title,
+              author: author,
+              license: license,
+              licenseUrl: licenseUrl,
+            };
 
-                console.log("Not updating plant, but keeping it");
-                return plant;
-            });
+            console.log("Updated plant");
+            return updatedPlant;
+          }
 
-
-            console.log("Updating newPlants.length=" + prevPlants.length);
-
-            return newPlants;
+          console.log("Not updating plant, but keeping it");
+          return plant;
         });
+
+        console.log("Updating newPlants.length=" + prevPlants.length);
+
+        return newPlants;
       });
+    });
 
-      return () => {
-          setLoading(false);
-          sse.close();
-      };
-        
-    }, [formData]);
+    return () => {
+      setLoading(false);
+      sse.close();
+    };
+  }, [formData]);
 
-    const handleSubmit = async (event) => {
-        event.preventDefault();
-        setLoading(true);
-        setFormData({
-            zip: zip,
-            shade: shade,
-            moisture: moisture,
-        });
-    }
+  const handleSubmit = async (event) => {
+    event.preventDefault();    
+    setLoading(true);
+    setFormData({
+      zip: zip,
+      shade: shade,
+      moisture: moisture,
+    });
+  };
+
 
   return (
     <div>
       <form onSubmit={handleSubmit}>
+
         <Grid container spacing={3} style={{display: 'flex'}}>
           <Grid item xs={12} sm={4}>
-            <TextField id="zip" 
-                       label="Zip Code" 
-                       variant="outlined" 
-                       onChange={handleZipChange} 
-                       sx={{width: '100%'}}
-                       inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
+            <TextField 
+              id="zip" 
+              label="Zip Code" 
+              variant="outlined" 
+              onChange={handleZipChange} 
+              sx={{width: '100%'}}
+              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange} value={shade}/>
+            <DropdownSelect 
+              id="shade"
+              label="Shade"
+              options={shadeOptions}
+              onChange={handleShadeChange}
+              value={shade}/>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange} value={moisture}/>
+            <DropdownSelect 
+              id="moisture"
+              label="Moisture"
+              options={moistureOptions}
+              onChange={handleMoistureChange}
+              value={moisture}/>
           </Grid>
           <Grid item xs={12} sm={12}>
             <button type="submit">Find Native Plants</button>
           </Grid>
         </Grid>
-
       </form>
       <table>
         <tbody>
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <a href={plant.image_url}>
-                  <img src={plant.image_url} alt={plant.image_url ? plant.common : null} width="150" />
-                </a>
+                <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
+                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
               </td>
               <td>
                 <b>{plant.common}</b>
