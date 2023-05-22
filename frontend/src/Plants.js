@@ -141,7 +141,7 @@ const Plants = () => {
             <tr>
               <td>
                 <img class="plantImage" src={plant.image_url} alt={plant.common} />
-                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}.`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
+                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
               </td>
               <td>
                 <b>{plant.common}</b>

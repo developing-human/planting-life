@@ -7,7 +7,7 @@ import Link from "@mui/material/Link";
 import "./AttributionPopover.css";
 
 function AttributionPopover({ caption, title, author, license, link }) {
-  let captionLink = caption.toUpperCase();
+  let captionLink = caption.toUpperCase().substring(0,23) + "...";
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
