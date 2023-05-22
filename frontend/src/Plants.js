@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 
 // import material ui for zip code input
 import TextField from "@mui/material/TextField";
+import Grid from "@mui/material/Grid";
 
 // import reusable dropdown select component
 import DropdownSelect from "./DropdownSelect";
@@ -105,15 +106,26 @@ const Plants = () => {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <TextField id="zip" 
-                   label="Zip Code" 
-                   variant="outlined" 
-                   onChange={handleZipChange} 
-                   inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
-        <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange} value={shade}/>
-        <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange} value={moisture}/>
+        <Grid container spacing={3} style={{display: 'flex'}}>
+          <Grid item xs={12} sm={4}>
+            <TextField id="zip" 
+                       label="Zip Code" 
+                       variant="outlined" 
+                       onChange={handleZipChange} 
+                       sx={{width: '100%'}}
+                       inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DropdownSelect id="shade" label="Shade" options={shadeOptions} onChange={handleShadeChange} value={shade}/>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <DropdownSelect id="moisture" label="Moisture" options={moistureOptions} onChange={handleMoistureChange} value={moisture}/>
+          </Grid>
+          <Grid item xs={12} sm={12}>
+            <button type="submit">Find Native Plants</button>
+          </Grid>
+        </Grid>
 
-        <button type="submit">Find Native Plants</button>
       </form>
       <table>
         <tbody>
