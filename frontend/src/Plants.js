@@ -140,10 +140,8 @@ const Plants = () => {
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <a class="plantImageContainer" href={plant.original_url} target="blank">
-                  <img class="plantImage" src={plant.image_url} alt={plant.common} />
-                </a>
-                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}, click for details.`} title={plant.title} author={plant.author} license={plant.license}/></figcaption>
+                <img class="plantImage" src={plant.image_url} alt={plant.common} />
+                <figcaption><AttributionPopover caption={`© Photo by ${plant.author}.`} title={plant.title} author={plant.author} license={plant.license} link={plant.original_url}/></figcaption>
               </td>
               <td>
                 <b>{plant.common}</b>
