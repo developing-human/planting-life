@@ -50,6 +50,7 @@ const Plants = () => {
     sse.onmessage = (e) => {
       let plant = JSON.parse(e.data);
       setPlants((prevPlants) => [...prevPlants, plant]);
+      setLoading(true);
     };
 
     sse.addEventListener("close", (event) => {
@@ -111,7 +112,8 @@ const Plants = () => {
   }, [formData]);
 
   const handleSubmit = async (event) => {
-    event.preventDefault();    
+    event.preventDefault();
+    setPlants([]);
     setLoading(true);
     setFormData({
       zip: zip,
@@ -156,7 +158,7 @@ const Plants = () => {
           </Grid>
         </Grid>
       </form>
-      <table>
+      <table id="returned-plants">
         <tbody>
           {plants.map((plant, index) => (
             <tr>
