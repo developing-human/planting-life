@@ -83,15 +83,6 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
             if let Some(image) =
                 flickr::get_image(&entry.scientific, &entry.common, &flickr_api_key)
             {
-                // TODO: Remove image_url event once front end supports image event
-                block_on(
-                    sender.send(
-                        sse::Data::new(format!("{}::{}", entry.scientific, image.thumbnail_url))
-                            .event("image_url"),
-                    ),
-                )
-                .unwrap();
-
                 let image_json = serde_json::to_string(&image).unwrap();
                 block_on(sender.send(sse::Data::new(image_json).event("image"))).unwrap();
             }

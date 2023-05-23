@@ -74,12 +74,8 @@ const Plants = () => {
       const licenseUrl = image.licenseUrl;
 
       setPlants((prevPlants) => {
-        console.log("About to update url, plants.length=" + prevPlants.length);
         const newPlants = prevPlants.map((plant) => {
           if (plant.scientific === scientificName) {
-            console.log(
-              "Updating " + plant.scientific + " with url: " + imageUrl
-            );
             const updatedPlant = {
               ...plant,
               image_url: imageUrl,
@@ -90,15 +86,12 @@ const Plants = () => {
               licenseUrl: licenseUrl,
             };
 
-            console.log("Updated plant");
             return updatedPlant;
           }
 
-          console.log("Not updating plant, but keeping it");
           return plant;
         });
 
-        console.log("Updating newPlants.length=" + prevPlants.length);
 
         return newPlants;
       });
@@ -162,7 +155,7 @@ const Plants = () => {
           {plants.map((plant, index) => (
             <tr>
               <td>
-                <a href={plant.original_url} target="_blank">
+                <a href={plant.original_url} target="_blank" rel="noreferrer">
                   <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
                 </a>
                 {
@@ -189,7 +182,7 @@ const Plants = () => {
       </table>
       {loading ? (        
         <div className="spinner">
-          <img src={`${process.env.PUBLIC_URL}/loading-earth.png`} pt="Loading" />
+          <img src={`${process.env.PUBLIC_URL}/loading-earth.png`} alt="Loading" />
         </div>
       ) : null}
     </div>
