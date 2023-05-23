@@ -131,7 +131,7 @@ No prose.  Your entire response will be formatted like:
 fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
-) -> impl Iterator<Item = String> {
+) -> Box<dyn Iterator<Item = String>> {
     let client = reqwest::blocking::Client::new();
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
@@ -145,13 +145,13 @@ fn call_model_stream(
         let response_body = response.text().expect("Can't extract text from error body");
 
         eprintln!("Error from model endpoint: {response_body}");
-        std::process::exit(1);
+        return Box::new(std::iter::empty());
     }
 
     //TODO: I can use a larger buffer by calling with_capacity.  Is this worthwhile?
     let reader = io::BufReader::new(response);
 
-    reader
+    let result_iter = reader
         .lines()
         .filter(|line_result| match line_result {
             Ok(line) => line.starts_with("data: {"),
@@ -174,5 +174,7 @@ fn call_model_stream(
             }
 
             None
-        })
+        });
+
+    Box::new(result_iter)
 }
