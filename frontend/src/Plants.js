@@ -50,7 +50,6 @@ const Plants = () => {
     sse.onmessage = (e) => {
       let plant = JSON.parse(e.data);
       setPlants((prevPlants) => [...prevPlants, plant]);
-      setLoading(true);
     };
 
     sse.addEventListener("close", (event) => {
@@ -98,7 +97,6 @@ const Plants = () => {
     });
 
     return () => {
-      setLoading(false);
       sse.close();
     };
   }, [formData]);
@@ -156,7 +154,7 @@ const Plants = () => {
             <tr>
               <td>
                 <a href={plant.original_url} target="_blank" rel="noreferrer">
-                  <img class="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
+                  <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
                 </a>
                 {
                   plant.author ? (
