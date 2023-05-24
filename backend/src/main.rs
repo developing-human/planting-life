@@ -2,6 +2,7 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
+use futures::join;
 use futures::stream::{Stream, StreamExt};
 use openai::NativePlantEntry;
 use serde::{self, Deserialize, Serialize};
@@ -67,9 +68,11 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
     actix_web::rt::spawn(async move {
         let mut plants = get_plant_stream(payload).await;
         while let Some(plant) = plants.next().await {
-            send_plant(&sender, &plant).await;
-
-            fetch_and_send_image(&sender, &plant).await;
+            // Concurrently send the plant to the front end while handling the image
+            join!(
+                send_plant(&sender, &plant),
+                fetch_and_send_image(&sender, &plant)
+            );
         }
 
         close_stream(&sender).await;
