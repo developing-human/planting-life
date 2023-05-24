@@ -169,48 +169,6 @@ pub async fn stream_plants(
 
     // plant_stream will have None's in it from lines that did not emit an entry, remove them.
     plant_stream.filter_map(|plant| async { plant })
-
-    /*
-    let accumulated = Arc::new(Mutex::new(String::new()));
-    let obj_start = Arc::new(Mutex::new(None));
-
-    // I'm making two simplifying assumptions based on my use case here:
-    // 1) A single chunk cannot finish two JSON objects
-    // 2) Each object is flat (no nested braces)
-    response.filter_map(move |chunk| {
-        let accumulated = Arc::clone(&accumulated);
-        let obj_start = Arc::clone(&obj_start);
-
-        async move {
-            let mut created_plant = None;
-            for c in chunk.chars() {
-                let mut accumulated = accumulated.lock().unwrap();
-                let mut obj_start = obj_start.lock().unwrap();
-                accumulated.push(c);
-                match c {
-                    '{' => {
-                        // This character was just pushed, so its the last char of accumulated.
-                        *obj_start = Some(accumulated.len() - 1);
-                    }
-                    '}' => {
-                        let obj_end = accumulated.len();
-
-                        let json_object = &accumulated[obj_start.unwrap()..obj_end];
-
-                        println!("Parsing: {}", json_object);
-                        if let Ok(plant) = serde_json::from_str(json_object) {
-                            created_plant = plant;
-                        }
-
-                        *obj_start = None;
-                    }
-                    _ => {}
-                }
-            }
-            created_plant
-        }
-    })
-    */
 }
 
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
