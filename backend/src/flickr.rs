@@ -1,3 +1,4 @@
+use futures::join;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
 
@@ -86,13 +87,19 @@ fn get_license_url(license_id: &str) -> Option<&str> {
     }
 }
 
-pub fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Option<Image> {
+pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Option<Image> {
     // Remove "spp." from the end if it exists, this is an abbreviation for "species".
     let truncated_scientific_name = &scientific_name.replace(" spp.", "");
 
-    // First, look for this plant in bloom
+    // Run searches for both blooming and non-blooming concurrently.
+    // This is a little aggressive since the latter won't be used if the former finds results
     let search_term = format!("{} blooming", scientific_name);
-    if let Some(response) = image_search(&search_term, api_key) {
+    let blooming_search = image_search(&search_term, api_key);
+    let non_blooming_search = image_search(scientific_name, api_key);
+    let (blooming_result, non_blooming_result) = join!(blooming_search, non_blooming_search);
+
+    // First, look for this plant in bloom
+    if let Some(response) = blooming_result {
         if let Some(image) = find_best_photo(
             response,
             scientific_name,
@@ -104,7 +111,7 @@ pub fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Opt
     }
 
     // If it can't be found in bloom, look for any other image of it
-    if let Some(response) = image_search(scientific_name, api_key) {
+    if let Some(response) = non_blooming_result {
         if let Some(image) = find_best_photo(
             response,
             scientific_name,
@@ -118,8 +125,8 @@ pub fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Opt
     None // No image to show :(
 }
 
-fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse> {
-    let client = reqwest::blocking::Client::new();
+async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse> {
+    let client = reqwest::Client::new();
     let response = client
         .get("https://api.flickr.com/services/rest")
         .query(&[
@@ -137,11 +144,13 @@ fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse>
             ("license", "1,2,3,4,5,6,7,8,9,10"),
         ])
         .send()
+        .await
         .expect("Error fetching image");
 
     let status = response.status();
     let response_body = response
         .text()
+        .await
         .expect("Error extracting body from response");
 
     if status != StatusCode::OK {

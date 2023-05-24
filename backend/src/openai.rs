@@ -1,6 +1,11 @@
+use futures::{stream::StreamExt, TryStreamExt};
+
+use futures::Stream;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use std::io::{self, BufRead};
+use std::sync::{Arc, Mutex};
+use tokio::io::AsyncBufReadExt;
+use tokio_util::io::StreamReader;
 
 #[derive(Debug, Serialize)]
 struct ChatCompletionRequest {
@@ -37,14 +42,12 @@ pub struct NativePlantEntry {
     pub image_url: Option<String>,
 }
 
-//TODO: I think this should stream chunks back.  And trickle parser
-//      should turn chunks into events.  Then events go to front end.
-pub fn stream_entries(
+pub async fn stream_entries(
     api_key: &str,
     zip: &str,
     shade: &str,
     moisture: &str,
-) -> impl Iterator<Item = NativePlantEntry> {
+) -> impl Stream<Item = NativePlantEntry> {
     let prompt = build_prompt(zip, shade, moisture);
     println!("Sending prompt: {}", prompt);
 
@@ -65,40 +68,46 @@ pub fn stream_entries(
         temperature: 0.5,
     };
 
-    let response = call_model_stream(payload, api_key);
+    let response = call_model_stream(payload, api_key).await;
 
-    let mut accumulated = String::new();
-    let mut obj_start = None;
+    let accumulated = Arc::new(Mutex::new(String::new()));
+    let obj_start = Arc::new(Mutex::new(None));
 
     // I'm making two simplifying assumptions based on my use case here:
     // 1) A single chunk cannot finish two JSON objects
     // 2) Each object is flat (no nested braces)
     response.filter_map(move |chunk| {
-        let mut created_plant = None;
-        for c in chunk.chars() {
-            accumulated.push(c);
-            match c {
-                '{' => {
-                    // This character was just pushed, so its the last char of accumulated.
-                    obj_start = Some(accumulated.len() - 1);
-                }
-                '}' => {
-                    let obj_end = accumulated.len();
+        let accumulated = Arc::clone(&accumulated);
+        let obj_start = Arc::clone(&obj_start);
 
-                    let json_object = &accumulated[obj_start.unwrap()..obj_end];
-
-                    println!("Parsing: {}", json_object);
-                    if let Ok(plant) = serde_json::from_str(json_object) {
-                        created_plant = plant;
+        async move {
+            let mut created_plant = None;
+            for c in chunk.chars() {
+                let mut accumulated = accumulated.lock().unwrap();
+                let mut obj_start = obj_start.lock().unwrap();
+                accumulated.push(c);
+                match c {
+                    '{' => {
+                        // This character was just pushed, so its the last char of accumulated.
+                        *obj_start = Some(accumulated.len() - 1);
                     }
+                    '}' => {
+                        let obj_end = accumulated.len();
 
-                    obj_start = None;
+                        let json_object = &accumulated[obj_start.unwrap()..obj_end];
+
+                        println!("Parsing: {}", json_object);
+                        if let Ok(plant) = serde_json::from_str(json_object) {
+                            created_plant = plant;
+                        }
+
+                        *obj_start = None;
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
+            created_plant
         }
-
-        created_plant
     })
 }
 
@@ -128,43 +137,63 @@ No prose.  Your entire response will be formatted like:
     )
 }
 
-fn call_model_stream(
+async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
-) -> Box<dyn Iterator<Item = String>> {
-    let client = reqwest::blocking::Client::new();
+) -> impl Stream<Item = String> {
+    let client = reqwest::Client::new();
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
         .json(&payload)
         .send()
+        .await
         .expect("Error calling model");
 
     let status = response.status();
     if status != StatusCode::OK {
-        let response_body = response.text().expect("Can't extract text from error body");
+        let response_body = response
+            .text()
+            .await
+            .expect("Can't extract text from error body");
 
-        eprintln!("Error from model endpoint: {response_body}");
-        return Box::new(std::iter::empty());
+        //TODO: Return a Result<Stream>
+        panic!("Error from model endpoint: {response_body}");
     }
 
-    //TODO: I can use a larger buffer by calling with_capacity.  Is this worthwhile?
-    let reader = io::BufReader::new(response);
+    let body = response
+        .bytes_stream()
+        .map_err(|err| -> std::io::Error { std::io::Error::new(std::io::ErrorKind::Other, err) });
+    let async_read = StreamReader::new(body);
 
-    let result_iter = reader
-        .lines()
-        .filter(|line_result| match line_result {
-            Ok(line) => line.starts_with("data: {"),
-            Err(_) => false,
+    let reader = tokio::io::BufReader::new(async_read);
+
+    let lines = reader.lines();
+
+    // LinesStream was the magic!
+    let lines_stream = tokio_stream::wrappers::LinesStream::new(lines);
+
+    lines_stream
+        .filter_map(|line_result| async move {
+            match line_result {
+                Ok(line) => {
+                    if line.starts_with("data: {") {
+                        Some(line)
+                    } else {
+                        None
+                    }
+                }
+                Err(_) => None,
+            }
         })
-        .map(|line| line.unwrap())
+        //        .map(|line| line.unwrap())
         .map(|line| String::from(&line[6..line.len()]))
         .map(|json| {
             let parsed: serde_json::Result<ChatCompletionResponse> = serde_json::from_str(&json);
 
             parsed.expect("Error parsing inner response")
         })
-        .filter_map(|parsed_response| {
+        .filter_map(|parsed_response| async move {
             let delta = &parsed_response.choices.get(0).unwrap().delta;
 
             if let Some(delta) = delta {
@@ -174,7 +203,5 @@ fn call_model_stream(
             }
 
             None
-        });
-
-    Box::new(result_iter)
+        })
 }

@@ -2,6 +2,7 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
+use futures::stream::StreamExt;
 use openai::NativePlantEntry;
 use serde::{self, Deserialize, Serialize};
 use std::env;
@@ -61,7 +62,7 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
 
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
 
-    thread::spawn(move || {
+    actix_web::rt::spawn(async move {
         let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
         let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
 
@@ -70,25 +71,37 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
             &payload.zip,
             payload.shade.description(),
             payload.moisture.description(),
-        );
+        )
+        .await;
 
-        for entry in entries {
-            let entry_json = serde_json::to_string(&entry).unwrap();
+        // I don't yet understand why this is needed.  But it tells the entries
+        // not to move in memory during async work.
+        let mut entries = Box::pin(entries);
 
-            //TODO: Can I get rid of the "block on"?
-            //      I think I need this thread to be async?
+        while let Some(entry) = entries.next().await {
+            //for entry in entries {
+            let entry_json = serde_json::to_string(&entry).expect("plant should serialize");
 
-            block_on(sender.send(sse::Data::new(entry_json))).unwrap();
+            sender
+                .send(sse::Data::new(entry_json))
+                .await
+                .expect("plant should send");
 
             if let Some(image) =
-                flickr::get_image(&entry.scientific, &entry.common, &flickr_api_key)
+                flickr::get_image(&entry.scientific, &entry.common, &flickr_api_key).await
             {
-                let image_json = serde_json::to_string(&image).unwrap();
-                block_on(sender.send(sse::Data::new(image_json).event("image"))).unwrap();
+                let image_json = serde_json::to_string(&image).expect("image should serialize");
+                sender
+                    .send(sse::Data::new(image_json).event("image"))
+                    .await
+                    .expect("image should send");
             }
         }
 
-        block_on(sender.send(sse::Data::new("").event("close"))).unwrap();
+        sender
+            .send(sse::Data::new("").event("close"))
+            .await
+            .expect("stream should close");
     });
 
     stream
