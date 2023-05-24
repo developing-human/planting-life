@@ -33,7 +33,7 @@ struct ChatCompletionMessage {
 
 //TODO: Should refactor to move this out of openai code.
 #[derive(Debug, Serialize, Deserialize)]
-pub struct NativePlantEntry {
+pub struct NativePlant {
     pub common: String,
     pub scientific: String,
     pub bloom: String,
@@ -41,16 +41,16 @@ pub struct NativePlantEntry {
     pub image_url: Option<String>,
 }
 
-struct NativePlantEntryBuilder {
+struct NativePlantBuilder {
     common: Option<String>,
     scientific: Option<String>,
     bloom: Option<String>,
     description: Option<String>,
 }
 
-impl NativePlantEntryBuilder {
+impl NativePlantBuilder {
     fn new() -> Self {
-        NativePlantEntryBuilder {
+        NativePlantBuilder {
             common: None,
             scientific: None,
             bloom: None,
@@ -72,12 +72,12 @@ impl NativePlantEntryBuilder {
         self.description = None;
     }
 
-    fn build(&self) -> NativePlantEntry {
+    fn build(&self) -> NativePlant {
         if !self.is_full() {
-            panic!("Building NativePlantEntry without full builder");
+            panic!("Building NativePlant without full builder");
         }
 
-        NativePlantEntry {
+        NativePlant {
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
             bloom: self.bloom.clone().unwrap(),
@@ -87,12 +87,14 @@ impl NativePlantEntryBuilder {
     }
 }
 
-pub async fn stream_entries(
+// Returns a Stream of NativePlantEntries after calling openai.
+// TODO: Move description out of this, to a separate request.
+pub async fn stream_plants(
     api_key: &str,
     zip: &str,
     shade: &str,
     moisture: &str,
-) -> impl Stream<Item = NativePlantEntry> {
+) -> impl Stream<Item = NativePlant> {
     let prompt = build_prompt(zip, shade, moisture);
     println!("Sending prompt: {}", prompt);
 
@@ -129,7 +131,7 @@ pub async fn stream_entries(
         }
     });
 
-    let plant_stream = line_stream.scan(NativePlantEntryBuilder::new(), |builder, line| {
+    let plant_stream = line_stream.scan(NativePlantBuilder::new(), |builder, line| {
         if line.is_none() {
             return futures::future::ready(Some(None));
         }
@@ -154,7 +156,7 @@ pub async fn stream_entries(
             _ => return futures::future::ready(Some(None)),
         }
 
-        // Once the builder is full, emit a built NativePlantEntry
+        // Once the builder is full, emit a built NativePlant
         if builder.is_full() {
             let future = futures::future::ready(Some(Some(builder.build())));
             builder.clear();

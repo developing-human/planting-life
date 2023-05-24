@@ -4,7 +4,7 @@ use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
 use futures::join;
 use futures::stream::{Stream, StreamExt};
-use openai::NativePlantEntry;
+use openai::NativePlant;
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
 use std::env;
@@ -60,7 +60,7 @@ impl Moisture {
 }
 
 #[get("/plants")]
-async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
+async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
     println!("Received request: {:#?}", payload);
 
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
@@ -85,10 +85,10 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
         .insert_header(("X-Accel-Buffering", "no"))
 }
 
-async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = NativePlantEntry>>> {
+async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = NativePlant>>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-    let entries = openai::stream_entries(
+    let plants = openai::stream_plants(
         &openai_api_key,
         &payload.zip,
         payload.shade.description(),
@@ -96,12 +96,12 @@ async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = N
     )
     .await;
 
-    // I don't yet understand why this is needed.  But it tells the entries
+    // I don't yet understand why this is needed.  But it tells the plants
     // not to move in memory during async work.
-    Box::pin(entries)
+    Box::pin(plants)
 }
 
-async fn send_plant(sender: &Sender, plant: &NativePlantEntry) {
+async fn send_plant(sender: &Sender, plant: &NativePlant) {
     let json = serde_json::to_string(&plant).expect("plant should serialize");
 
     sender
@@ -110,7 +110,7 @@ async fn send_plant(sender: &Sender, plant: &NativePlantEntry) {
         .expect("plant should send");
 }
 
-async fn fetch_and_send_image(sender: &Sender, plant: &NativePlantEntry) {
+async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
     if let Some(image) = flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key).await
@@ -131,7 +131,7 @@ async fn close_stream(sender: &Sender) {
 }
 
 #[get("/plants_mock")]
-async fn fetch_entries_handler_mock(
+async fn fetch_plants_handler_mock(
     web::Query(payload): web::Query<FetchRequest>,
 ) -> impl Responder {
     println!("Received mock request: {:#?}", payload);
@@ -152,19 +152,19 @@ async fn fetch_entries_handler_mock(
     let image_json = serde_json::to_string(&image).unwrap();
 
     thread::spawn(move || {
-        for mut entry in build_mock_plants() {
+        for mut plant in build_mock_plants() {
             // Remove image to let it load a moment later.
-            let image_url = entry.image_url;
-            entry.image_url = None;
+            let image_url = plant.image_url;
+            plant.image_url = None;
 
-            let entry_json = serde_json::to_string(&entry).unwrap();
+            let plant_json = serde_json::to_string(&plant).unwrap();
 
-            block_on(sender.send(sse::Data::new(entry_json))).unwrap();
+            block_on(sender.send(sse::Data::new(plant_json))).unwrap();
             thread::sleep(time::Duration::from_millis(250));
 
             block_on(
                 sender.send(
-                    sse::Data::new(format!("{}::{}", entry.scientific, image_url.unwrap()))
+                    sse::Data::new(format!("{}::{}", plant.scientific, image_url.unwrap()))
                         .event("image_url"),
                 ),
             )
@@ -183,37 +183,37 @@ async fn fetch_entries_handler_mock(
         .insert_header(("X-Accel-Buffering", "no"))
 }
 
-fn build_mock_plants() -> impl Iterator<Item = NativePlantEntry> {
+fn build_mock_plants() -> impl Iterator<Item = NativePlant> {
     vec![
-        NativePlantEntry {
+        NativePlant {
             common: "Wild Columbine".to_string(),
             scientific: "Aquilegia canadensis".to_string(),
             bloom: "Spring to early summer".to_string(),
             description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/5031/7238526710_80bf103077_q.jpg".to_string()),
         },
-        NativePlantEntry {
+        NativePlant {
             common: "Swamp Milkweed".to_string(),
             scientific: "Asclepias incarnata".to_string(),
             bloom: "Summer".to_string(),
             description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/3126/3147197425_4e9ac1e2ca_q.jpg".to_string()),
         },
-        NativePlantEntry {
+        NativePlant {
             common: "Joe Pye Weed".to_string(),
             scientific: "Eutrochium purpureum".to_string(),
             bloom: "Late summer to fall".to_string(),
             description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/3862/15215414361_9f659f6f52_q.jpg".to_string()),
         },
-        NativePlantEntry {
+        NativePlant {
             common: "Blue Flag Iris".to_string(),
             scientific: "Iris versicolor".to_string(),
             bloom: "Late spring to early summer".to_string(),
             description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/65535/50623901946_1c37f69ccd_q.jpg".to_string()),
         },
-        NativePlantEntry {
+        NativePlant {
             common: "Cardinal Flower".to_string(),
             scientific: "Lobelia cardinalis".to_string(),
             bloom: "Late summer to early fall".to_string(),
@@ -233,8 +233,8 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .service(fetch_entries_handler)
-            .service(fetch_entries_handler_mock)
+            .service(fetch_plants_handler)
+            .service(fetch_plants_handler_mock)
     })
     .bind("0.0.0.0:8080")?
     .run()
