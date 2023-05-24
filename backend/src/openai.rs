@@ -3,7 +3,6 @@ use futures::{stream::StreamExt, TryStreamExt};
 use futures::Stream;
 use reqwest::StatusCode;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex};
 use tokio::io::AsyncBufReadExt;
 use tokio_util::io::StreamReader;
 
@@ -42,6 +41,52 @@ pub struct NativePlantEntry {
     pub image_url: Option<String>,
 }
 
+struct NativePlantEntryBuilder {
+    common: Option<String>,
+    scientific: Option<String>,
+    bloom: Option<String>,
+    description: Option<String>,
+}
+
+impl NativePlantEntryBuilder {
+    fn new() -> Self {
+        NativePlantEntryBuilder {
+            common: None,
+            scientific: None,
+            bloom: None,
+            description: None,
+        }
+    }
+
+    fn is_full(&self) -> bool {
+        self.common.is_some()
+            && self.scientific.is_some()
+            && self.bloom.is_some()
+            && self.description.is_some()
+    }
+
+    fn clear(&mut self) {
+        self.common = None;
+        self.scientific = None;
+        self.bloom = None;
+        self.description = None;
+    }
+
+    fn build(&self) -> NativePlantEntry {
+        if !self.is_full() {
+            panic!("Building NativePlantEntry without full builder");
+        }
+
+        NativePlantEntry {
+            common: self.common.clone().unwrap(),
+            scientific: self.scientific.clone().unwrap(),
+            bloom: self.bloom.clone().unwrap(),
+            description: self.description.clone().unwrap(),
+            image_url: None,
+        }
+    }
+}
+
 pub async fn stream_entries(
     api_key: &str,
     zip: &str,
@@ -70,6 +115,60 @@ pub async fn stream_entries(
 
     let response = call_model_stream(payload, api_key).await;
 
+    let line_stream = response.scan(String::new(), |state, chunk| {
+        state.push_str(&chunk);
+        if let Some(pos) = state.find('\n') {
+            // Take from start of line to end of line
+            let line = state[..pos].to_owned();
+
+            // Remove any of the returned line from state
+            state.replace_range(..pos + 1, "");
+            futures::future::ready(Some(Some(line)))
+        } else {
+            futures::future::ready(Some(None))
+        }
+    });
+
+    let plant_stream = line_stream.scan(NativePlantEntryBuilder::new(), |builder, line| {
+        if line.is_none() {
+            return futures::future::ready(Some(None));
+        }
+
+        let line = line.unwrap();
+        if !line.contains(':') {
+            return futures::future::ready(Some(None));
+        }
+
+        // Since we checked existence of ":", we know there will be at least two entries
+        // and these unwraps will not panic
+        let split: Vec<&str> = line.split(':').collect();
+        let key = split.first().unwrap().trim();
+        let value = Some(String::from(split.get(1).unwrap().trim()));
+
+        // Store labeled values in the builder
+        match key {
+            "scientific" => builder.scientific = value,
+            "common" => builder.common = value,
+            "bloom" => builder.bloom = value,
+            "description" => builder.description = value,
+            _ => return futures::future::ready(Some(None)),
+        }
+
+        // Once the builder is full, emit a built NativePlantEntry
+        if builder.is_full() {
+            let future = futures::future::ready(Some(Some(builder.build())));
+            builder.clear();
+
+            return future;
+        }
+
+        futures::future::ready(Some(None))
+    });
+
+    // plant_stream will have None's in it from lines that did not emit an entry, remove them.
+    plant_stream.filter_map(|plant| async { plant })
+
+    /*
     let accumulated = Arc::new(Mutex::new(String::new()));
     let obj_start = Arc::new(Mutex::new(None));
 
@@ -109,34 +208,37 @@ pub async fn stream_entries(
             created_plant
         }
     })
+    */
 }
 
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
     format!(
         r#"You are a knowledgeable gardener living near zip code {}.
----
-First, choose native plants to plant in your garden.
-Next, filter to plants that will thrive in {}.
-Next, filter to plants that will thrive in {}.
-Next, filter to plants that support caterpillars and pollinators.
 
-Finally, choose the top ten to plant in your garden.
----
+Choose ten plants for your garden which are NATIVE near zip code {} and will THRIVE in {} and {}.  
+Prioritize plants which support pollinators.
+
 No prose.  Your entire response will be formatted like:
-```
-[
-  {{
-    "common": "common name",
-    "scientific": "scientific name",
-    "bloom": "season of bloom",
-    "description": "Energetically describe the wildlife it supports."
-  }}
-]
-```"#,
-        zip, shade, moisture
+
+scientific: scientific name
+common: common name
+bloom: season of bloom
+description: Energetically describe the wildlife this plant supports
+
+scientific: scientific name
+common: common name
+bloom: season of bloom
+description: Energetically describe the wildlife this plant supports
+"#,
+        zip,
+        zip,
+        shade.to_uppercase(),
+        moisture.to_uppercase()
     )
 }
 
+// Returns a stream of short strings from openai
+// If openai as trying return "foo bar baz", one chunk could be "foo b"
 async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,

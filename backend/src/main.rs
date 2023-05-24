@@ -65,6 +65,7 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
 
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
 
+    // The real work is done in a new thread so the connection to the front end can open.
     actix_web::rt::spawn(async move {
         let mut plants = get_plant_stream(payload).await;
         while let Some(plant) = plants.next().await {
@@ -195,28 +196,28 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlantEntry> {
             common: "Swamp Milkweed".to_string(),
             scientific: "Asclepias incarnata".to_string(),
             bloom: "Summer".to_string(),
-            description: "This plant is a host for the Monarch butterfly caterpillar and supports many other pollinators.".to_string(),
+            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/3126/3147197425_4e9ac1e2ca_q.jpg".to_string()),
         },
         NativePlantEntry {
             common: "Joe Pye Weed".to_string(),
             scientific: "Eutrochium purpureum".to_string(),
             bloom: "Late summer to fall".to_string(),
-            description: "This plant is a favorite of many pollinators, including bees and butterflies.".to_string(),
+            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/3862/15215414361_9f659f6f52_q.jpg".to_string()),
         },
         NativePlantEntry {
             common: "Blue Flag Iris".to_string(),
             scientific: "Iris versicolor".to_string(),
             bloom: "Late spring to early summer".to_string(),
-            description: "This plant supports the Baltimore Checkerspot butterfly caterpillar and is a favorite of many pollinators.".to_string(),
+            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/65535/50623901946_1c37f69ccd_q.jpg".to_string()),
         },
         NativePlantEntry {
             common: "Cardinal Flower".to_string(),
             scientific: "Lobelia cardinalis".to_string(),
             bloom: "Late summer to early fall".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports many other pollinators.".to_string(),
+            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
             image_url: Some("https://live.staticflickr.com/6174/6167236354_c7e9771f00_q.jpg".to_string()),
         }
     ].into_iter()
