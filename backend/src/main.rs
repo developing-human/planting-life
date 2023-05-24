@@ -2,10 +2,12 @@ use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::executor::block_on;
-use futures::stream::StreamExt;
+use futures::stream::{Stream, StreamExt};
 use openai::NativePlantEntry;
 use serde::{self, Deserialize, Serialize};
+use std::boxed::Box;
 use std::env;
+use std::pin::Pin;
 use std::thread;
 use std::time;
 
@@ -63,51 +65,65 @@ async fn fetch_entries_handler(web::Query(payload): web::Query<FetchRequest>) ->
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
 
     actix_web::rt::spawn(async move {
-        let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-        let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
+        let mut plants = get_plant_stream(payload).await;
+        while let Some(plant) = plants.next().await {
+            send_plant(&sender, &plant).await;
 
-        let entries = openai::stream_entries(
-            &openai_api_key,
-            &payload.zip,
-            payload.shade.description(),
-            payload.moisture.description(),
-        )
-        .await;
-
-        // I don't yet understand why this is needed.  But it tells the entries
-        // not to move in memory during async work.
-        let mut entries = Box::pin(entries);
-
-        while let Some(entry) = entries.next().await {
-            //for entry in entries {
-            let entry_json = serde_json::to_string(&entry).expect("plant should serialize");
-
-            sender
-                .send(sse::Data::new(entry_json))
-                .await
-                .expect("plant should send");
-
-            if let Some(image) =
-                flickr::get_image(&entry.scientific, &entry.common, &flickr_api_key).await
-            {
-                let image_json = serde_json::to_string(&image).expect("image should serialize");
-                sender
-                    .send(sse::Data::new(image_json).event("image"))
-                    .await
-                    .expect("image should send");
-            }
+            fetch_and_send_image(&sender, &plant).await;
         }
 
-        sender
-            .send(sse::Data::new("").event("close"))
-            .await
-            .expect("stream should close");
+        close_stream(&sender).await;
     });
 
     stream
         .with_keep_alive(time::Duration::from_secs(1))
         .customize()
         .insert_header(("X-Accel-Buffering", "no"))
+}
+
+async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = NativePlantEntry>>> {
+    let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+
+    let entries = openai::stream_entries(
+        &openai_api_key,
+        &payload.zip,
+        payload.shade.description(),
+        payload.moisture.description(),
+    )
+    .await;
+
+    // I don't yet understand why this is needed.  But it tells the entries
+    // not to move in memory during async work.
+    Box::pin(entries)
+}
+
+async fn send_plant(sender: &Sender, plant: &NativePlantEntry) {
+    let json = serde_json::to_string(&plant).expect("plant should serialize");
+
+    sender
+        .send(sse::Data::new(json))
+        .await
+        .expect("plant should send");
+}
+
+async fn fetch_and_send_image(sender: &Sender, plant: &NativePlantEntry) {
+    let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
+
+    if let Some(image) = flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key).await
+    {
+        let image_json = serde_json::to_string(&image).expect("image should serialize");
+        sender
+            .send(sse::Data::new(image_json).event("image"))
+            .await
+            .expect("image should send");
+    }
+}
+
+async fn close_stream(sender: &Sender) {
+    sender
+        .send(sse::Data::new("").event("close"))
+        .await
+        .expect("stream should close");
 }
 
 #[get("/plants_mock")]
