@@ -174,7 +174,7 @@ const Plants = () => {
         <tbody>
           {plants.map((plant, index) => (
             <tr>
-              <td>
+              <td className="imageCell">
                 <a href={plant.original_url} target="_blank" rel="noreferrer">
                   <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
                 </a>

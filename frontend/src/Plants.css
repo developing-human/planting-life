@@ -10,6 +10,9 @@ table td {
   padding: 8px;
   text-align: left;
 }
+table td.imageCell {
+  width: 166px;
+}
 
 table th {
   background-color: aliceblue;
