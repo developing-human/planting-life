@@ -68,14 +68,32 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
     // The real work is done in a new thread so the connection to the front end can open.
     actix_web::rt::spawn(async move {
         let mut plants = get_plant_stream(payload).await;
+        let mut handles = vec![];
         while let Some(plant) = plants.next().await {
-            // Concurrently send the plant to the front end while handling the image
-            join!(
-                send_plant(&sender, &plant),
-                fetch_and_send_image(&sender, &plant)
-            );
+            // Make a clone, so the inner and outer tasks can each own a sender
+            let sender_clone = sender.clone();
+
+            // This inner task is started so the next entry can start processing before
+            // the previous one finishes.
+            let handle = actix_web::rt::spawn(async move {
+                // Concurrently send the plant to the front end while handling the image
+                join!(
+                    send_plant(&sender_clone, &plant),
+                    fetch_and_send_image(&sender_clone, &plant),
+                    fetch_and_send_description(&sender_clone, &plant),
+                );
+            });
+
+            handles.push(handle);
         }
 
+        // Wait for all inner tasks to finish before closing the stream
+        // This lets any outstanding data be written back to the client
+        for handle in handles {
+            handle.await.unwrap_or_default();
+        }
+
+        //TODO: How can I wait to close this until the last thread is finished?
         close_stream(&sender).await;
     });
 
@@ -121,6 +139,19 @@ async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
             .await
             .expect("image should send");
     }
+}
+
+async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let description = openai::fetch_description(&api_key, &plant.scientific).await;
+    let payload = format!(
+        r#"{{"scientificName": "{}", "description": "{}"}}"#,
+        plant.scientific, description
+    );
+    sender
+        .send(sse::Data::new(payload).event("description"))
+        .await
+        .expect("image should send");
 }
 
 async fn close_stream(sender: &Sender) {
@@ -189,35 +220,35 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlant> {
             common: "Wild Columbine".to_string(),
             scientific: "Aquilegia canadensis".to_string(),
             bloom: "Spring to early summer".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
+            description: Some("This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string()),
             image_url: Some("https://live.staticflickr.com/5031/7238526710_80bf103077_q.jpg".to_string()),
         },
         NativePlant {
             common: "Swamp Milkweed".to_string(),
             scientific: "Asclepias incarnata".to_string(),
             bloom: "Summer".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
+            description: Some("This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string()),
             image_url: Some("https://live.staticflickr.com/3126/3147197425_4e9ac1e2ca_q.jpg".to_string()),
         },
         NativePlant {
             common: "Joe Pye Weed".to_string(),
             scientific: "Eutrochium purpureum".to_string(),
             bloom: "Late summer to fall".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
+            description: Some("This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string()),
             image_url: Some("https://live.staticflickr.com/3862/15215414361_9f659f6f52_q.jpg".to_string()),
         },
         NativePlant {
             common: "Blue Flag Iris".to_string(),
             scientific: "Iris versicolor".to_string(),
             bloom: "Late spring to early summer".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
+            description: Some("This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string()),
             image_url: Some("https://live.staticflickr.com/65535/50623901946_1c37f69ccd_q.jpg".to_string()),
         },
         NativePlant {
             common: "Cardinal Flower".to_string(),
             scientific: "Lobelia cardinalis".to_string(),
             bloom: "Late summer to early fall".to_string(),
-            description: "This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string(),
+            description: Some("This plant is a favorite of hummingbirds and supports the Columbine Duskywing butterfly caterpillar.".to_string()),
             image_url: Some("https://live.staticflickr.com/6174/6167236354_c7e9771f00_q.jpg".to_string()),
         }
     ].into_iter()

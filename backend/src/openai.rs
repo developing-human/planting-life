@@ -37,7 +37,7 @@ pub struct NativePlant {
     pub common: String,
     pub scientific: String,
     pub bloom: String,
-    pub description: String,
+    pub description: Option<String>,
     pub image_url: Option<String>,
 }
 
@@ -45,7 +45,6 @@ struct NativePlantBuilder {
     common: Option<String>,
     scientific: Option<String>,
     bloom: Option<String>,
-    description: Option<String>,
 }
 
 impl NativePlantBuilder {
@@ -54,22 +53,17 @@ impl NativePlantBuilder {
             common: None,
             scientific: None,
             bloom: None,
-            description: None,
         }
     }
 
     fn is_full(&self) -> bool {
-        self.common.is_some()
-            && self.scientific.is_some()
-            && self.bloom.is_some()
-            && self.description.is_some()
+        self.common.is_some() && self.scientific.is_some() && self.bloom.is_some()
     }
 
     fn clear(&mut self) {
         self.common = None;
         self.scientific = None;
         self.bloom = None;
-        self.description = None;
     }
 
     fn build(&self) -> NativePlant {
@@ -81,14 +75,13 @@ impl NativePlantBuilder {
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
             bloom: self.bloom.clone().unwrap(),
-            description: self.description.clone().unwrap(),
+            description: None,
             image_url: None,
         }
     }
 }
 
 // Returns a Stream of NativePlantEntries after calling openai.
-// TODO: Move description out of this, to a separate request.
 pub async fn stream_plants(
     api_key: &str,
     zip: &str,
@@ -96,7 +89,6 @@ pub async fn stream_plants(
     moisture: &str,
 ) -> impl Stream<Item = NativePlant> {
     let prompt = build_prompt(zip, shade, moisture);
-    println!("Sending prompt: {}", prompt);
 
     let payload = ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
@@ -110,7 +102,7 @@ pub async fn stream_plants(
                 content: Some(prompt),
             },
         ],
-        max_tokens: 3000,
+        max_tokens: 500,
         stream: true,
         temperature: 0.5,
     };
@@ -152,7 +144,6 @@ pub async fn stream_plants(
             "scientific" => builder.scientific = value,
             "common" => builder.common = value,
             "bloom" => builder.bloom = value,
-            "description" => builder.description = value,
             _ => return futures::future::ready(Some(None)),
         }
 
@@ -171,6 +162,36 @@ pub async fn stream_plants(
     plant_stream.filter_map(|plant| async { plant })
 }
 
+pub async fn fetch_description(api_key: &str, scientific_name: &str) -> String {
+    let prompt = format!(
+        "Describe the specific wildlife {} supports in 25-35 words by completing this sentence: 
+         Supports ...",
+        scientific_name
+    );
+
+    let payload = ChatCompletionRequest {
+        model: String::from("gpt-3.5-turbo"),
+        messages: vec![
+            ChatCompletionMessage {
+                role: Some(String::from("system")),
+                content: Some(String::from("You are a helpful assistant")),
+            },
+            ChatCompletionMessage {
+                role: Some(String::from("user")),
+                content: Some(prompt),
+            },
+        ],
+        max_tokens: 200,
+        stream: true,
+        temperature: 0.5,
+    };
+
+    let response = call_model_stream(payload, api_key).await;
+
+    // Collect all the chunks into a single string, which is the full description
+    response.collect::<String>().await
+}
+
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
     format!(
         r#"You are a knowledgeable gardener living near zip code {}.
@@ -180,15 +201,13 @@ Prioritize plants which support pollinators.
 
 No prose.  Your entire response will be formatted like:
 
-scientific: scientific name
-common: common name
+scientific: Scientific Name
+common: Common Name
 bloom: season of bloom
-description: Energetically describe the wildlife this plant supports
 
-scientific: scientific name
-common: common name
+scientific: Scientific Name
+common: Common Name
 bloom: season of bloom
-description: Energetically describe the wildlife this plant supports
 "#,
         zip,
         zip,

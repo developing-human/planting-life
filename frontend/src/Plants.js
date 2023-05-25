@@ -96,6 +96,28 @@ const Plants = () => {
       });
     });
 
+    sse.addEventListener("description", (event) => {
+      // get JSON image data
+      const payload = JSON.parse(event.data);
+      setPlants((prevPlants) => {
+        const newPlants = prevPlants.map((plant) => {
+          if (plant.scientific === payload.scientificName) {
+            const updatedPlant = {
+              ...plant,
+              description: payload.description
+            };
+
+            return updatedPlant;
+          }
+
+          return plant;
+        });
+
+
+        return newPlants;
+      });
+    });
+
     return () => {
       sse.close();
     };
