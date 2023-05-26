@@ -93,7 +93,6 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
             handle.await.unwrap_or_default();
         }
 
-        //TODO: How can I wait to close this until the last thread is finished?
         close_stream(&sender).await;
     });
 
@@ -143,15 +142,19 @@ async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
 
 async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let description = openai::fetch_description(&api_key, &plant.scientific).await;
-    let payload = format!(
-        r#"{{"scientificName": "{}", "description": "{}"}}"#,
-        plant.scientific, description
-    );
-    sender
-        .send(sse::Data::new(payload).event("description"))
-        .await
-        .expect("image should send");
+    let description_stream = openai::fetch_description(&api_key, &plant.scientific).await;
+
+    let mut description_stream = Box::pin(description_stream);
+    while let Some(description_delta) = description_stream.next().await {
+        let payload = format!(
+            r#"{{"scientificName": "{}", "descriptionDelta": "{}"}}"#,
+            plant.scientific, description_delta
+        );
+        sender
+            .send(sse::Data::new(payload).event("descriptionDelta"))
+            .await
+            .expect("description delta should send");
+    }
 }
 
 async fn close_stream(sender: &Sender) {

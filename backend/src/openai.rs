@@ -162,7 +162,7 @@ pub async fn stream_plants(
     plant_stream.filter_map(|plant| async { plant })
 }
 
-pub async fn fetch_description(api_key: &str, scientific_name: &str) -> String {
+pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Stream<Item = String> {
     let prompt = format!(
         "Describe the specific wildlife {} supports in 25-35 words by completing this sentence: 
          Supports ...",
@@ -186,10 +186,7 @@ pub async fn fetch_description(api_key: &str, scientific_name: &str) -> String {
         temperature: 0.5,
     };
 
-    let response = call_model_stream(payload, api_key).await;
-
-    // Collect all the chunks into a single string, which is the full description
-    response.collect::<String>().await
+    call_model_stream(payload, api_key).await
 }
 
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {

@@ -49,7 +49,7 @@ const Plants = () => {
 
     sse.onmessage = (e) => {
       let plant = JSON.parse(e.data);
-      setPlants((prevPlants) => [...prevPlants, plant]);
+      setPlants((prevPlants) => [...prevPlants, plant] );
     };
 
     sse.addEventListener("close", (event) => {
@@ -96,15 +96,16 @@ const Plants = () => {
       });
     });
 
-    sse.addEventListener("description", (event) => {
+    sse.addEventListener("descriptionDelta", (event) => {
       // get JSON image data
       const payload = JSON.parse(event.data);
       setPlants((prevPlants) => {
         const newPlants = prevPlants.map((plant) => {
           if (plant.scientific === payload.scientificName) {
+            const delta = payload.descriptionDelta;
             const updatedPlant = {
               ...plant,
-              description: payload.description
+              description: plant.description ? plant.description + delta : delta
             };
 
             return updatedPlant;
@@ -173,31 +174,32 @@ const Plants = () => {
       <table id="returned-plants">
         <tbody>
           {plants.map((plant, index) => (
-            <tr>
-              <td className="imageCell">
-                <a href={plant.original_url} target="_blank" rel="noreferrer">
-                  <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
-                </a>
-                {
-                  plant.author ? (
-                    <figcaption>
-                      <AttributionPopover
-                        caption={`© Photo by ${plant.author}`}
-                        title={plant.title}
-                        author={plant.author}
-                        license={plant.license}
-                        link={plant.licenseUrl}/></figcaption>
-                  ) : null
-                }
-              </td>
-              <td>
-                <b>{plant.common}</b>
-                <i>{plant.scientific}</i>
-                <br /> <br />
-                Blooms in {plant.bloom.toLowerCase()}. {plant.description}
-              </td>
-            </tr>
-          ))}
+              <tr>
+                <td className="imageCell">
+                  <a href={plant.original_url} target="_blank" rel="noreferrer">
+                    <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
+                  </a>
+                  {
+                    plant.author ? (
+                      <figcaption>
+                        <AttributionPopover
+                          caption={`© Photo by ${plant.author}`}
+                          title={plant.title}
+                          author={plant.author}
+                          license={plant.license}
+                          link={plant.licenseUrl}/></figcaption>
+                    ) : null
+                  }
+                </td>
+                <td>
+                  <b>{plant.common}</b>
+                  <i>{plant.scientific}</i>
+                  <br /> <br />
+                  Blooms in {plant.bloom.toLowerCase()}. {plant.description}
+                </td>
+              </tr>
+              )
+          )}
         </tbody>
       </table>
       {loading ? (        
