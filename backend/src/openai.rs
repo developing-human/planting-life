@@ -107,7 +107,7 @@ pub async fn stream_plants(
         temperature: 0.5,
     };
 
-    let response = call_model_stream(payload, api_key).await;
+    let response = call_model_stream(payload, api_key, true).await;
 
     let line_stream = response.scan(String::new(), |state, chunk| {
         state.push_str(&chunk);
@@ -186,7 +186,7 @@ pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Str
         temperature: 0.5,
     };
 
-    call_model_stream(payload, api_key).await
+    call_model_stream(payload, api_key, false).await
 }
 
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
@@ -218,6 +218,7 @@ bloom: season of bloom
 async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
+    trailing_newline: bool,
 ) -> impl Stream<Item = String> {
     let client = reqwest::Client::new();
     let response = client
@@ -252,11 +253,13 @@ async fn call_model_stream(
     let lines_stream = tokio_stream::wrappers::LinesStream::new(lines);
 
     lines_stream
-        .filter_map(|line_result| async move {
+        .filter_map(move |line_result| async move {
             match line_result {
                 Ok(line) => {
                     if line.starts_with("data: {") {
                         Some(line)
+                    } else if line == "data: [DONE]" && trailing_newline {
+                        Some(r#"data: {"choices":[{"delta":{"content":"\n"}}]}"#.to_string())
                     } else {
                         None
                     }
@@ -268,7 +271,6 @@ async fn call_model_stream(
         .map(|line| String::from(&line[6..line.len()]))
         .map(|json| {
             let parsed: serde_json::Result<ChatCompletionResponse> = serde_json::from_str(&json);
-
             parsed.expect("Error parsing inner response")
         })
         .filter_map(|parsed_response| async move {

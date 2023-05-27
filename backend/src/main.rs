@@ -150,6 +150,7 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
             r#"{{"scientificName": "{}", "descriptionDelta": "{}"}}"#,
             plant.scientific, description_delta
         );
+
         sender
             .send(sse::Data::new(payload).event("descriptionDelta"))
             .await
