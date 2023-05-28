@@ -1,6 +1,9 @@
 use futures::join;
 use reqwest::StatusCode;
+use reqwest_middleware::ClientBuilder;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ImageSearchResponse {
@@ -126,9 +129,17 @@ pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) 
 }
 
 async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse> {
-    let client = reqwest::Client::new();
+    let retry_policy = ExponentialBackoff::builder()
+        .retry_bounds(Duration::from_millis(100), Duration::from_millis(1_000))
+        .build_with_max_retries(4);
+
+    let client = ClientBuilder::new(reqwest::Client::new())
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
+
     let response = client
         .get("https://api.flickr.com/services/rest")
+        .timeout(Duration::from_millis(2_000)) // Typically 350-500ms, sometimes ~1s
         .query(&[
             ("method", "flickr.photos.search"),
             ("api_key", api_key),

@@ -2,7 +2,10 @@ use futures::{stream::StreamExt, TryStreamExt};
 
 use futures::Stream;
 use reqwest::StatusCode;
+use reqwest_middleware::ClientBuilder;
+use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 use tokio::io::AsyncBufReadExt;
 use tokio_util::io::StreamReader;
 
@@ -220,10 +223,17 @@ async fn call_model_stream(
     api_key: &str,
     trailing_newline: bool,
 ) -> impl Stream<Item = String> {
-    let client = reqwest::Client::new();
+    let retry_policy = ExponentialBackoff::builder()
+        .retry_bounds(Duration::from_millis(100), Duration::from_millis(1_000))
+        .build_with_max_retries(4);
+    let client = ClientBuilder::new(reqwest::Client::new())
+        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+        .build();
+
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
+        .timeout(Duration::from_millis(1_000)) // typical is 400-800ms
         .json(&payload)
         .send()
         .await
