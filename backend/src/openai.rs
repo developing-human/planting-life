@@ -192,30 +192,6 @@ pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Str
     call_model_stream(payload, api_key, false).await
 }
 
-// This prompt is doing fairly well, but trying a new approach above.
-fn build_promptx(zip: &str, shade: &str, moisture: &str) -> String {
-    format!(
-        r#"As a gardening expert, you're helping me choose ten plants for my garden.
-Let's think step by step:
-First, consider plants native near zip code {}
-Second, filter your list to those which {}
-Third, filter your list to those which {}
-Finally, select ten remaining plants which best support local wildlife
-
-No prose.  Your entire response will be formatted like:
-
-scientific: Scientific Name
-common: Common Name
-bloom: season of bloom
-
-scientific: Scientific Name
-common: Common Name
-bloom: season of bloom
-"#,
-        zip, shade, moisture,
-    )
-}
-
 // This is doing fairly well, but trying another approach above
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
     format!(
