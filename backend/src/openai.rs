@@ -177,7 +177,7 @@ pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Str
         messages: vec![
             ChatCompletionMessage {
                 role: Some(String::from("system")),
-                content: Some(String::from("You are a helpful assistant")),
+                content: Some(String::from("You are a knowledgeable gardener")),
             },
             ChatCompletionMessage {
                 role: Some(String::from("user")),
@@ -186,18 +186,43 @@ pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Str
         ],
         max_tokens: 200,
         stream: true,
-        temperature: 0.5,
+        temperature: 0.3,
     };
 
     call_model_stream(payload, api_key, false).await
 }
 
+// This prompt is doing fairly well, but trying a new approach above.
+fn build_promptx(zip: &str, shade: &str, moisture: &str) -> String {
+    format!(
+        r#"As a gardening expert, you're helping me choose ten plants for my garden.
+Let's think step by step:
+First, consider plants native near zip code {}
+Second, filter your list to those which {}
+Third, filter your list to those which {}
+Finally, select ten remaining plants which best support local wildlife
+
+No prose.  Your entire response will be formatted like:
+
+scientific: Scientific Name
+common: Common Name
+bloom: season of bloom
+
+scientific: Scientific Name
+common: Common Name
+bloom: season of bloom
+"#,
+        zip, shade, moisture,
+    )
+}
+
+// This is doing fairly well, but trying another approach above
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
     format!(
-        r#"You are a knowledgeable gardener living near zip code {}.
-
-Choose ten plants for your garden which are NATIVE near zip code {} and will THRIVE in {} and {}.  
-Prioritize plants which support pollinators.
+        r#"Choose ten plants for a new gardener's garden which are NATIVE near zip code {}.
+Their garden is in {} and {}.
+Only suggest plants which do well in {} and {}.
+Do NOT suggest plants which do better in other conditions.
 
 No prose.  Your entire response will be formatted like:
 
@@ -210,9 +235,10 @@ common: Common Name
 bloom: season of bloom
 "#,
         zip,
-        zip,
         shade.to_uppercase(),
-        moisture.to_uppercase()
+        moisture.to_uppercase(),
+        shade.to_uppercase(),
+        moisture.to_uppercase(),
     )
 }
 
