@@ -63,11 +63,20 @@ impl Moisture {
 async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
     println!("Received request: {:#?}", payload);
 
+    //TODO: 10 might be small now that I'm streaming descriptions back.
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
 
     // The real work is done in a new thread so the connection to the front end can open.
     actix_web::rt::spawn(async move {
-        let mut plants = get_plant_stream(payload).await;
+        let mut plants = match get_plant_stream(payload).await {
+            Ok(plants) => plants,
+            Err(err) => {
+                eprintln!("Failed to get plant stream {err}");
+                send_error(&sender).await;
+                return;
+            }
+        };
+
         let mut handles = vec![];
         while let Some(plant) = plants.next().await {
             // Make a clone, so the inner and outer tasks can each own a sender
@@ -102,7 +111,9 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
         .insert_header(("X-Accel-Buffering", "no"))
 }
 
-async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = NativePlant>>> {
+async fn get_plant_stream(
+    payload: FetchRequest,
+) -> anyhow::Result<Pin<Box<impl Stream<Item = NativePlant>>>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
     let plants = openai::stream_plants(
@@ -111,11 +122,11 @@ async fn get_plant_stream(payload: FetchRequest) -> Pin<Box<impl Stream<Item = N
         payload.shade.description(),
         payload.moisture.description(),
     )
-    .await;
+    .await?;
 
     // I don't yet understand why this is needed.  But it tells the plants
     // not to move in memory during async work.
-    Box::pin(plants)
+    Ok(Box::pin(plants))
 }
 
 async fn send_plant(sender: &Sender, plant: &NativePlant) {
@@ -125,6 +136,14 @@ async fn send_plant(sender: &Sender, plant: &NativePlant) {
         .send(sse::Data::new(json))
         .await
         .expect("plant should send");
+}
+
+async fn send_error(sender: &Sender) {
+    println!("sending error");
+    sender
+        .send(sse::Data::new("").event("error"))
+        .await
+        .expect("error should send");
 }
 
 async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
@@ -142,7 +161,13 @@ async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
 
 async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let description_stream = openai::fetch_description(&api_key, &plant.scientific).await;
+    let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {
+        Ok(stream) => stream,
+        Err(_) => {
+            eprintln!("Failed to fetch description");
+            return;
+        }
+    };
 
     let mut description_stream = Box::pin(description_stream);
     while let Some(description_delta) = description_stream.next().await {

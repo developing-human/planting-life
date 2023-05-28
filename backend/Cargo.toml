@@ -17,6 +17,7 @@ futures = "0.3.28"
 tokio = "1.18"
 reqwest-retry = "0.2.2"
 reqwest-middleware = "0.2.1"
+anyhow = "1.0.71"
 
 # for returning server sent events
 actix-web-lab = "0.19.1"

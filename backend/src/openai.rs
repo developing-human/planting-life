@@ -1,5 +1,6 @@
 use futures::{stream::StreamExt, TryStreamExt};
 
+use anyhow::Context;
 use futures::Stream;
 use reqwest::StatusCode;
 use reqwest_middleware::ClientBuilder;
@@ -90,7 +91,7 @@ pub async fn stream_plants(
     zip: &str,
     shade: &str,
     moisture: &str,
-) -> impl Stream<Item = NativePlant> {
+) -> anyhow::Result<impl Stream<Item = NativePlant>> {
     let prompt = build_prompt(zip, shade, moisture);
 
     let payload = ChatCompletionRequest {
@@ -110,7 +111,7 @@ pub async fn stream_plants(
         temperature: 0.5,
     };
 
-    let response = call_model_stream(payload, api_key, true).await;
+    let response = call_model_stream(payload, api_key, true).await?;
 
     let line_stream = response.scan(String::new(), |state, chunk| {
         state.push_str(&chunk);
@@ -162,10 +163,13 @@ pub async fn stream_plants(
     });
 
     // plant_stream will have None's in it from lines that did not emit an entry, remove them.
-    plant_stream.filter_map(|plant| async { plant })
+    Ok(plant_stream.filter_map(|plant| async { plant }))
 }
 
-pub async fn fetch_description(api_key: &str, scientific_name: &str) -> impl Stream<Item = String> {
+pub async fn fetch_description(
+    api_key: &str,
+    scientific_name: &str,
+) -> anyhow::Result<impl Stream<Item = String>> {
     let prompt = format!(
         "Describe the specific wildlife {} supports in 25-35 words by completing this sentence: 
          Supports ...",
@@ -224,7 +228,7 @@ async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
     trailing_newline: bool,
-) -> impl Stream<Item = String> {
+) -> anyhow::Result<impl Stream<Item = String>> {
     let retry_policy = ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(100), Duration::from_millis(1_000))
         .build_with_max_retries(4);
@@ -239,32 +243,29 @@ async fn call_model_stream(
         .json(&payload)
         .send()
         .await
-        .expect("Error calling model");
+        .with_context(|| "Failed to call open ai chat completion endpoint")?;
 
     let status = response.status();
     if status != StatusCode::OK {
         let response_body = response
             .text()
             .await
-            .expect("Can't extract text from error body");
+            .with_context(|| "Failed to extract text from openai error body")?;
 
-        //TODO: Return a Result<Stream>
-        panic!("Error from model endpoint: {response_body}");
+        return Err(anyhow::anyhow!("Error calling openai: {response_body}"));
     }
 
     let body = response
         .bytes_stream()
         .map_err(|err| -> std::io::Error { std::io::Error::new(std::io::ErrorKind::Other, err) });
+
+    // Convert the stream of bytes into a stream of lines
     let async_read = StreamReader::new(body);
-
     let reader = tokio::io::BufReader::new(async_read);
-
     let lines = reader.lines();
-
-    // LinesStream was the magic!
     let lines_stream = tokio_stream::wrappers::LinesStream::new(lines);
 
-    lines_stream
+    Ok(lines_stream
         .filter_map(move |line_result| async move {
             match line_result {
                 Ok(line) => {
@@ -295,5 +296,5 @@ async fn call_model_stream(
             }
 
             None
-        })
+        }))
 }

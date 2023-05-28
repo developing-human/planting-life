@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 // import material ui for zip code input
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
+import Alert from "@mui/material/Alert";
 
 // import reusable dropdown select & attribution components
 import DropdownSelect from "./DropdownSelect";
@@ -25,6 +26,7 @@ const Plants = () => {
   const [shade, setShade] = useState(defaultShade);
   const [moisture, setMoisture] = useState(defaultMoisture);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -55,6 +57,12 @@ const Plants = () => {
     sse.addEventListener("close", (event) => {
         setLoading(false);
         sse.close();
+    });
+
+    sse.addEventListener("error", (event) => {
+      setLoading(false);
+      setError("Well that's embarassing... please try again.");
+      sse.close();
     });
 
     sse.addEventListener("image", (event) => {
@@ -128,6 +136,7 @@ const Plants = () => {
     event.preventDefault();
     setPlants([]);
     setLoading(true);
+    setError(null);
     setFormData({
       zip: zip,
       shade: shade,
@@ -171,6 +180,11 @@ const Plants = () => {
           </Grid>
         </Grid>
       </form>
+      {
+        error
+        ? (<Alert severity="error">{error}</Alert>)
+        : null
+      }
       <table id="returned-plants">
         <tbody>
           {plants.map((plant, index) => (

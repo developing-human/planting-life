@@ -155,14 +155,26 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
             ("license", "1,2,3,4,5,6,7,8,9,10"),
         ])
         .send()
-        .await
-        .expect("Error fetching image");
+        .await;
+
+    let response = match response {
+        Ok(r) => r,
+        Err(_) => {
+            eprintln!("Error fetching response for: {search_term}");
+            return None;
+        }
+    };
 
     let status = response.status();
-    let response_body = response
-        .text()
-        .await
-        .expect("Error extracting body from response");
+    let response_body = response.text().await;
+
+    let response_body = match response_body {
+        Ok(rb) => rb,
+        Err(_) => {
+            eprintln!("Error fetching response body for: {search_term}");
+            return None;
+        }
+    };
 
     if status != StatusCode::OK {
         eprintln!("Error from model endpoint: {response_body}");
@@ -193,7 +205,14 @@ fn find_best_photo(
     // Search for the most viewed photo which has the scientific or common name in the title
     // In case none are found, also track the most viewed overall
     'photo: for photo in response.photos.photo.iter() {
-        let photo_views = photo.views.parse::<i32>().unwrap();
+        let photo_views = match photo.views.parse::<i32>() {
+            Ok(views) => views,
+            Err(_) => {
+                eprintln!("Could not parse {} as i32", photo.views);
+                continue;
+            }
+        };
+
         let title_lc = photo.title.to_lowercase();
         let description_lc = photo.description._content.to_lowercase();
 
