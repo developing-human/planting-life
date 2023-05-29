@@ -53,7 +53,7 @@ impl Moisture {
     fn description(&self) -> &str {
         match self {
             Moisture::Low => "dry soil",
-            Moisture::Medium => "moist soil",
+            Moisture::Medium => "moderately wet soil",
             Moisture::High => "wet soil",
         }
     }
@@ -72,7 +72,7 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
             Ok(plants) => plants,
             Err(err) => {
                 eprintln!("Failed to get plant stream {err}");
-                send_error(&sender).await;
+                send_event(&sender, "error", "").await;
                 return;
             }
         };
@@ -96,13 +96,15 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
             handles.push(handle);
         }
 
+        send_event(&sender, "allPlantsLoaded", "").await;
+
         // Wait for all inner tasks to finish before closing the stream
         // This lets any outstanding data be written back to the client
         for handle in handles {
             handle.await.unwrap_or_default();
         }
 
-        close_stream(&sender).await;
+        send_event(&sender, "close", "").await;
     });
 
     stream
@@ -132,18 +134,16 @@ async fn get_plant_stream(
 async fn send_plant(sender: &Sender, plant: &NativePlant) {
     let json = serde_json::to_string(&plant).expect("plant should serialize");
 
-    sender
-        .send(sse::Data::new(json))
-        .await
-        .expect("plant should send");
+    send_event(sender, "plant", &json).await;
 }
 
-async fn send_error(sender: &Sender) {
-    println!("sending error");
-    sender
-        .send(sse::Data::new("").event("error"))
-        .await
-        .expect("error should send");
+async fn send_event(sender: &Sender, event: &str, message: &str) {
+    let data = sse::Data::new(message).event(event);
+
+    match sender.send(data).await {
+        Ok(_) => {}
+        Err(_) => eprintln!("Error sending [{}] with message [{}]", event, message),
+    }
 }
 
 async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
@@ -152,10 +152,7 @@ async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) {
     if let Some(image) = flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key).await
     {
         let image_json = serde_json::to_string(&image).expect("image should serialize");
-        sender
-            .send(sse::Data::new(image_json).event("image"))
-            .await
-            .expect("image should send");
+        send_event(sender, "image", &image_json).await;
     }
 }
 
@@ -176,18 +173,8 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
             plant.scientific, description_delta
         );
 
-        sender
-            .send(sse::Data::new(payload).event("descriptionDelta"))
-            .await
-            .expect("description delta should send");
+        send_event(sender, "descriptionDelta", &payload).await;
     }
-}
-
-async fn close_stream(sender: &Sender) {
-    sender
-        .send(sse::Data::new("").event("close"))
-        .await
-        .expect("stream should close");
 }
 
 #[get("/plants_mock")]

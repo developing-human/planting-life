@@ -49,10 +49,16 @@ const Plants = () => {
       `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
     );
 
-    sse.onmessage = (e) => {
-      let plant = JSON.parse(e.data);
+    sse.addEventListener("plant", (event) => {
+      let plant = JSON.parse(event.data);
       setPlants((prevPlants) => [...prevPlants, plant] );
-    };
+    });
+
+    // Hides the loading animation when the last plant appears,
+    // rather than when all plants finish loading.
+    sse.addEventListener("allPlantsLoaded", (event) => {
+      setLoading(false);
+    });
 
     sse.addEventListener("close", (event) => {
         setLoading(false);
