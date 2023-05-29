@@ -7,7 +7,6 @@ import Alert from "@mui/material/Alert";
 
 // import components
 import DropdownSelect from "./DropdownSelect";
-import AttributionPopover from "./AttributionPopover";
 import PlantCard from "./PlantCard";
 
 import "./Plants.css";

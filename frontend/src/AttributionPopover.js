@@ -8,7 +8,7 @@ import "./AttributionPopover.css";
 
 function AttributionPopover({ caption, title, author, license, link }) {
   let captionUppercase = caption.toUpperCase();
-  let captionLink = captionUppercase.length > 20 ? captionUppercase.substring(0,20) + "..." : captionUppercase;
+  let captionLink = captionUppercase.length > 40 ? captionUppercase.substring(0,40) + "..." : captionUppercase;
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
