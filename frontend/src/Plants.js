@@ -186,43 +186,15 @@ const Plants = () => {
           </Grid>
         </Grid>
       </form>
+
       {error ? <Alert severity="error">{error}</Alert> : null}
+
       <section id="returned-plants">
         {plants.map((plant, index) => (
-          <PlantCard plant={plant} />
+          <PlantCard plant={plant} key={index}/>
         ))}
       </section>
-      {/* <table id="returned-plants">
-        <tbody>
-          {plants.map((plant, index) => (
-              <tr>
-                <td className="imageCell">
-                  <a href={plant.original_url} target="_blank" rel="noreferrer">
-                    <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
-                  </a>
-                  {
-                    plant.author ? (
-                      <figcaption>
-                        <AttributionPopover
-                          caption={`© Photo by ${plant.author}`}
-                          title={plant.title}
-                          author={plant.author}
-                          license={plant.license}
-                          link={plant.licenseUrl}/></figcaption>
-                    ) : null
-                  }
-                </td>
-                <td>
-                  <b>{plant.common}</b>
-                  <i>{plant.scientific}</i>
-                  <br /> <br />
-                  {plant.bloom ? "Blooms in " + plant.bloom.toLowerCase() + ". " : null}{plant.description}
-                </td>
-              </tr>
-              )
-          )}
-        </tbody>
-      </table> */}
+
       {loading ? (
         <div className="spinner">
           <img
