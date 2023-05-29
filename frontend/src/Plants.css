@@ -26,3 +26,13 @@ figcaption {
   margin: none;
   max-width: 150px;
 }
+
+#returned-plants {
+  margin-inline: auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
