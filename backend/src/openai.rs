@@ -40,7 +40,7 @@ struct ChatCompletionMessage {
 pub struct NativePlant {
     pub common: String,
     pub scientific: String,
-    pub bloom: String,
+    pub bloom: Option<String>,
     pub description: Option<String>,
     pub image_url: Option<String>,
 }
@@ -78,10 +78,24 @@ impl NativePlantBuilder {
         NativePlant {
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
-            bloom: self.bloom.clone().unwrap(),
+            bloom: NativePlantBuilder::sanitize_bloom(self.bloom.clone()),
             description: None,
             image_url: None,
         }
+    }
+
+    fn sanitize_bloom(bloom: Option<String>) -> Option<String> {
+        if let Some(bloom) = bloom {
+            for season in &["spring", "summer", "fall", "autumn", "winter"] {
+                // Only use the "bloom" if it contains a season name
+                // Sometimes we get values like "n/a" or "does not bloom"
+                if bloom.contains(season) {
+                    return Some(bloom);
+                }
+            }
+        }
+
+        None
     }
 }
 

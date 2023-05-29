@@ -215,7 +215,7 @@ const Plants = () => {
                   <b>{plant.common}</b>
                   <i>{plant.scientific}</i>
                   <br /> <br />
-                  Blooms in {plant.bloom.toLowerCase()}. {plant.description}
+                  {plant.bloom ? "Blooms in " + plant.bloom.toLowerCase() + ". " : null}{plant.description}
                 </td>
               </tr>
               )
