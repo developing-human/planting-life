@@ -238,13 +238,14 @@ bloom: season of bloom
 
 // Returns a stream of short strings from openai
 // If openai as trying return "foo bar baz", one chunk could be "foo b"
+#[tracing::instrument]
 async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
     trailing_newline: bool,
 ) -> anyhow::Result<impl Stream<Item = String>> {
     let retry_policy = ExponentialBackoff::builder()
-        .retry_bounds(Duration::from_millis(100), Duration::from_millis(1_000))
+        .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
         .build_with_max_retries(4);
     let client = ClientBuilder::new(reqwest::Client::new())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
@@ -253,7 +254,7 @@ async fn call_model_stream(
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
-        .timeout(Duration::from_millis(1_000)) // typical is 400-800ms
+        .timeout(Duration::from_millis(1_250)) // typical is 400-800ms
         .json(&payload)
         .send()
         .await

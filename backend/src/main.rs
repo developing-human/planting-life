@@ -11,6 +11,7 @@ use std::env;
 use std::pin::Pin;
 use std::thread;
 use std::time;
+use tracing::{info, warn};
 
 mod flickr;
 mod openai;
@@ -61,7 +62,7 @@ impl Moisture {
 
 #[get("/plants")]
 async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
-    println!("Received request: {:#?}", payload);
+    info!("{payload:?}");
 
     //TODO: 10 might be small now that I'm streaming descriptions back.
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
@@ -71,7 +72,7 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
         let mut plants = match get_plant_stream(payload).await {
             Ok(plants) => plants,
             Err(err) => {
-                eprintln!("Failed to get plant stream {err}");
+                warn!("Failed to get plant stream {err}");
                 send_event(&sender, "error", "").await;
                 return;
             }
@@ -142,7 +143,7 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
 
     match sender.send(data).await {
         Ok(_) => {}
-        Err(_) => eprintln!("Error sending [{}] with message [{}]", event, message),
+        Err(_) => warn!("Error sending [{}] with message [{}]", event, message),
     }
 }
 
@@ -161,7 +162,7 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
     let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {
         Ok(stream) => stream,
         Err(_) => {
-            eprintln!("Failed to fetch description");
+            warn!("Failed to fetch description");
             return;
         }
     };
@@ -181,7 +182,7 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
 async fn fetch_plants_handler_mock(
     web::Query(payload): web::Query<FetchRequest>,
 ) -> impl Responder {
-    println!("Received mock request: {:#?}", payload);
+    info!("Mock: {:?}", payload);
 
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(2);
 
@@ -272,6 +273,8 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlant> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    tracing_subscriber::fmt::init();
+
     HttpServer::new(|| {
         let cors = Cors::default()
             .allowed_origin("https://www.planting.life")

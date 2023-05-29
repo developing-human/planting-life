@@ -4,6 +4,7 @@ use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use tracing::warn;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ImageSearchResponse {
@@ -128,9 +129,10 @@ pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) 
     None // No image to show :(
 }
 
+#[tracing::instrument]
 async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse> {
     let retry_policy = ExponentialBackoff::builder()
-        .retry_bounds(Duration::from_millis(100), Duration::from_millis(1_000))
+        .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
         .build_with_max_retries(4);
 
     let client = ClientBuilder::new(reqwest::Client::new())
@@ -160,7 +162,7 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
     let response = match response {
         Ok(r) => r,
         Err(_) => {
-            eprintln!("Error fetching response for: {search_term}");
+            warn!("Error fetching response for: {search_term}");
             return None;
         }
     };
@@ -171,13 +173,13 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
     let response_body = match response_body {
         Ok(rb) => rb,
         Err(_) => {
-            eprintln!("Error fetching response body for: {search_term}");
+            warn!("Error fetching response body for: {search_term}");
             return None;
         }
     };
 
     if status != StatusCode::OK {
-        eprintln!("Error from model endpoint: {response_body}");
+        warn!("Error from model endpoint: {response_body}");
         return None;
     }
 
@@ -208,7 +210,7 @@ fn find_best_photo(
         let photo_views = match photo.views.parse::<i32>() {
             Ok(views) => views,
             Err(_) => {
-                eprintln!("Could not parse {} as i32", photo.views);
+                warn!("Could not parse {} as i32", photo.views);
                 continue;
             }
         };
