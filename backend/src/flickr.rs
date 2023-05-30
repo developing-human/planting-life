@@ -21,6 +21,9 @@ struct ImageSearchPhoto {
     id: String,
     owner: String,
     url_q: String,
+    url_z: String,
+    height_z: u32,
+    width_z: u32,
     views: String,
     title: String,
     license: String,
@@ -39,6 +42,7 @@ pub struct Image {
     pub scientific_name: String,
     pub title: String,
     pub thumbnail_url: String,
+    pub card_url: String,
     pub original_url: String,
     pub author: String,
     pub license: String,
@@ -51,6 +55,7 @@ impl Image {
             scientific_name: String::from(scientific_name),
             title: photo.title.clone(),
             thumbnail_url: photo.url_q.clone(),
+            card_url: photo.url_z.clone(),
             original_url: format!("https://www.flickr.com/photos/{}/{}", photo.owner, photo.id),
             author: photo.ownername.clone(),
             license: get_license_name(&photo.license)?.to_string(),
@@ -149,7 +154,7 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
             ("media", "photos"),
             ("format", "json"),
             ("nojsoncallback", "1"),
-            ("extras", "views,url_q,license,owner_name,description"),
+            ("extras", "views,url_q,url_z,license,owner_name,description"),
             ("min_upload_date", "2015-01-01"),
             ("sort", "relevance"),
             // This is everything except "All Rights Reserved"
@@ -197,63 +202,91 @@ fn find_best_photo(
     truncated_scientific_name: &str,
     common_name: &str,
 ) -> Option<Image> {
-    let mut highest_title_views = -1;
-    let mut highest_title = None;
-    let mut highest_description_views = -1;
-    let mut highest_description = None;
     let scientific_name_lc = truncated_scientific_name.to_lowercase();
     let common_name_lc = common_name.to_lowercase();
 
-    // Search for the most viewed photo which has the scientific or common name in the title
-    // In case none are found, also track the most viewed overall
-    'photo: for photo in response.photos.photo.iter() {
-        let photo_views = match photo.views.parse::<i32>() {
-            Ok(views) => views,
+    // Filter to valid photos, where valid means:
+    //   1. photo.views represents a valid integer
+    //   2. The description doesn't have any banned words which hint at illustrations
+    let mut valid_photos = response
+        .photos
+        .photo
+        .into_iter()
+        .filter(|photo| match photo.views.parse::<i32>() {
+            Ok(_) => true,
             Err(_) => {
                 warn!("Could not parse {} as i32", photo.views);
-                continue;
+                false
             }
-        };
+        })
+        .filter(|photo| {
+            let description_lc = photo.description._content.to_lowercase();
+            let title_lc = photo.title.to_lowercase();
 
+            // Certain words in the description mean we should ignore this, usually because
+            // they are hand drawn rather than photos
+            for banned_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
+                if description_lc.contains(banned_word) {
+                    return false;
+                }
+                if title_lc.contains(banned_word) {
+                    return false;
+                }
+            }
+
+            true
+        })
+        .collect::<Vec<ImageSearchPhoto>>();
+
+    // Sort such that the highest priority images come first.
+    // Priorities:
+    //   1. Title has plant name
+    //   2. Is landscape
+    //   3. Views
+    valid_photos.sort_unstable_by(|a, b| {
+        let a_title_lc = a.title.to_lowercase();
+        let a_has_name =
+            a_title_lc.contains(&scientific_name_lc) || a_title_lc.contains(&common_name_lc);
+        let b_title_lc = b.title.to_lowercase();
+        let b_has_name =
+            b_title_lc.contains(&scientific_name_lc) || b_title_lc.contains(&common_name_lc);
+
+        // Containing the name gives highest priority
+        if a_has_name && !b_has_name {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_has_name && b_has_name {
+            return std::cmp::Ordering::Greater;
+        }
+
+        // Being landscape is next highest priority
+        let a_is_landscape = a.width_z >= a.height_z;
+        let b_is_landscape = b.width_z >= b.height_z;
+        if a_is_landscape && !b_is_landscape {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_is_landscape && b_is_landscape {
+            return std::cmp::Ordering::Greater;
+        }
+
+        // Unwrap is ok, invalid views strings are filtered above
+        let a_views = a.views.parse::<i32>().unwrap();
+        let b_views = b.views.parse::<i32>().unwrap();
+
+        // This is flipped because more views gives higher priority
+        // and the highest priority is at the beginning of the list
+        b_views.cmp(&a_views)
+    });
+
+    println!("{common_name_lc}");
+    for photo in valid_photos.iter() {
         let title_lc = photo.title.to_lowercase();
-        let description_lc = photo.description._content.to_lowercase();
-
-        // Certain words in the description mean we should ignore this, usually because
-        // they are hand drawn rather than photos
-        for banned_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
-            if description_lc.contains(banned_word) {
-                continue 'photo;
-            }
-        }
-
-        if (title_lc.contains(&scientific_name_lc) || title_lc.contains(&common_name_lc))
-            && photo_views > highest_title_views
-        {
-            highest_title_views = photo_views;
-            highest_title = Some(photo);
-        }
-
-        if (description_lc.contains(&scientific_name_lc)
-            || description_lc.contains(&common_name_lc))
-            && photo_views > highest_description_views
-        {
-            highest_description_views = photo_views;
-            highest_description = Some(photo);
-        }
+        let has_name = title_lc.contains(&scientific_name_lc) || title_lc.contains(&common_name_lc);
+        let is_landscape = photo.width_z >= photo.height_z;
+        println!("{} {} {}", has_name, is_landscape, photo.views);
     }
 
-    // If any had scientific or common name, return most viewed of those
-    if let Some(photo) = highest_title {
-        return Image::from_photo(photo, scientific_name);
-    }
-
-    // If any had scientific or common name, return most viewed of those
-    if let Some(photo) = highest_description {
-        return Image::from_photo(photo, scientific_name);
-    }
-
-    // Don't try returning photos without a common/scientific name match
-    // That tends to choose popular photos that are of a different plant.
-
-    None // No image found :(
+    valid_photos
+        .first()
+        .and_then(|photo| Image::from_photo(photo, scientific_name))
 }

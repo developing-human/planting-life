@@ -10,14 +10,14 @@ import AttributionPopover from "./AttributionPopover";
 
 function PlantCard({ plant }) {
   return (
-    <Card sx={{ width: 345 }}>
+    <Card sx={{ width: 500 }}>
       <CardHeader title={plant.common} subheader={plant.scientific} />
 
       <CardMedia
         component="img"
-        height="194"
-        image={plant.image_url}
-        alt={plant.image_url ? plant.common : null}
+        height="300"
+        image={plant.card_url}
+        alt={plant.card_url ? plant.common : null}
       />
       {plant.author ? (
         <figcaption>

@@ -79,6 +79,7 @@ const Plants = () => {
 
       // grab relevant image and attribution data
       const imageUrl = image.thumbnailUrl;
+      const cardUrl = image.cardUrl;
       const originalUrl = image.originalUrl;
       const author = image.author;
       const title = image.title;
@@ -91,6 +92,7 @@ const Plants = () => {
             const updatedPlant = {
               ...plant,
               image_url: imageUrl,
+              card_url: cardUrl,
               original_url: originalUrl,
               title: title,
               author: author,
