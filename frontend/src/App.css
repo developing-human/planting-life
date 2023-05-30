@@ -5,7 +5,8 @@ body {
 }
 
 .App {
-  max-width: 725px;
+  /* max-width: 725px; */
+  max-width: 95vw;
   margin: 0 auto;
 }
 
