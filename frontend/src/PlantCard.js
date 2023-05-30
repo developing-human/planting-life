@@ -10,12 +10,12 @@ import AttributionPopover from "./AttributionPopover";
 
 function PlantCard({ plant }) {
   return (
-    <Card sx={{ width: 500 }}>
+    <Card sx={{ width: 600 }}>
       <CardHeader title={plant.common} subheader={plant.scientific} />
 
       <CardMedia
         component="img"
-        height="300"
+        height="350"
         image={plant.card_url}
         alt={plant.card_url ? plant.common : null}
       />

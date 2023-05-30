@@ -278,14 +278,6 @@ fn find_best_photo(
         b_views.cmp(&a_views)
     });
 
-    println!("{common_name_lc}");
-    for photo in valid_photos.iter() {
-        let title_lc = photo.title.to_lowercase();
-        let has_name = title_lc.contains(&scientific_name_lc) || title_lc.contains(&common_name_lc);
-        let is_landscape = photo.width_z >= photo.height_z;
-        println!("{} {} {}", has_name, is_landscape, photo.views);
-    }
-
     valid_photos
         .first()
         .and_then(|photo| Image::from_photo(photo, scientific_name))
