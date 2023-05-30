@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 
-// import material ui for zip code input
+// import material ui components
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Alert from "@mui/material/Alert";
 
-// import reusable dropdown select & attribution components
+// import components
 import DropdownSelect from "./DropdownSelect";
-import AttributionPopover from "./AttributionPopover";
+import PlantCard from "./PlantCard";
 
 import "./Plants.css";
 import "./spinner.css";
@@ -40,7 +40,6 @@ const Plants = () => {
     setMoisture(newValue);
   };
 
-
   useEffect(() => {
     if (!formData) return;
 
@@ -51,7 +50,7 @@ const Plants = () => {
 
     sse.addEventListener("plant", (event) => {
       let plant = JSON.parse(event.data);
-      setPlants((prevPlants) => [...prevPlants, plant] );
+      setPlants((prevPlants) => [...prevPlants, plant]);
     });
 
     // Hides the loading animation when the last plant appears,
@@ -61,8 +60,8 @@ const Plants = () => {
     });
 
     sse.addEventListener("close", (event) => {
-        setLoading(false);
-        sse.close();
+      setLoading(false);
+      sse.close();
     });
 
     sse.addEventListener("error", (event) => {
@@ -80,6 +79,7 @@ const Plants = () => {
 
       // grab relevant image and attribution data
       const imageUrl = image.thumbnailUrl;
+      const cardUrl = image.cardUrl;
       const originalUrl = image.originalUrl;
       const author = image.author;
       const title = image.title;
@@ -92,6 +92,7 @@ const Plants = () => {
             const updatedPlant = {
               ...plant,
               image_url: imageUrl,
+              card_url: cardUrl,
               original_url: originalUrl,
               title: title,
               author: author,
@@ -104,7 +105,6 @@ const Plants = () => {
 
           return plant;
         });
-
 
         return newPlants;
       });
@@ -119,7 +119,9 @@ const Plants = () => {
             const delta = payload.descriptionDelta;
             const updatedPlant = {
               ...plant,
-              description: plant.description ? plant.description + delta : delta
+              description: plant.description
+                ? plant.description + delta
+                : delta,
             };
 
             return updatedPlant;
@@ -127,7 +129,6 @@ const Plants = () => {
 
           return plant;
         });
-
 
         return newPlants;
       });
@@ -150,81 +151,58 @@ const Plants = () => {
     });
   };
 
-
   return (
     <div>
       <form onSubmit={handleSubmit}>
-
-        <Grid container spacing={3} style={{display: 'flex'}}>
+        <Grid container spacing={3} style={{ display: "flex" }}>
           <Grid item xs={12} sm={4}>
-            <TextField 
-              id="zip" 
-              label="Zip Code" 
-              variant="outlined" 
-              onChange={handleZipChange} 
-              sx={{width: '100%'}}
-              inputProps={{ inputMode: 'numeric', pattern: '[0-9]*' }} />
+            <TextField
+              id="zip"
+              label="Zip Code"
+              variant="outlined"
+              onChange={handleZipChange}
+              sx={{ width: "100%" }}
+              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+            />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <DropdownSelect 
+            <DropdownSelect
               id="shade"
               label="Shade"
               options={shadeOptions}
               onChange={handleShadeChange}
-              value={shade}/>
+              value={shade}
+            />
           </Grid>
           <Grid item xs={12} sm={4}>
-            <DropdownSelect 
+            <DropdownSelect
               id="moisture"
               label="Moisture"
               options={moistureOptions}
               onChange={handleMoistureChange}
-              value={moisture}/>
+              value={moisture}
+            />
           </Grid>
           <Grid item xs={12} sm={12}>
             <button type="submit">Find Native Plants</button>
           </Grid>
         </Grid>
       </form>
-      {
-        error
-        ? (<Alert severity="error">{error}</Alert>)
-        : null
-      }
-      <table id="returned-plants">
-        <tbody>
-          {plants.map((plant, index) => (
-              <tr>
-                <td className="imageCell">
-                  <a href={plant.original_url} target="_blank" rel="noreferrer">
-                    <img className="plantImage" src={plant.image_url} alt={plant.image_url ? plant.common : null} />
-                  </a>
-                  {
-                    plant.author ? (
-                      <figcaption>
-                        <AttributionPopover
-                          caption={`© Photo by ${plant.author}`}
-                          title={plant.title}
-                          author={plant.author}
-                          license={plant.license}
-                          link={plant.licenseUrl}/></figcaption>
-                    ) : null
-                  }
-                </td>
-                <td>
-                  <b>{plant.common}</b>
-                  <i>{plant.scientific}</i>
-                  <br /> <br />
-                  {plant.bloom ? "Blooms in " + plant.bloom.toLowerCase() + ". " : null}{plant.description}
-                </td>
-              </tr>
-              )
-          )}
-        </tbody>
-      </table>
-      {loading ? (        
+
+      {error ? <Alert severity="error">{error}</Alert> : null}
+
+      <section id="returned-plants">
+        {plants.map((plant, index) => (
+          <PlantCard plant={plant} key={index}/>
+        ))}
+      </section>
+
+      {loading ? (
         <div className="spinner">
-          <img src={`${process.env.PUBLIC_URL}/loading-earth.png`} alt="Loading" />
+          <img
+            src={`${process.env.PUBLIC_URL}/loading-earth.png`}
+            alt="Loading"
+          />
         </div>
       ) : null}
     </div>

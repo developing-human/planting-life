@@ -1,28 +1,13 @@
-table {
-  border-collapse: collapse;
-  border: 1px solid #333;
-  margin: auto;
-}
-
-table th,
-table td {
-  border: 1px solid #333;
-  padding: 8px;
-  text-align: left;
-}
-table td.imageCell {
-  width: 166px;
-}
-
-table th {
-  background-color: aliceblue;
-  color: black;
-  font-weight: bold;
-}
-
 figcaption {
   font-size: 8px;
-  padding: none;
+  padding: 2px 2px 0;
   margin: none;
-  max-width: 150px;
+  max-width: fit-content;
+}
+
+#returned-plants {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
 }

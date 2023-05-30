@@ -191,6 +191,7 @@ async fn fetch_plants_handler_mock(
         scientific_name: String::from("Asclepias incarnata"),
         title: String::from("Milkweed"),
         thumbnail_url: String::from("https://live.staticflickr.com/71/175851524_04904b8383_q_d.jpg"),
+        card_url: String::from("https://live.staticflickr.com/71/175851524_04904b8383_z_d.jpg"),
         original_url: String::from("https://www.flickr.com/photos/salim/175851524/in/photolist-LYSddJ-do77yy-gxh1X-gxhhQ-gxhwQ-29aXjBh-gxiXt-gxjzi-2gTsfpW-2nu6TdF-t7vKB-gQpY2t-2jxkYNQ-Vxf8qd-yn9kQ6-25wQste-2jxgKNA-rpQqA4-BsgvHn-pPbpVq-dwwp6P-dwBTEW-66cBaE-7iwAYm-7dcY49-6AaZnj-6AaZQw-5amQLW-6A6R9F-4PhsgS-2m57JQa-tZkSa-dwBUjf-dwBW3f-69CtD-8Qzoco-8Qzo6U-4ayh5W-5xnfwM-3ahGQv-ffDEDm-BzyB2B-7e9bKZ-AC367L-dhJw92-ybwhs-6K9AGp-6K9AvT"),
         author: String::from("Salim Virji"),
         license: String::from("CC BY-SA 2.0"),
