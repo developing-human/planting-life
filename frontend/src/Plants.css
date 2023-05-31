@@ -6,21 +6,8 @@ figcaption {
 }
 
 #returned-plants {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-evenly;
-  align-items: center;
-  gap: 10px;
-}
-
-#returned-plants::after {
-  content: "";
-  width: 350px;
-}
-
-/* this isn't working...*/
-#returned-plants::after::after {
-  content: "";
-  width: 350px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-gap: 20px;
+  justify-items: center;
 }
