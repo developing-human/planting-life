@@ -14,7 +14,13 @@ figcaption {
   gap: 10px;
 }
 
-#returned-plants:last-child {
-  margin-right: auto;
-  order: -1;
+#returned-plants::after {
+  content: "";
+  width: 350px;
+}
+
+/* this isn't working...*/
+#returned-plants::after::after {
+  content: "";
+  width: 350px;
 }

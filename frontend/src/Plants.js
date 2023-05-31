@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Alert from "@mui/material/Alert";
+import { Button } from "@mui/material";
 
 // import components
 import DropdownSelect from "./DropdownSelect";
@@ -154,7 +155,7 @@ const Plants = () => {
   return (
     <div>
       <form onSubmit={handleSubmit}>
-        <Grid container spacing={3} style={{ display: "flex" }}>
+        <Grid container spacing={3} style={{ display: "flex", justifyContent: "center" }}>
           <Grid item xs={12} sm={4}>
             <TextField
               id="zip"
@@ -183,8 +184,8 @@ const Plants = () => {
               value={moisture}
             />
           </Grid>
-          <Grid item xs={12} sm={12}>
-            <button type="submit">Find Native Plants</button>
+          <Grid item>
+            <Button type="submit">Find Native Plants</Button>
           </Grid>
         </Grid>
       </form>
