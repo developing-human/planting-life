@@ -21,9 +21,9 @@ struct ImageSearchPhoto {
     id: String,
     owner: String,
     url_q: String,
-    url_z: String,
-    height_z: u32,
-    width_z: u32,
+    url_z: Option<String>,
+    height_z: Option<u32>,
+    width_z: Option<u32>,
     views: String,
     title: String,
     license: String,
@@ -55,7 +55,7 @@ impl Image {
             scientific_name: String::from(scientific_name),
             title: photo.title.clone(),
             thumbnail_url: photo.url_q.clone(),
-            card_url: photo.url_z.clone(),
+            card_url: photo.url_z.clone().unwrap(), // only photos with url_z are chosen
             original_url: format!("https://www.flickr.com/photos/{}/{}", photo.owner, photo.id),
             author: photo.ownername.clone(),
             license: get_license_name(&photo.license)?.to_string(),
@@ -192,7 +192,10 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
         serde_json::from_str(&response_body);
     match parsed_response {
         Ok(response) => Some(response),
-        Err(_) => None,
+        Err(e) => {
+            warn!("Cannot parse flickr response: {}", e);
+            None
+        }
     }
 }
 
@@ -212,6 +215,7 @@ fn find_best_photo(
         .photos
         .photo
         .into_iter()
+        .filter(|photo| photo.url_z.is_some())
         .filter(|photo| match photo.views.parse::<i32>() {
             Ok(_) => true,
             Err(_) => {
@@ -260,8 +264,9 @@ fn find_best_photo(
         }
 
         // Being landscape is next highest priority
-        let a_is_landscape = a.width_z >= a.height_z;
-        let b_is_landscape = b.width_z >= b.height_z;
+        // Unwraps are ok because photos without _z are filtered earlier
+        let a_is_landscape = a.width_z.unwrap() >= a.height_z.unwrap();
+        let b_is_landscape = b.width_z.unwrap() >= b.height_z.unwrap();
         if a_is_landscape && !b_is_landscape {
             return std::cmp::Ordering::Less;
         }

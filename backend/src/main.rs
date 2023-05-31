@@ -276,6 +276,10 @@ fn build_mock_plants() -> impl Iterator<Item = NativePlant> {
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
 
+    let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
+    flickr::get_image("Mimulus guttatus", "Seep Monkeyflower", &flickr_api_key).await;
+    return Ok(());
+
     HttpServer::new(|| {
         let cors = Cors::default()
             .allowed_origin("https://www.planting.life")
