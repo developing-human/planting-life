@@ -10,6 +10,11 @@ body {
   margin: 0 auto;
 }
 
+form {
+  max-width: 725px;
+  margin-inline: auto;
+}
+
 button[type="submit"] {
   width: 300px;
   background-color: #4CAF50;
