@@ -6,8 +6,8 @@ figcaption {
 }
 
 #returned-plants {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-gap: 20px;
+  justify-items: center;
 }

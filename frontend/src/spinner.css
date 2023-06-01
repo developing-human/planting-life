@@ -3,6 +3,14 @@
   to { transform: rotate(360deg); }
 }
 
+.spinner {
+  height: 575px;
+  max-height: 60vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .spinner img {
     display: block;
     margin-left: auto;
