@@ -212,8 +212,9 @@ pub async fn fetch_description(
 
 // This is doing fairly well, but trying another approach above
 fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
+    // Requests twelve because this forms a nice grid with 1, 2, 3, or 4 columns.
     format!(
-        r#"Choose ten plants for a new gardener's garden which are NATIVE near zip code {}.
+        r#"Choose twelve plants for a new gardener's garden which are NATIVE near zip code {}.
 Their garden is in {} and {}.
 Only suggest plants which do well in {} and {}.
 Do NOT suggest plants which do better in other conditions.
