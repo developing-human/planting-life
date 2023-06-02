@@ -1,13 +1,19 @@
-import React from 'react';
-import './App.css';
-import Plants from './Plants';
+import { Routes, Route } from "react-router-dom";
+
+// pages
+import Home from "./pages/Home/Home";
+
+// styling
+import "./App.css";
 
 function App() {
-    return (
-        <div className="App">
-          <Plants />
-        </div>
-    );
+  return (
+    <div className="App">
+      <Routes>
+        <Route path="/" element={ <Home /> } />
+      </Routes>
+    </div>
+  );
 }
 
 export default App;
