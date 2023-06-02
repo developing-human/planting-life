@@ -1,3 +1,6 @@
+// attribution popover component
+import AttributionPopover from "../AttributionPopover/AttributionPopover";
+
 // material ui
 import Card from "@mui/material/Card";
 import CardHeader from "@mui/material/CardHeader";
@@ -5,8 +8,8 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 
-// attribution popover component
-import AttributionPopover from "../AttributionPopover/AttributionPopover";
+// styling
+import "./PlantCard.css"
 
 function PlantCard({ plant }) {
   return (

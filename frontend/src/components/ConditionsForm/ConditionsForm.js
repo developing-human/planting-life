@@ -1,22 +1,20 @@
 import { useEffect, useState } from "react";
 
+// components
+import DropdownSelect from "../DropdownSelect/DropdownSelect";
+
+// utilities
+import sendRequest from "../../utilities/plant-api";
+
 // material ui
 import TextField from "@mui/material/TextField";
 import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 
-// components
-import DropdownSelect from "../DropdownSelect/DropdownSelect";
+// styling
+import "./ConditionsForm.css"
 
-// utilities
-import sendRequest from "../../utilities/openai-api";
-
-// other
-import Alert from "@mui/material/Alert";
-import PlantCard from "../PlantCard/PlantCard";
-import Spinner from "../Spinner/Spinner";
-
-function ConditionsForm() {
+function ConditionsForm({ setPlants, setLoading, setError }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -24,9 +22,6 @@ function ConditionsForm() {
   const defaultMoisture = moistureOptions[1];
 
   const [formData, setFormData] = useState(null);
-  const [plants, setPlants] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
   const [zip, setZip] = useState("");
   const [shade, setShade] = useState(defaultShade);
   const [moisture, setMoisture] = useState(defaultMoisture);
@@ -45,7 +40,7 @@ function ConditionsForm() {
 
   useEffect(() => {
     sendRequest(formData, setPlants, setLoading, setError)
-  }, [formData]);
+  }, [formData, setPlants, setLoading, setError]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -60,7 +55,6 @@ function ConditionsForm() {
   };
 
   return (
-    <div>
       <form onSubmit={handleSubmit}>
         <Grid
           container
@@ -100,17 +94,6 @@ function ConditionsForm() {
           </Grid>
         </Grid>
       </form>
-      
-      {error ? <Alert severity="error">{error}</Alert> : null}
-
-      <section id="returned-plants">
-        {plants.map((plant, index) => (
-          <PlantCard plant={plant} key={index} />
-        ))}
-
-        {loading ? <Spinner /> : null}
-      </section>
-    </div>
   );
 }
 

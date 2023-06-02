@@ -23,7 +23,7 @@ function AttributionPopover({ caption, title, author, license, link }) {
   const id = open ? `${title}-simple-popover` : undefined;
 
   return (
-    <div>
+    <>
       <Link
         underline="none"
         aria-describedby={id}
@@ -59,7 +59,7 @@ function AttributionPopover({ caption, title, author, license, link }) {
           </div>
         </Typography>
       </Popover>
-    </div>
+    </>
   );
 }
 

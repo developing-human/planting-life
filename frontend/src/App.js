@@ -1,16 +1,17 @@
-import React, { useEffect } from "react";
-import "./App.css";
+import { Routes, Route } from "react-router-dom";
 
 // pages
 import Home from "./pages/Home/Home";
 
-// utilities
-import { getData } from "./utilities/openai-api";
+// styling
+import "./App.css";
 
 function App() {
   return (
     <div className="App">
-      <Home />
+      <Routes>
+        <Route path="/" element={ <Home /> } />
+      </Routes>
     </div>
   );
 }

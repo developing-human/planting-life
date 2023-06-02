@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
@@ -9,13 +9,16 @@ import PlantCard from "../../components/PlantCard/PlantCard";
 import Alert from "@mui/material/Alert";
 import "./Home.css";
 
-const Home = (plants, loading, error) => {
-  return (
-    <div>
-      <ConditionsForm />
+const Home = () => {
+  const [plants, setPlants] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-      //!TODO -- I want to bring this back in, but need to figure out how to get plants, loading, and error values
-      {/* {error ? <Alert severity="error">{error}</Alert> : null}
+  return (
+    <>
+      <ConditionsForm setPlants={setPlants} setLoading={setLoading} setError={setError}/>
+
+      {error ? <Alert severity="error">{error}</Alert> : null}
 
       <section id="returned-plants">
         {plants.map((plant, index) => (
@@ -23,8 +26,8 @@ const Home = (plants, loading, error) => {
         ))}
 
         {loading ? <Spinner /> : null}
-      </section> */}
-    </div>
+      </section>
+    </>
   );
 };
 

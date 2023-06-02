@@ -8,7 +8,6 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
 
     sse.addEventListener("plant", (event) => {
       let plant = JSON.parse(event.data);
-      console.log(plant);
       setPlants((prevPlants) => [...prevPlants, plant]);
     });
 
@@ -33,30 +32,18 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
       // get JSON image data
       const image = JSON.parse(event.data);
 
-      // grab image scientific name to compare to AI data
-      const scientificName = image.scientificName;
-
-      // grab relevant image and attribution data
-      const imageUrl = image.thumbnailUrl;
-      const cardUrl = image.cardUrl;
-      const originalUrl = image.originalUrl;
-      const author = image.author;
-      const title = image.title;
-      const license = image.license;
-      const licenseUrl = image.licenseUrl;
-
       setPlants((prevPlants) => {
         const newPlants = prevPlants.map((plant) => {
-          if (plant.scientific === scientificName) {
+          if (plant.scientific === image.scientificName) {
             const updatedPlant = {
               ...plant,
-              image_url: imageUrl,
-              card_url: cardUrl,
-              original_url: originalUrl,
-              title: title,
-              author: author,
-              license: license,
-              licenseUrl: licenseUrl,
+              image_url: image.thumbnailUrl,
+              card_url: image.cardUrl,
+              original_url: image.originalUrl,
+              title: image.title,
+              author: image.author,
+              license: image.license,
+              licenseUrl: image.licenseUrl,
             };
 
             return updatedPlant;
@@ -96,9 +83,4 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
     return () => {
       sse.close();
     };
-}
-
-export async function getData(plants, loading, alert) {
-    let data = {plants, loading, alert}
-    return data;
 }
