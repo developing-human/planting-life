@@ -6,7 +6,7 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 
 // attribution popover component
-import AttributionPopover from "./AttributionPopover";
+import AttributionPopover from "../AttributionPopover/AttributionPopover";
 
 function PlantCard({ plant }) {
   return (
