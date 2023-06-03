@@ -230,6 +230,9 @@ fn find_best_photo(
             ![
                 "37831198204", // educational drawing of carex crinita
                 "17332010645", // field of apparently dead goldenrod?
+                "43826520262", // too close up of wild ginger
+                "41085999240", // too close up of wild ginger
+                "26596674001", // too close up of wild ginger
             ]
             .contains(&photo.id.as_str())
         })
