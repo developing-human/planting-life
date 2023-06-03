@@ -5,6 +5,8 @@ use futures::executor::block_on;
 use futures::join;
 use futures::stream::{Stream, StreamExt};
 use openai::NativePlant;
+use planting_life::flickr;
+use planting_life::openai;
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
 use std::env;
@@ -12,9 +14,6 @@ use std::pin::Pin;
 use std::thread;
 use std::time;
 use tracing::{info, warn};
-
-mod flickr;
-mod openai;
 
 #[derive(Serialize, Deserialize, Debug)]
 struct FetchRequest {
