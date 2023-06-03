@@ -210,8 +210,8 @@ fn find_best_photo(
 
     // Filter to valid photos, where valid means:
     //   1. photo.views represents a valid integer
-    //   2. The photo id is not banned (some photos are bad for this use case)
-    //   3. The description doesn't have any banned words which hint at illustrations
+    //   2. The photo id is not blocked (some photos are bad for this use case)
+    //   3. The description doesn't have any blocked words which hint at illustrations
     let mut valid_photos = response
         .photos
         .photo
@@ -229,6 +229,7 @@ fn find_best_photo(
             // This is more of a stop gap until there's an interface to choose images
             ![
                 "37831198204", // educational drawing of carex crinita
+                "17332010645", // field of apparently dead goldenrod?
             ]
             .contains(&photo.id.as_str())
         })
@@ -238,11 +239,11 @@ fn find_best_photo(
 
             // Certain words in the description mean we should ignore this, usually because
             // they are hand drawn rather than photos
-            for banned_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
-                if description_lc.contains(banned_word) {
+            for blocked_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
+                if description_lc.contains(blocked_word) {
                     return false;
                 }
-                if title_lc.contains(banned_word) {
+                if title_lc.contains(blocked_word) {
                     return false;
                 }
             }
