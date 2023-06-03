@@ -210,7 +210,8 @@ fn find_best_photo(
 
     // Filter to valid photos, where valid means:
     //   1. photo.views represents a valid integer
-    //   2. The description doesn't have any banned words which hint at illustrations
+    //   2. The photo id is not banned (some photos are bad for this use case)
+    //   3. The description doesn't have any banned words which hint at illustrations
     let mut valid_photos = response
         .photos
         .photo
@@ -222,6 +223,14 @@ fn find_best_photo(
                 warn!("Could not parse {} as i32", photo.views);
                 false
             }
+        })
+        .filter(|photo| {
+            // Filter out images that aren't useful in this context
+            // This is more of a stop gap until there's an interface to choose images
+            ![
+                "37831198204", // educational drawing of carex crinita
+            ]
+            .contains(&photo.id.as_str())
         })
         .filter(|photo| {
             let description_lc = photo.description._content.to_lowercase();
