@@ -233,6 +233,7 @@ fn find_best_photo(
                 "43826520262", // too close up of wild ginger
                 "41085999240", // too close up of wild ginger
                 "26596674001", // too close up of wild ginger
+                "37356079394", // too close up of black eyed susan
             ]
             .contains(&photo.id.as_str())
         })
