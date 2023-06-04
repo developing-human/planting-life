@@ -5,6 +5,7 @@ use futures::executor::block_on;
 use futures::join;
 use futures::stream::{Stream, StreamExt};
 use openai::NativePlant;
+use planting_life::citations;
 use planting_life::flickr;
 use planting_life::openai;
 use serde::{self, Deserialize, Serialize};
@@ -90,6 +91,7 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
                     send_plant(&sender_clone, &plant),
                     fetch_and_send_image(&sender_clone, &plant),
                     fetch_and_send_description(&sender_clone, &plant),
+                    fetch_and_send_citations(&sender_clone, &plant),
                 );
             });
 
@@ -174,6 +176,18 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) {
         );
 
         send_event(sender, "descriptionDelta", &payload).await;
+    }
+}
+
+async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
+    let citations = citations::find(&plant.scientific).await;
+    if !citations.is_empty() {
+        let citations_json = serde_json::to_string(&citations).expect("citations should serialize");
+        let payload = format!(
+            r#"{{"scientificName": "{}", "citations": {}}}"#,
+            plant.scientific, citations_json
+        );
+        send_event(sender, "citations", &payload).await;
     }
 }
 
