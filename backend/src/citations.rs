@@ -100,21 +100,32 @@ mod wikipedia {
 }
 
 mod usda {
+    use std::collections::HashMap;
     use std::fs::File;
     use std::io::BufReader;
 
     use lazy_static::lazy_static;
+    use tracing::log::error;
 
     lazy_static! {
-        static ref HASHMAP: std::collections::HashMap<String, String> = {
+        static ref HASHMAP: HashMap<String, String> = {
             let file = match File::open("resources/usda_symbols.json") {
                 Ok(file) => file,
-                Err(e) => panic!("Cannot load usda_symbols.json {}", e),
+                Err(e) => {
+                    error!("Cannot load usda_symbols.json, using empty map {}", e);
+                    return HashMap::new();
+                }
             };
 
             match serde_json::from_reader(BufReader::new(file)) {
                 Ok(map) => map,
-                Err(e) => panic!("Cannot deserialize usda_symbols.json {}", e),
+                Err(e) => {
+                    error!(
+                        "Cannot deserialize usda_symbols.json, using empty map {}",
+                        e
+                    );
+                    HashMap::new()
+                }
             }
         };
     }
