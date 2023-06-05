@@ -1,10 +1,13 @@
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  padding: 20px 0;
 }
 
 .App {
+  width: 100%;
+}
+
+.content {
   width: 95vw;
   max-width: 1500px;
   margin: 0 auto;
