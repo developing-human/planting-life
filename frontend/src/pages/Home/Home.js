@@ -2,6 +2,7 @@ import { useState } from "react";
 
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
+import Accordion from "../../components/IntroAccordion/IntroAccordion";
 import Spinner from "../../components/Spinner/Spinner";
 import PlantCard from "../../components/PlantCard/PlantCard";
 
@@ -17,6 +18,8 @@ const Home = () => {
   return (
     <>
       <ConditionsForm setPlants={setPlants} setLoading={setLoading} setError={setError}/>
+
+      <div className="accordion-container"><Accordion /></div>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 

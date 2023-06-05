@@ -10,7 +10,6 @@ function NavBar() {
   return (
     <Box
       className="nav-container"
-      sx={{ flexGrow: 1 }}
     >
       <AppBar
         position="static"
@@ -20,7 +19,7 @@ function NavBar() {
         }}
       >
         <Toolbar sx={{ flexWrap: "wrap" }}>
-          <IconButton size="string" edge="start" color="inherit">
+          <IconButton disabled size="string" edge="start" color="inherit">
             <img
               className="icon"
               src="https://planting.life/favicon-32x32.png"

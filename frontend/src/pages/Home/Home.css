@@ -1,3 +1,11 @@
+.accordion-container {
+  width: 95vw;
+  max-width: 825px;
+  margin-inline: auto;
+  padding-bottom: 20px;
+  padding-inline: 10px;
+}
+
 #returned-plants {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
