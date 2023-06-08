@@ -8,17 +8,24 @@ import "./NavBar.css";
 
 function NavBar() {
   return (
-    <Box
-      className="nav-container"
-    >
+    <Box className="nav-container">
       <AppBar
         position="static"
         sx={{
           backgroundColor: "#45a049",
           paddingInline: 0,
+          height: "50px",
         }}
       >
-        <Toolbar sx={{ flexWrap: "wrap" }}>
+        <Toolbar
+        variant="dense"
+          sx={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
           <IconButton disabled size="string" edge="start" color="inherit">
             <img
               className="icon"
@@ -36,6 +43,7 @@ function NavBar() {
           </Typography>
 
           <Typography
+            id="slogan"
             variant="subtitle1"
             component="div"
             sx={{
@@ -46,15 +54,15 @@ function NavBar() {
               maxWidth: "500px",
               paddingTop: "5px",
               paddingBottom: "5px",
-              paddingLeft:"10px",
-              fontSize: "0.9rem"
+              paddingLeft: "10px",
+              fontSize: "0.9rem",
             }}
           >
             Plant native. Support wildlife. Grow your local ecosystem.
           </Typography>
         </Toolbar>
       </AppBar>
-    </Box>
+      </Box>
   );
 }
 
