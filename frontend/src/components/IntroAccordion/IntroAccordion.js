@@ -42,25 +42,22 @@ const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   borderTop: '1px solid rgba(0, 0, 0, .125)',
 }));
 
-function IntroAccordion() {
-  const [expanded, setExpanded] = React.useState('panel1');
-
+function IntroAccordion({expanded, setExpanded}) {
   const handleChange = (panel) => (event, newExpanded) => {
     setExpanded(newExpanded ? panel : false);
   };
 
   return (
     <div>
-      <Accordion expanded={expanded === 'panel1'} onChange={handleChange('panel1')}>
-        <AccordionSummary aria-controls="panel1d-content" id="panel1d-header">
+      <Accordion expanded={expanded === 'welcome'} onChange={handleChange('welcome')}>
+        <AccordionSummary aria-controls="welcome-content" id="welcome-header">
           <Typography>Welcome!</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
-            malesuada lacus ex, sit amet blandit leo lobortis eget. Lorem ipsum dolor
-            sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-            sit amet blandit leo lobortis eget.
+          Simply enter your zip code along with information about the amount of shade and soil moisture level where you intend to plant. AI returns results based on your area and conditions. Start your gardening journey today and make a positive impact in your local environment.
+          <br />
+          <br/ >*Please confirm results with your local nursery for accuracy
           </Typography>
         </AccordionDetails>
       </Accordion>

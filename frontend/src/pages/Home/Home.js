@@ -14,12 +14,13 @@ const Home = () => {
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [expanded, setExpanded] = useState('welcome');
 
   return (
     <>
-      <ConditionsForm setPlants={setPlants} setLoading={setLoading} setError={setError}/>
+      <ConditionsForm setPlants={setPlants} setLoading={setLoading} setError={setError} setExpanded={setExpanded}/>
 
-      <div className="accordion-container"><Accordion /></div>
+      <div className="accordion-container"><Accordion expanded={expanded} setExpanded={setExpanded}/></div>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
