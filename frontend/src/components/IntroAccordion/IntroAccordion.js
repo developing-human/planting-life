@@ -71,6 +71,19 @@ function IntroAccordion({ expanded, setExpanded }) {
           </Typography>
         </AccordionDetails>
       </Accordion>
+      <Accordion expanded={expanded === 'about'} onChange={handleChange('about')}>
+        <AccordionSummary aria-controls="about-content" id="about-header">
+          <Typography>What is planting.life?</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Typography>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
+            malesuada lacus ex, sit amet blandit leo lobortis eget. Lorem ipsum dolor
+            sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
+            sit amet blandit leo lobortis eget.
+          </Typography>
+        </AccordionDetails>
+      </Accordion>
     </div>
   );
 }
