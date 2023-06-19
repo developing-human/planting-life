@@ -77,10 +77,10 @@ function IntroAccordion({ expanded, setExpanded }) {
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
-            malesuada lacus ex, sit amet blandit leo lobortis eget. Lorem ipsum dolor
-            sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex,
-            sit amet blandit leo lobortis eget.
+            Planting Life helps you discover native plants that will
+            thrive in your garden.  Whether you're a new or experienced
+            gardener, it will help you choose plants to provide food
+            and shelter for local wildlife.
           </Typography>
         </AccordionDetails>
       </Accordion>
