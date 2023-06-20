@@ -2,7 +2,7 @@ import { useState } from "react";
 
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
-import Accordion from "../../components/IntroAccordion/IntroAccordion";
+import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
 import Spinner from "../../components/Spinner/Spinner";
 import PlantCard from "../../components/PlantCard/PlantCard";
 
@@ -20,7 +20,7 @@ const Home = () => {
     <>
       <ConditionsForm setPlants={setPlants} setLoading={setLoading} setError={setError} setExpanded={setExpanded}/>
 
-      <div className="accordion-container"><Accordion expanded={expanded} setExpanded={setExpanded}/></div>
+      <div className="accordion-container"><IntroAccordion expanded={expanded} setExpanded={setExpanded}/></div>
 
       {error ? <Alert severity="error">{error}</Alert> : null}
 
