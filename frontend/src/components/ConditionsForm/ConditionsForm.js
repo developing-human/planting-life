@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setLoading, setError }) {
+function ConditionsForm({ setPlants, setLoading, setError, setExpanded }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -44,6 +44,7 @@ function ConditionsForm({ setPlants, setLoading, setError }) {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    setExpanded(false);
     setPlants([]);
     setLoading(true);
     setError(null);

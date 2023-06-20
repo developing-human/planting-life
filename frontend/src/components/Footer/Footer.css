@@ -1,0 +1,18 @@
+.footer-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    position: relative;
+    bottom: 0;
+    margin-top: auto;
+}
+
+footer {
+    min-width: 95vw;
+    padding: 5px 0;
+    border-top: 1px solid black;
+    text-align: center;
+    font-style: italic;
+    font-size: 0.9rem;
+}

@@ -1,0 +1,14 @@
+.nav-container {
+    padding-bottom: 30px;
+}
+
+.icon {
+    padding: 0;
+    margin: 0;
+}
+
+@media screen and (max-width: 690px) {
+    #slogan {
+        display: none;
+    }
+}
