@@ -55,32 +55,20 @@ function IntroAccordion({ expanded, setExpanded }) {
         onChange={handleChange("welcome")}
       >
         <AccordionSummary aria-controls="welcome-content" id="welcome-header">
-          <Typography>Why plant native?</Typography>
+          <Typography>What is Planting Life?</Typography>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-            Planting native celebrates the beauty of our surroundings while
-            creating a haven for local wildlife, nurturing a sense of belonging,
-            and reminding us that we are an integral part of the intricate
-            tapestry of life on this Earth.
-            <br />
-            <br />
-            To find native plants that would thrive in your area, simply enter
-            your zip code along with the amount of shade and soil moisture level
-            where you intend to plant.
-          </Typography>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion expanded={expanded === 'about'} onChange={handleChange('about')}>
-        <AccordionSummary aria-controls="about-content" id="about-header">
-          <Typography>What is planting.life?</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography>
-            Planting Life helps you discover native plants that will
-            thrive in your garden.  Whether you're a new or experienced
-            gardener, it will help you choose plants to provide food
-            and shelter for local wildlife.
+	  Planting Life helps you discover native plants that will
+	  thrive in your garden.  Whether you're a new or experienced
+	  gardener, it will help you choose plants which support
+	  your local ecosystem.
+          <br />
+          <br />
+	  By planting native, you'll provide food and shelter for wildlife
+	  which already lives near you.  You'll also simplify maintenance
+	  for your garden by selecting plants which are well-suited to
+	  the moisture and soil conditions in your area.
           </Typography>
         </AccordionDetails>
       </Accordion>
