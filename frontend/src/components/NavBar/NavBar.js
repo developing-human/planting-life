@@ -39,7 +39,7 @@ function NavBar() {
             component="div"
             sx={{ flexGrow: 1, paddingLeft: "5px" }}
           >
-            Planting.life
+            Planting Life
           </Typography>
 
           <Typography
