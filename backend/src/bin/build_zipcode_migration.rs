@@ -1,0 +1,37 @@
+use csv::Reader;
+use std::error::Error;
+use std::fs::File;
+use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
+
+#[derive(Debug, serde::Deserialize)]
+struct Record {
+    zip: String,
+    lat: f64,
+    lng: f64,
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let in_file = File::open("resources/zipcodes.csv")?;
+    let mut out_file = File::create("db/migrations/populate-zipcodes.sql")?;
+    let mut reader = Reader::from_reader(in_file);
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    writeln!(out_file, "--liquibase formatted sql")?;
+    writeln!(out_file)?;
+    writeln!(out_file, "--changeset script:{timestamp}")?;
+    writeln!(out_file, "DELETE FROM zipcodes;")?;
+    for result in reader.deserialize() {
+        let record: Record = result?;
+        writeln!(
+            out_file,
+            "INSERT INTO zipcodes (zipcode, latitude, longitude) VALUES ('{}', {}, {});",
+            record.zip, record.lat, record.lng
+        )?;
+    }
+
+    Ok(())
+}

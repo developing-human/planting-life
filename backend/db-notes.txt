@@ -1,7 +1,0 @@
-For the following to work, need to: brew install mysql-client
-
-connect to the db inside the container locally:
-mysql -h 127.0.0.1 -u planting_life_admin -p
-
-dump the contents of the database (includes db users):
-mysqldump -u planting_life_admin -h 127.0.0.1 -p planting_life

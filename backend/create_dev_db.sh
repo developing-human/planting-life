@@ -26,7 +26,7 @@ fi
 echo "Cleaning up existing database..."
 docker stop planting_life_db > /dev/null
 docker rm planting_life_db > /dev/null
-rm -rf `pwd`/db/data
+sudo rm -rf `pwd`/db/data
 
 # Putting data in a subdirectory, to leave a reasonable place for config
 echo ""
@@ -85,5 +85,9 @@ mysql -h 127.0.0.1 -u root --password=dev_password1235 -e "
   FLUSH PRIVILEGES;
 "
 
-#TODO: The above command shouldn't directly have the password in it, try
-#      something like: https://stackoverflow.com/questions/20751352/suppress-warning-messages-using-mysql-from-within-terminal-but-password-written
+# Populate the database via migrations
+# Change to directory so the relative paths are all correct
+echo "Populating db..."
+cd db
+liquibase update
+

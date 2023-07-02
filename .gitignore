@@ -2,7 +2,7 @@
 /backend/target
 /backend/vendor
 /backend/.cargo
-/backend/db
+/backend/db/data
 /frontend/node_modules
 /frontend/build
 
