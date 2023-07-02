@@ -1,6 +1,26 @@
 #!/bin/bash
 
-# Pre-requisites: Install docker and mysql-client
+missing_prereq=0
+if ! command -v docker &> /dev/null
+then
+    echo "docker is not installed, but is required"
+    missing_prereq=1
+fi
+if ! command -v mysql &> /dev/null
+then
+    echo "mysql-client is not installed, but is required"
+    missing_prereq=1
+fi
+if ! command -v liquibase &> /dev/null
+then
+    echo "liquibase is not installed, but is required"
+    missing_prereq=1
+fi
+
+# If any command was not installed, exit with status 1
+if [ $missing_prereq -eq 1 ]; then
+    exit 1
+fi
 
 # Cleanup existing database.  Maybe put this behind an option.
 echo "Cleaning up existing database..."
