@@ -5,6 +5,7 @@ use futures::join;
 use futures::stream::{Stream, StreamExt};
 use openai::NativePlant;
 use planting_life::citations;
+use planting_life::database::Database;
 use planting_life::flickr;
 use planting_life::openai;
 use serde::{self, Deserialize, Serialize};
@@ -15,10 +16,15 @@ use std::time;
 use tracing::{info, warn};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct FetchRequest {
+struct PlantsRequest {
     zip: String,
     shade: Shade,
     moisture: Moisture,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct NurseriesRequest {
+    zip: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -59,7 +65,7 @@ impl Moisture {
 }
 
 #[get("/plants")]
-async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> impl Responder {
+async fn fetch_plants_handler(web::Query(payload): web::Query<PlantsRequest>) -> impl Responder {
     info!("{payload:?}");
 
     //TODO: 10 might be small now that I'm streaming descriptions back.
@@ -114,7 +120,7 @@ async fn fetch_plants_handler(web::Query(payload): web::Query<FetchRequest>) -> 
 }
 
 async fn get_plant_stream(
-    payload: FetchRequest,
+    payload: PlantsRequest,
 ) -> anyhow::Result<Pin<Box<impl Stream<Item = NativePlant>>>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
@@ -189,17 +195,36 @@ async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
     }
 }
 
+#[get("/nurseries")]
+async fn fetch_nurseries_handler(
+    web::Query(payload): web::Query<NurseriesRequest>,
+    db: web::Data<Database>,
+) -> impl Responder {
+    info!("{payload:?}");
+
+    let nurseries = db.find_nurseries(&payload.zip).await;
+
+    actix_web::HttpResponse::Ok().json(nurseries)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
 
-    HttpServer::new(|| {
+    let db_url = env::var("PLANTING_LIFE_DB_URL").expect("Must define $PLANTING_LIFE_DB_URL");
+    let db = Database::new(&db_url);
+
+    HttpServer::new(move || {
         let cors = Cors::default()
             .allowed_origin("https://www.planting.life")
             .allowed_origin("https://planting.life")
             .allowed_methods(vec!["GET"]);
 
-        App::new().wrap(cors).service(fetch_plants_handler)
+        App::new()
+            .wrap(cors)
+            .app_data(web::Data::new(db.clone()))
+            .service(fetch_plants_handler)
+            .service(fetch_nurseries_handler)
     })
     .bind("0.0.0.0:8080")?
     .run()

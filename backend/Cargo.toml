@@ -40,3 +40,5 @@ csv = "1.2"
 
 # for calculating distance from lat/long
 geo = "0.25.1"
+
+mysql_async = "0.32.2"
