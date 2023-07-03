@@ -12,6 +12,10 @@ struct Record {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    //TODO: If ever updating the table of zipcodes, consider rewriting this
+    //      to either use batches or use a "loadData" changeset.  This migration
+    //      took almost an hour to execute over an ssh tunnel with prod.
+
     let in_file = File::open("resources/zipcodes.csv")?;
     let mut out_file = File::create("db/migrations/populate-zipcodes.sql")?;
     let mut reader = Reader::from_reader(in_file);
