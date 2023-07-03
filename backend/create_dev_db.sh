@@ -22,16 +22,19 @@ if [ $missing_prereq -eq 1 ]; then
     exit 1
 fi
 
-# Cleanup existing database.  Maybe put this behind an option.
-echo "Cleaning up existing database..."
-docker stop planting_life_db > /dev/null
-docker rm planting_life_db > /dev/null
-sudo rm -rf `pwd`/db/data
+echo ""
+echo "Removing old docker container..."
+docker stop planting_life_db
+docker container rm planting_life_db
+
+echo ""
+echo "Removing old docker volume..."
+docker volume rm planting_life_db_data
 
 # Putting data in a subdirectory, to leave a reasonable place for config
 echo ""
-echo "Making directory..."
-mkdir -p db/data
+echo "Making docker volume..."
+docker volume create planting_life_db_data
 
 # Start container, mapping db/data to the data directory
 echo ""
@@ -40,10 +43,10 @@ docker pull mariadb
 
 echo ""
 echo "Starting mariadb..."
-docker run \
+docker run  \
   --name planting_life_db \
   -p 3306:3306 \
-  -v  `pwd`/db/data:/var/lib/mysql \
+  -v  planting_life_db_data:/var/lib/mysql \
   -e MYSQL_ROOT_PASSWORD=dev_password1235 \
   --security-opt seccomp=unconfined \
   -d \
