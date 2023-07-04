@@ -1,8 +1,10 @@
-export default async function sendRequest(formData, setPlants, setLoading, setError, onFinishedLoading) {
+export default async function sendRequest(formData, setPlants, setLoading, setError, setEventSource, onFinishedLoading) {
     const { zip, shade, moisture } = formData;
     const sse = new EventSource(
       `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
     );
+
+    setEventSource(sse);
 
     sse.addEventListener("plant", (event) => {
       let plant = JSON.parse(event.data);

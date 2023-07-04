@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 // components
 import DropdownSelect from "../DropdownSelect/DropdownSelect";
@@ -21,10 +21,10 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
   const defaultShade = shadeOptions[1];
   const defaultMoisture = moistureOptions[1];
 
-  const [formData, setFormData] = useState(null);
   const [zip, setZip] = useState("");
   const [shade, setShade] = useState(defaultShade);
   const [moisture, setMoisture] = useState(defaultMoisture);
+  const [eventSource, setEventSource] = useState(null);
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -38,12 +38,26 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
     setMoisture(newValue);
   };
 
-  useEffect(() => {
-    if (!formData) {
-      return;
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setExpanded(false);
+    setPlants([]);
+    setNurseries([]);
+    setLoading(true);
+    setError(null);
+    let formData = {
+      zip: zip,
+      shade: shade,
+      moisture: moisture,
+    };
+
+    // Try to close an existing eventSource, loading behaves weird if
+    // two EventSources are open at the same time.
+    if (eventSource) {
+      eventSource.close();
     }
 
-    sendRequest(formData, setPlants, setLoading, setError, () => {
+    sendRequest(formData, setPlants, setLoading, setError, setEventSource, () => {
 
       // This is a callback to make the nurseries not load until after
       // plants are loaded.  Loading it first made it distracting and
@@ -52,21 +66,6 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
         .then(response => response.json())
         .then(nurseries => setNurseries(nurseries))
         .catch(error => console.error('Error: ', error));
-    });
-
-  }, [formData, setPlants, setNurseries, setLoading, setError]);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setExpanded(false);
-    setPlants([]);
-    setNurseries([]);
-    setLoading(true);
-    setError(null);
-    setFormData({
-      zip: zip,
-      shade: shade,
-      moisture: moisture,
     });
   };
 
