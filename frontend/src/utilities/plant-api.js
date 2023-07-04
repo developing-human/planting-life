@@ -1,6 +1,4 @@
-export default async function sendRequest(formData, setPlants, setLoading, setError) {
-    if (!formData) return;
-
+export default async function sendRequest(formData, setPlants, setLoading, setError, onFinishedLoading) {
     const { zip, shade, moisture } = formData;
     const sse = new EventSource(
       `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
@@ -15,6 +13,7 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
     // rather than when all plants finish loading.
     sse.addEventListener("allPlantsLoaded", (event) => {
       setLoading(false);
+      onFinishedLoading();
     });
 
     sse.addEventListener("close", (event) => {

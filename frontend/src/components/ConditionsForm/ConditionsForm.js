@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setLoading, setError, setExpanded }) {
+function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpanded }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -39,13 +39,28 @@ function ConditionsForm({ setPlants, setLoading, setError, setExpanded }) {
   };
 
   useEffect(() => {
-    sendRequest(formData, setPlants, setLoading, setError)
-  }, [formData, setPlants, setLoading, setError]);
+    if (!formData) {
+      return;
+    }
+
+    sendRequest(formData, setPlants, setLoading, setError, () => {
+
+      // This is a callback to make the nurseries not load until after
+      // plants are loaded.  Loading it first made it distracting and
+      // impossible to read as the cards were loading.
+      fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${formData.zip}`)
+        .then(response => response.json())
+        .then(nurseries => setNurseries(nurseries))
+        .catch(error => console.error('Error: ', error));
+    });
+
+  }, [formData, setPlants, setNurseries, setLoading, setError]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     setExpanded(false);
     setPlants([]);
+    setNurseries([]);
     setLoading(true);
     setError(null);
     setFormData({
