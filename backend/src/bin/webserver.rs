@@ -202,7 +202,20 @@ async fn fetch_nurseries_handler(
 ) -> impl Responder {
     info!("{payload:?}");
 
-    let nurseries = db.find_nurseries(&payload.zip).await;
+    let mut nurseries = db.find_nurseries(&payload.zip).await;
+
+    for nursery in &mut nurseries {
+        if nursery.map_url.is_none() {
+            // Pad the zip code to five digits, using zeros.
+            let zip = format!("{:05}", nursery.zip);
+
+            let query = format!("{} near {}", nursery.name, zip);
+            let query = query.replace(' ', "+");
+            let url = format!("https://www.google.com/maps/search/?api=1&query={query}");
+
+            nursery.map_url = Some(url);
+        }
+    }
 
     actix_web::HttpResponse::Ok().json(nurseries)
 }

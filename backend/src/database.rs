@@ -19,6 +19,7 @@ impl Database {
 pub struct Nursery {
     pub name: String,
     pub url: String,
+    pub map_url: Option<String>,
     pub address: String,
     pub city: String,
     pub state: String,
@@ -48,6 +49,7 @@ ORDER BY miles ASC"
                     state,
                     zip,
                     miles,
+                    map_url: None,
                 },
             )
             .await
