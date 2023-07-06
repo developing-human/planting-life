@@ -20,9 +20,13 @@ function Nursery({ nursery }) {
       <NoPaddingCardContent>
         <Typography variant="body2" color="text.secondary">
           {nursery.address}, {nursery.city}, {nursery.state} {nursery.zip} <br />
-          <a href={nursery.url} target="_blank">Website</a> 
-          &nbsp;|&nbsp; 
-          <a href={nursery.map_url} target="_blank">Map</a>
+          {nursery.url && (
+            <>
+              <a href={nursery.url} target="_blank" rel="noreferrer">Website</a> 
+              &nbsp;|&nbsp; 
+            </>
+          )}
+          <a href={nursery.map_url} target="_blank" rel="noreferrer">Map</a>
         </Typography>
       </NoPaddingCardContent>
     </Card>
