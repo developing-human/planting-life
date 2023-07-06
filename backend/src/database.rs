@@ -18,7 +18,7 @@ impl Database {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Nursery {
     pub name: String,
-    pub url: String,
+    pub url: Option<String>,
     pub map_url: Option<String>,
     pub address: String,
     pub city: String,

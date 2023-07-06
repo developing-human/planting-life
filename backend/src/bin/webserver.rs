@@ -204,6 +204,9 @@ async fn fetch_nurseries_handler(
 
     let mut nurseries = db.find_nurseries(&payload.zip).await;
 
+    // Some areas have 20+ nurseries and it looks ridiculous, set a limit
+    nurseries.truncate(10);
+
     for nursery in &mut nurseries {
         if nursery.map_url.is_none() {
             // Pad the zip code to five digits, using zeros.
