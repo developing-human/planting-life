@@ -1,0 +1,49 @@
+<mxfile host="app.diagrams.net" modified="2023-07-07T01:30:10.286Z" agent="Mozilla/5.0 (X11; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/114.0" etag="UmbZ4wheYmi8d59eiAoT" version="21.5.0" type="device">
+  <diagram id="R2lEEEUBdFMjLlhIrx00" name="Page-1">
+    <mxGraphModel dx="1204" dy="1109" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0" extFonts="Permanent Marker^https://fonts.googleapis.com/css?family=Permanent+Marker">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-1" value="Images" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="705" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-2" value="&lt;div&gt;Nurseries&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="195" y="170" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-12" value="&lt;div&gt;1:1&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="7jxLbwN9dDCzLYTHrMwa-3" target="7jxLbwN9dDCzLYTHrMwa-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-3" value="Plants" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="535" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-10" value="1:M" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7jxLbwN9dDCzLYTHrMwa-4" target="7jxLbwN9dDCzLYTHrMwa-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-4" value="Regions" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="195" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-8" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7jxLbwN9dDCzLYTHrMwa-5" target="7jxLbwN9dDCzLYTHrMwa-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-9" value="M:M" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7jxLbwN9dDCzLYTHrMwa-5" target="7jxLbwN9dDCzLYTHrMwa-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-5" value="Zipcodes" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="25" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-11" value="M:M" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="7jxLbwN9dDCzLYTHrMwa-6" target="7jxLbwN9dDCzLYTHrMwa-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-6" value="Queries" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="365" y="80" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-13" value="&lt;div&gt;Every zip code maps to a region,&lt;/div&gt;&lt;div&gt;even if its a one zipcode region&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="90" y="30" width="200" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="7jxLbwN9dDCzLYTHrMwa-14" value="&lt;div&gt;Queries consider region, shade,&lt;/div&gt;&lt;div&gt;and moisture.&amp;nbsp; They map to many&lt;/div&gt;&lt;div&gt;plants.&lt;br&gt;&lt;/div&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="325" y="20" width="200" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

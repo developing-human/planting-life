@@ -16,4 +16,4 @@ ADD COLUMN region_id INT;
 
 ALTER TABLE zipcodes
 ADD CONSTRAINT FK_REGION
-FOREIGN KEY(region_id) REFERENCES region(id);
+FOREIGN KEY(region_id) REFERENCES regions(id);
