@@ -5,7 +5,11 @@
   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
   <include file="migrations/create-zipcode-table.sql"/>
+  <include file="migrations/create-region-table.sql"/>
   <include file="migrations/create-nursery-tables.sql"/>
+  <include file="migrations/create-images-table.sql"/>
+  <include file="migrations/create-plants-table.sql"/>
+  <include file="migrations/create-query-tables.sql"/>
   <include file="migrations/populate-zipcodes.sql"/>
   <include file="migrations/populate-nurseries.sql"/>
 </databaseChangeLog>
