@@ -12,4 +12,5 @@
   <include file="migrations/create-query-tables.sql"/>
   <include file="migrations/populate-zipcodes.sql"/>
   <include file="migrations/populate-nurseries.sql"/>
+  <include file="migrations/populate-regions.sql"/>
 </databaseChangeLog>
