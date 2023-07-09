@@ -3,9 +3,9 @@ use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::join;
 use futures::stream::{Stream, StreamExt};
-use openai::NativePlant;
 use planting_life::citations;
 use planting_life::database::Database;
+use planting_life::domain::{Moisture, NativePlant, Shade};
 use planting_life::flickr;
 use planting_life::openai;
 use serde::{self, Deserialize, Serialize};
@@ -20,48 +20,6 @@ struct PlantsRequest {
     zip: String,
     shade: Shade,
     moisture: Moisture,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct NurseriesRequest {
-    zip: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-enum Shade {
-    #[serde(rename = "Full Shade")]
-    Full,
-    #[serde(rename = "Partial Shade")]
-    Partial,
-    #[serde(rename = "Full Sun")]
-    No,
-}
-
-impl Shade {
-    fn description(&self) -> &str {
-        match self {
-            Shade::Full => "full shade",
-            Shade::Partial => "partial shade",
-            Shade::No => "full sun",
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-enum Moisture {
-    Low,
-    Medium,
-    High,
-}
-
-impl Moisture {
-    fn description(&self) -> &str {
-        match self {
-            Moisture::Low => "dry soil",
-            Moisture::Medium => "moderately wet soil",
-            Moisture::High => "wet soil",
-        }
-    }
 }
 
 #[get("/plants")]
@@ -193,6 +151,11 @@ async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
         );
         send_event(sender, "citations", &payload).await;
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct NurseriesRequest {
+    zip: String,
 }
 
 #[get("/nurseries")]

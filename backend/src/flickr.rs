@@ -1,3 +1,4 @@
+use crate::domain::Image;
 use futures::join;
 use reqwest::StatusCode;
 use reqwest_middleware::ClientBuilder;
@@ -34,19 +35,6 @@ struct ImageSearchPhoto {
 #[derive(Serialize, Deserialize, Debug)]
 struct ImageSearchPhotoDescription {
     _content: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "camelCase")]
-pub struct Image {
-    pub scientific_name: String,
-    pub title: String,
-    pub thumbnail_url: String,
-    pub card_url: String,
-    pub original_url: String,
-    pub author: String,
-    pub license: String,
-    pub license_url: String,
 }
 
 impl Image {

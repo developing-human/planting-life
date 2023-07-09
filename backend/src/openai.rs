@@ -1,5 +1,6 @@
 use futures::{stream::StreamExt, TryStreamExt};
 
+use crate::domain::NativePlant;
 use anyhow::Context;
 use futures::Stream;
 use reqwest::StatusCode;
@@ -33,16 +34,6 @@ struct ChatCompletionResponseChoice {
 struct ChatCompletionMessage {
     role: Option<String>,
     content: Option<String>,
-}
-
-//TODO: Should refactor to move this out of openai code.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct NativePlant {
-    pub common: String,
-    pub scientific: String,
-    pub bloom: Option<String>,
-    pub description: Option<String>,
-    pub image_url: Option<String>,
 }
 
 struct NativePlantBuilder {

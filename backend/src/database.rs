@@ -1,6 +1,6 @@
+use crate::domain::Nursery;
 use mysql_async::prelude::*;
 use mysql_async::Pool;
-use serde::{Deserialize, Serialize};
 
 #[derive(Clone)]
 pub struct Database {
@@ -13,18 +13,6 @@ impl Database {
             pool: Pool::new(url),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Nursery {
-    pub name: String,
-    pub url: Option<String>,
-    pub map_url: Option<String>,
-    pub address: String,
-    pub city: String,
-    pub state: String,
-    pub zip: usize,
-    pub miles: usize,
 }
 
 impl Database {
@@ -56,3 +44,10 @@ ORDER BY miles ASC"
             .unwrap()
     }
 }
+
+//TODO: Lookup query results by zip/moisture/shade
+//TODO: Save query results
+
+//TODO: Lookup plant (plus image?  together or separate?)
+//TODO: Save plant
+//TODO: Save image
