@@ -1,20 +1,24 @@
 use serde::{Deserialize, Serialize};
+use std::fmt::{Display, Formatter};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NativePlant {
+    pub id: Option<usize>,
     pub common: String,
     pub scientific: String,
     pub bloom: Option<String>,
     pub description: Option<String>,
-    pub image_url: Option<String>,
+    //pub image_url: Option<String>,
+    pub image: Option<Image>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
-    pub scientific_name: String,
+    pub id: Option<usize>,
+    pub scientific_name: String, //TODO: Duplicate, remove soon.
     pub title: String,
-    pub thumbnail_url: String,
+    //pub thumbnail_url: String,
     pub card_url: String,
     pub original_url: String,
     pub author: String,
@@ -24,38 +28,53 @@ pub struct Image {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Shade {
-    #[serde(rename = "Full Shade")]
-    Full,
-    #[serde(rename = "Partial Shade")]
-    Partial,
     #[serde(rename = "Full Sun")]
-    No,
+    None,
+    #[serde(rename = "Partial Shade")]
+    Some,
+    #[serde(rename = "Full Shade")]
+    Lots,
 }
 
 impl Shade {
     pub fn description(&self) -> &str {
         match self {
-            Shade::Full => "full shade",
-            Shade::Partial => "partial shade",
-            Shade::No => "full sun",
+            Shade::None => "full sun",
+            Shade::Some => "partial shade",
+            Shade::Lots => "full shade",
         }
+    }
+}
+
+impl Display for Shade {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum Moisture {
-    Low,
-    Medium,
-    High,
+    #[serde(rename = "Low")]
+    None,
+    #[serde(rename = "Medium")]
+    Some,
+    #[serde(rename = "High")]
+    Lots,
 }
 
 impl Moisture {
     pub fn description(&self) -> &str {
         match self {
-            Moisture::Low => "dry soil",
-            Moisture::Medium => "moderately wet soil",
-            Moisture::High => "wet soil",
+            Moisture::None => "dry soil",
+            Moisture::Some => "moderately wet soil",
+            Moisture::Lots => "wet soil",
         }
+    }
+}
+
+impl Display for Moisture {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

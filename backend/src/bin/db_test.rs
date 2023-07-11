@@ -1,0 +1,74 @@
+use planting_life::database::Database;
+use planting_life::domain::*;
+use std::env;
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() {
+    let db_url = env::var("PLANTING_LIFE_DB_URL").expect("Must define $PLANTING_LIFE_DB_URL");
+    let db = Database::new(&db_url);
+
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 4 {
+        eprintln!("Expected exactly two arguments, had: {args:?}");
+        std::process::exit(1);
+    }
+
+    let scientific_name = &args[1];
+    let common_name = &args[2];
+    let description = &args[3];
+
+    let plant = NativePlant {
+        scientific: scientific_name.to_string(),
+        common: common_name.to_string(),
+        description: Some(description.to_string()),
+        bloom: None,
+        image: None,
+        id: None,
+    };
+
+    let saved_plant = db.save_plant(&plant).await;
+    println!("saved: {saved_plant:#?}");
+
+    let fetched_by_id = db.get_plant_by_id(saved_plant.id.unwrap()).await;
+    println!("by id: {fetched_by_id:#?}");
+
+    let fetched_by_name = db.get_plant_by_scientific_name(scientific_name).await;
+    println!("by name: {fetched_by_name:#?}");
+
+    let first = NativePlant {
+        scientific: "first".to_string(),
+        common: common_name.to_string(),
+        description: Some(description.to_string()),
+        bloom: None,
+        image: None,
+        id: None,
+    };
+    let second = NativePlant {
+        scientific: "second".to_string(),
+        common: common_name.to_string(),
+        description: Some(description.to_string()),
+        bloom: None,
+        image: None,
+        id: None,
+    };
+    let third = NativePlant {
+        scientific: "third".to_string(),
+        common: common_name.to_string(),
+        description: Some(description.to_string()),
+        bloom: None,
+        image: None,
+        id: None,
+    };
+
+    let first = db.save_plant(&first).await;
+    let all_plants = vec![first, second.clone(), third.clone()];
+    let plants_to_save = vec![second, third];
+    db.save_query_results(
+        "43081",
+        &Moisture::Lots,
+        &Shade::Some,
+        &all_plants,
+        &plants_to_save,
+    )
+    .await;
+}

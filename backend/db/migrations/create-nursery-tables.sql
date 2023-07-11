@@ -23,3 +23,14 @@ CREATE TABLE zipcodes_nurseries (
  FOREIGN KEY (zipcode) REFERENCES zipcodes(zipcode),
  FOREIGN KEY (nursery_id) REFERENCES nurseries(id)
 );
+
+--changeset doug:3
+ALTER TABLE zipcodes_nurseries DROP FOREIGN KEY zipcodes_nurseries_ibfk_2;
+ALTER TABLE zipcodes_nurseries DROP INDEX zipcodes_nurseries_ibfk_2;
+
+ALTER TABLE nurseries MODIFY id INT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE zipcodes_nurseries
+ADD CONSTRAINT zipcodes_nurseries_ibfk_2
+FOREIGN KEY(nursery_id) REFERENCES nurseries(id);
+

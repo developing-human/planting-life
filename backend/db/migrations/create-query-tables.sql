@@ -18,3 +18,15 @@ CREATE TABLE queries_plants (
   FOREIGN KEY(query_id) REFERENCES queries(id),
   FOREIGN KEY(plant_id) REFERENCES plants(id)
 );
+
+--changeset doug:2
+ALTER TABLE queries_plants DROP FOREIGN KEY queries_plants_ibfk_1;
+--ALTER TABLE queries_plants DROP INDEX queries_plants_ibfk_1;
+
+ALTER TABLE queries MODIFY id INT NOT NULL AUTO_INCREMENT;
+
+ALTER TABLE queries_plants
+ADD CONSTRAINT queries_plants_ibfk_1
+FOREIGN KEY(query_id) REFERENCES queries(id);
+
+

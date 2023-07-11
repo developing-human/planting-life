@@ -67,11 +67,12 @@ impl NativePlantBuilder {
         }
 
         NativePlant {
+            id: None,
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
             bloom: NativePlantBuilder::sanitize_bloom(self.bloom.clone()),
             description: None,
-            image_url: None,
+            image: None,
         }
     }
 
