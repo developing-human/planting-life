@@ -44,7 +44,6 @@ async fn fill_and_send_plants(
     let mut handles = vec![];
 
     while let Some(plant) = plants.next().await {
-        println!("Looping over {}", plant.scientific);
         // Make a clone, so the inner and outer tasks can each own a sender
         let sender_clone = sender.clone();
         let db = db.get_ref().clone();
@@ -69,11 +68,12 @@ async fn fill_and_send_plants(
             // Now, any missing parts need to be filled in.
 
             // Concurrently send the plant to the front end while handling the image
-            let (_, img, description, _) = join!(
+            let (_, img, description /*, _*/) = join!(
                 send_plant(&sender_clone, &plant),
                 fetch_and_send_image(&sender_clone, &plant),
                 fetch_and_send_description(&sender_clone, &plant),
-                fetch_and_send_citations(&sender_clone, &plant),
+                //TODO: Bring citations back once they can be cached or displayed.
+                //fetch_and_send_citations(&sender_clone, &plant),
             );
 
             let updated_plant = NativePlant {
@@ -85,7 +85,10 @@ async fn fill_and_send_plants(
             // Only save plants which weren't from the database (no id) or where
             // the description was updated.  In the future, we'll also want to check
             // images and citations once those are handled by the db.
-            if updated_plant.id.is_none() || updated_plant.description != plant.description {
+            if updated_plant.id.is_none()
+                || updated_plant.description != plant.description
+                || (plant.image.is_none() && updated_plant.image.is_some())
+            {
                 plants_to_save.lock().await.push(updated_plant.clone());
             }
 
@@ -131,7 +134,7 @@ async fn fetch_plants_handler(
     info!("{payload:?}");
 
     //TODO: 10 might be small now that I'm streaming descriptions back.
-    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
+    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(1);
 
     // The real work is done in a new thread so the connection to the front end can open.
     actix_web::rt::spawn(async move {
@@ -184,7 +187,6 @@ async fn get_plant_stream(
 async fn send_plant(sender: &Sender, plant: &NativePlant) {
     let json = serde_json::to_string(&plant).expect("plant should serialize");
 
-    println!("Sending plant");
     send_event(sender, "plant", &json).await;
 }
 
@@ -199,19 +201,18 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
 
 async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) -> Option<Image> {
     if plant.image.is_some() {
-        println!("Skipping image fetch for: {}", plant.scientific);
+        info!("Skipping image fetch for: {}", plant.scientific);
         // Don't fetch or send if its already available
         // If already populated, its been sent w/ the original plant
         return plant.image.clone();
     }
-    println!("Fetching image for: {}", plant.scientific);
+    info!("Fetching image for: {}", plant.scientific);
 
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
     let image = flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key).await;
     if let Some(image) = image {
         let image_json = serde_json::to_string(&image).expect("image should serialize");
-        println!("Sending image");
         send_event(sender, "image", &image_json).await;
 
         return Some(image);

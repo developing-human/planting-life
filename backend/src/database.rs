@@ -106,8 +106,6 @@ WHERE z.zipcode = ?
         moisture: &Moisture,
         shade: &Shade,
         plant_ids: HashSet<usize>,
-        //all_plants: &Vec<NativePlant>,
-        //saved_plants: &[NativePlant],
     ) {
         let mut conn = self.pool.get_conn().await.unwrap();
 
@@ -158,21 +156,39 @@ WHERE z.zipcode = ?
             }
         }
 
-        let id = r"INSERT INTO plants (scientific_name, common_name, description, image_id)
+        let id = if let Some(id) = plant.id {
+            println!("UPDATING PLANT: {}", plant.scientific);
+            r"UPDATE plants 
+              SET description = :description, image_id = :image_id
+              WHERE id = :id"
+                .with(params! {
+                    "id" => id,
+                    "description" => plant.description.clone(),
+                    "image_id" => img_id
+                })
+                .ignore(&mut conn)
+                .await
+                .unwrap();
+
+            id
+        } else {
+            println!("INSERTING PLANT: {}", plant.scientific);
+            r"INSERT INTO plants (scientific_name, common_name, description, image_id)
             VALUES (:scientific_name, :common_name, :description, :image_id)
             RETURNING id"
-            .with(params! {
-                "scientific_name" => &plant.scientific,
-                "common_name" => &plant.common,
-                "description" => plant.description.clone().unwrap_or("null".to_string()),
-                "image_id" => img_id
-            })
-            .fetch(&mut conn)
-            .await
-            .unwrap();
+                .with(params! {
+                    "scientific_name" => &plant.scientific,
+                    "common_name" => &plant.common,
+                    "description" => plant.description.clone().unwrap_or("null".to_string()),
+                    "image_id" => img_id
+                })
+                .fetch(&mut conn)
+                .await
+                .unwrap()[0]
+        };
 
         NativePlant {
-            id: Some(id[0]),
+            id: Some(id),
             scientific: plant.scientific.clone(),
             common: plant.common.clone(),
             description: plant.description.clone(),
