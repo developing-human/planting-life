@@ -29,4 +29,6 @@ ALTER TABLE queries_plants
 ADD CONSTRAINT queries_plants_ibfk_1
 FOREIGN KEY(query_id) REFERENCES queries(id);
 
-
+--changeset doug:3
+ALTER TABLE queries
+ADD UNIQUE unique_query_index(region_id, shade, moisture);

@@ -54,25 +54,46 @@ ORDER BY miles ASC"
         let mut conn = self.pool.get_conn().await.unwrap();
 
         r"
-SELECT p.id, p.scientific_name, p.common_name, p.description
+SELECT p.id, p.scientific_name, p.common_name, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN queries_plants qp ON qp.plant_id = p.id
 INNER JOIN queries q ON qp.query_id = q.id
 INNER JOIN zipcodes z ON z.region_id = q.region_id
+LEFT JOIN images i ON i.id = p.image_id
 WHERE z.zipcode = ?
   AND q.moisture = ?
   AND q.shade = ?
-  LIMIT 12
 "
         .with((zip, moisture.to_string(), shade.to_string()))
-        .map(&mut conn, |(id, scientific, common, description)| {
+        .map(&mut conn, |(id, scientific, common, description, img_id, title, card_url, original_url, author, license)| {
+
+            let img_id: Option<usize> = img_id;
+            let card_url: Option<String> = card_url;
+            let original_url: Option<String> = original_url;
+            let author: Option<String> = author;
+            let license: Option<String> = license;
+            let title: Option<String> = title;
+            let scientific: String = scientific;
             NativePlant {
                 id: Some(id),
-                scientific,
+                scientific: scientific.to_string(),
                 common,
                 description,
                 bloom: None, //TODO: Need to add a column for this
-                image: None,
+                image: if img_id.is_some() {
+                    Some(Image {
+                        id: img_id,
+                        scientific_name: scientific,
+                        title: title.unwrap(),
+                        card_url: card_url.unwrap(),
+                        original_url: original_url.unwrap(),
+                        author: author.unwrap(),
+                        license: license.unwrap(),
+                        license_url: "TODO".to_string(),
+                    })
+                } else {
+                    None
+                },
             }
         })
         .await
@@ -84,15 +105,12 @@ WHERE z.zipcode = ?
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
-        all_plants: &Vec<NativePlant>,
-        plants_to_save: &[NativePlant],
+        plant_ids: HashSet<usize>,
+        //all_plants: &Vec<NativePlant>,
+        //saved_plants: &[NativePlant],
     ) {
         let mut conn = self.pool.get_conn().await.unwrap();
 
-        // Convert to Vec<&NativePlant>
-        let plants_to_save = plants_to_save.iter().collect();
-
-        let saved_plants = self.save_plants(&plants_to_save).await;
         let query_id: i32 = r"INSERT INTO queries (moisture, shade, region_id) VALUES
             (?, ?, (SELECT region_id from zipcodes where zipcode = ?))
             RETURNING id"
@@ -101,18 +119,6 @@ WHERE z.zipcode = ?
             .await
             .unwrap() //TODO: Handle error
             .unwrap(); // Unwraps an option that will always be Some
-
-        let mut plant_ids = HashSet::new();
-        for plant in all_plants {
-            if let Some(id) = plant.id {
-                plant_ids.insert(id);
-            }
-        }
-        for plant in saved_plants {
-            if let Some(id) = plant.id {
-                plant_ids.insert(id);
-            }
-        }
 
         r"INSERT INTO queries_plants (query_id, plant_id)
             VALUES (:query_id, :plant_id)"
@@ -129,7 +135,7 @@ WHERE z.zipcode = ?
 
     // Takes in a vector of plants which are not in the database (null ids), and
     // returns a new vector of native plants which have ids and are in the database
-    async fn save_plants(&self, plants_in: &Vec<&NativePlant>) -> Vec<NativePlant> {
+    pub async fn save_plants(&self, plants_in: &Vec<&NativePlant>) -> Vec<NativePlant> {
         let mut futures = vec![];
         for plant in plants_in {
             futures.push(self.save_plant(plant));
@@ -138,18 +144,28 @@ WHERE z.zipcode = ?
         future::join_all(futures).await
     }
 
-    // Takes in a plants which is not in the database, and returns a new plant with
-    // its database id populated
+    // Takes in a plant which may or may not be in the database, and returns
+    // a new plant with its database id populated
     pub async fn save_plant(&self, plant: &NativePlant) -> NativePlant {
         let mut conn = self.pool.get_conn().await.unwrap();
 
-        let id = r"INSERT INTO plants (scientific_name, common_name, description)
-            VALUES (:scientific_name, :common_name, :description)
+        let mut img_id = None;
+        if let Some(image) = &plant.image {
+            img_id = image.id;
+            if image.id.is_none() {
+                let saved_image = self.save_image(image).await;
+                img_id = saved_image.id;
+            }
+        }
+
+        let id = r"INSERT INTO plants (scientific_name, common_name, description, image_id)
+            VALUES (:scientific_name, :common_name, :description, :image_id)
             RETURNING id"
             .with(params! {
                 "scientific_name" => &plant.scientific,
                 "common_name" => &plant.common,
                 "description" => plant.description.clone().unwrap_or("null".to_string()),
+                "image_id" => img_id
             })
             .fetch(&mut conn)
             .await
@@ -165,6 +181,36 @@ WHERE z.zipcode = ?
         }
     }
 
+    async fn save_image(&self, image: &Image) -> Image {
+        let mut conn = self.pool.get_conn().await.unwrap();
+
+        let id = r"INSERT INTO images (title, card_url, original_url, author, license)
+            VALUES (:title, :card_url, :original_url, :author, :license)
+            RETURNING id"
+            .with(params! {
+                "title" => &image.title,
+                "card_url" => &image.card_url,
+                "original_url" => &image.original_url,
+                "author" => &image.author,
+                "license" => &image.license,
+            })
+            .fetch(&mut conn)
+            .await
+            .unwrap();
+
+        Image {
+            id: Some(id[0]),
+            title: image.title.clone(),
+            card_url: image.card_url.clone(),
+            original_url: image.original_url.clone(),
+            author: image.author.clone(),
+            license: image.license.clone(),
+            scientific_name: image.scientific_name.clone(),
+            license_url: image.license_url.clone(),
+        }
+    }
+
+    //TODO: Maybe not needed
     pub async fn get_plant_by_id(&self, id: usize) -> NativePlant {
         let mut conn = self.pool.get_conn().await.unwrap();
 
@@ -194,8 +240,9 @@ WHERE id = :plant_id"
         let mut conn = self.pool.get_conn().await.unwrap();
 
         let query_result = r"
-SELECT id, common_name, description
-FROM plants
+SELECT p.id, p.common_name, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
+FROM plants p
+INNER JOIN images i ON i.id = p.image_id
 WHERE scientific_name = :scientific_name"
             .with(params! {
                 "scientific_name" => scientific_name,
@@ -204,14 +251,41 @@ WHERE scientific_name = :scientific_name"
             .await
             .unwrap(); // assume it worked
 
-        if let Some((id, common, description)) = query_result {
+        if let Some((
+            id,
+            common,
+            description,
+            img_id,
+            title,
+            card_url,
+            original_url,
+            author,
+            license,
+        )) = query_result
+        {
+            // Type information is needed below, and other attempts weren't working :)
+            let img_id: Option<usize> = img_id;
+
             Some(NativePlant {
                 id: Some(id),
                 scientific: scientific_name.to_string(),
                 common,
                 description,
                 bloom: None,
-                image: None,
+                image: if img_id.is_some() {
+                    Some(Image {
+                        id: img_id,
+                        scientific_name: scientific_name.to_string(),
+                        title,
+                        card_url,
+                        original_url,
+                        author,
+                        license,
+                        license_url: "TODO".to_string(),
+                    })
+                } else {
+                    None
+                },
             })
         } else {
             None

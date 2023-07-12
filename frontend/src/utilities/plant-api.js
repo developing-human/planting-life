@@ -38,13 +38,7 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
           if (plant.scientific === image.scientificName) {
             const updatedPlant = {
               ...plant,
-              image_url: image.thumbnailUrl,
-              card_url: image.cardUrl,
-              original_url: image.originalUrl,
-              title: image.title,
-              author: image.author,
-              license: image.license,
-              licenseUrl: image.licenseUrl,
+              image: image
             };
 
             return updatedPlant;

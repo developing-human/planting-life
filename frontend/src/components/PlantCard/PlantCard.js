@@ -19,17 +19,17 @@ function PlantCard({ plant }) {
       <CardMedia
         component="img"
         height="350"
-        image={plant.card_url}
-        alt={plant.card_url ? plant.common : null}
+        image={plant.image ? plant.image.cardUrl : null}
+        alt={plant.image ? plant.common : null}
       />
-      {plant.author ? (
+      {plant.image ? (
         <figcaption>
           <AttributionPopover
-            caption={`© Photo by ${plant.author}`}
-            title={plant.title}
-            author={plant.author}
-            license={plant.license}
-            link={plant.licenseUrl}
+            caption={`© Photo by ${plant.image.author}`}
+            title={plant.image.title}
+            author={plant.image.author}
+            license={plant.image.license}
+            link={plant.image.licenseUrl}
           />
         </figcaption>
       ) : null}

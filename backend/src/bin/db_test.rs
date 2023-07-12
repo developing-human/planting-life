@@ -7,6 +7,9 @@ async fn main() {
     let db_url = env::var("PLANTING_LIFE_DB_URL").expect("Must define $PLANTING_LIFE_DB_URL");
     let db = Database::new(&db_url);
 
+    //let fetched = db.get_plant_by_scientific_name("Asclepias incarnata").await;
+    //println!("fetched: {fetched:#?}");
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 4 {
         eprintln!("Expected exactly two arguments, had: {args:?}");
@@ -35,6 +38,7 @@ async fn main() {
     let fetched_by_name = db.get_plant_by_scientific_name(scientific_name).await;
     println!("by name: {fetched_by_name:#?}");
 
+    /*
     let first = NativePlant {
         scientific: "first".to_string(),
         common: common_name.to_string(),
@@ -59,16 +63,17 @@ async fn main() {
         image: None,
         id: None,
     };
+    */
 
-    let first = db.save_plant(&first).await;
-    let all_plants = vec![first, second.clone(), third.clone()];
-    let plants_to_save = vec![second, third];
-    db.save_query_results(
-        "43081",
-        &Moisture::Lots,
-        &Shade::Some,
-        &all_plants,
-        &plants_to_save,
-    )
-    .await;
+    //let first = db.save_plant(&first).await;
+    //let all_plants = vec![first, second.clone(), third.clone()];
+    //let plants_to_save = vec![second, third];
+    //    db.save_query_results(
+    //        "43081",
+    //        &Moisture::Lots,
+    //        &Shade::Some,
+    //        &all_plants,
+    //        &plants_to_save,
+    //    )
+    //    .await;
 }

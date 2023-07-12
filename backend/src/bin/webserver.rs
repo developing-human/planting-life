@@ -11,6 +11,7 @@ use planting_life::flickr;
 use planting_life::openai;
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
+use std::collections::HashSet;
 use std::env;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -29,6 +30,7 @@ async fn fill_and_send_plants(
     payload: &PlantsRequest,
     mut plants: impl Stream<Item = NativePlant> + Unpin,
     sender: &Sender,
+    plants_from_db: bool,
 ) {
     let db = web::Data::new(Arc::new(db));
 
@@ -101,18 +103,24 @@ async fn fill_and_send_plants(
         handle.await.unwrap_or_default();
     }
 
-    //TODO: Not sure what to do about this warning.  Using crate async-mutex may help.
     let plants_to_save = plants_to_save.lock().await;
     let all_plants = all_plants.lock().await;
-    let future = db.save_query_results(
-        &payload.zip,
-        &payload.moisture,
-        &payload.shade,
-        &all_plants,
-        &plants_to_save,
-    );
 
-    future.await;
+    // Save any plants which are new or updated.
+    let saved_plants = db.save_plants(&plants_to_save.iter().collect()).await;
+
+    // We only need to cache the query results if these results aren't from the database
+    // When they are from the database, we know its already there.
+    if !plants_from_db {
+        let plant_ids: HashSet<usize> = all_plants
+            .iter()
+            .chain(saved_plants.iter())
+            .filter_map(|p| p.id)
+            .collect();
+
+        db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
+            .await;
+    }
 }
 
 #[get("/plants")]
@@ -132,7 +140,7 @@ async fn fetch_plants_handler(
             .await;
 
         if !plants_db.is_empty() {
-            fill_and_send_plants(db, &payload, stream::iter(plants_db), &sender).await;
+            fill_and_send_plants(db, &payload, stream::iter(plants_db), &sender, true).await;
         } else {
             let plants = match get_plant_stream(&payload).await {
                 Ok(plants) => plants,
@@ -143,7 +151,7 @@ async fn fetch_plants_handler(
                 }
             };
 
-            fill_and_send_plants(db, &payload, plants, &sender).await;
+            fill_and_send_plants(db, &payload, plants, &sender, false).await;
         }
 
         send_event(&sender, "close", "").await;
@@ -191,10 +199,12 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
 
 async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) -> Option<Image> {
     if plant.image.is_some() {
+        println!("Skipping image fetch for: {}", plant.scientific);
         // Don't fetch or send if its already available
         // If already populated, its been sent w/ the original plant
         return plant.image.clone();
     }
+    println!("Fetching image for: {}", plant.scientific);
 
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
