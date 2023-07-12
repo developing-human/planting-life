@@ -54,7 +54,7 @@ ORDER BY miles ASC"
         let mut conn = self.pool.get_conn().await.unwrap();
 
         r"
-SELECT p.id, p.scientific_name, p.common_name, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
+SELECT p.id, p.scientific_name, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN queries_plants qp ON qp.plant_id = p.id
 INNER JOIN queries q ON qp.query_id = q.id
@@ -65,7 +65,7 @@ WHERE z.zipcode = ?
   AND q.shade = ?
 "
         .with((zip, moisture.to_string(), shade.to_string()))
-        .map(&mut conn, |(id, scientific, common, description, img_id, title, card_url, original_url, author, license)| {
+        .map(&mut conn, |(id, scientific, common, bloom, description, img_id, title, card_url, original_url, author, license)| {
 
             let img_id: Option<usize> = img_id;
             let card_url: Option<String> = card_url;
@@ -74,12 +74,13 @@ WHERE z.zipcode = ?
             let license: Option<String> = license;
             let title: Option<String> = title;
             let scientific: String = scientific;
+            let bloom: Option<String> = bloom;
             NativePlant {
                 id: Some(id),
                 scientific: scientific.to_string(),
                 common,
                 description,
-                bloom: None, //TODO: Need to add a column for this
+                bloom,
                 image: if img_id.is_some() {
                     Some(Image {
                         id: img_id,
@@ -173,12 +174,13 @@ WHERE z.zipcode = ?
             id
         } else {
             println!("INSERTING PLANT: {}", plant.scientific);
-            r"INSERT INTO plants (scientific_name, common_name, description, image_id)
-            VALUES (:scientific_name, :common_name, :description, :image_id)
+            r"INSERT INTO plants (scientific_name, common_name, bloom, description, image_id)
+            VALUES (:scientific_name, :common_name, :bloom, :description, :image_id)
             RETURNING id"
                 .with(params! {
                     "scientific_name" => &plant.scientific,
                     "common_name" => &plant.common,
+                    "bloom" => &plant.bloom,
                     "description" => plant.description.clone().unwrap_or("null".to_string()),
                     "image_id" => img_id
                 })
@@ -256,7 +258,7 @@ WHERE id = :plant_id"
         let mut conn = self.pool.get_conn().await.unwrap();
 
         let query_result = r"
-SELECT p.id, p.common_name, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
+SELECT p.id, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN images i ON i.id = p.image_id
 WHERE scientific_name = :scientific_name"
@@ -270,6 +272,7 @@ WHERE scientific_name = :scientific_name"
         if let Some((
             id,
             common,
+            bloom,
             description,
             img_id,
             title,
@@ -287,7 +290,7 @@ WHERE scientific_name = :scientific_name"
                 scientific: scientific_name.to_string(),
                 common,
                 description,
-                bloom: None,
+                bloom,
                 image: if img_id.is_some() {
                     Some(Image {
                         id: img_id,

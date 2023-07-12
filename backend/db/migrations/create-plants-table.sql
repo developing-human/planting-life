@@ -22,4 +22,5 @@ ALTER TABLE queries_plants
 ADD CONSTRAINT queries_plants_ibfk_2
 FOREIGN KEY(plant_id) REFERENCES plants(id);
 
-
+--changeset doug:3
+ALTER TABLE plants ADD COLUMN bloom VARCHAR(100);
