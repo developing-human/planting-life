@@ -82,6 +82,8 @@ WHERE z.zipcode = ?
                 description,
                 bloom,
                 image: if img_id.is_some() {
+                    let license = license.unwrap();
+
                     Some(Image {
                         id: img_id,
                         scientific_name: scientific,
@@ -89,8 +91,8 @@ WHERE z.zipcode = ?
                         card_url: card_url.unwrap(),
                         original_url: original_url.unwrap(),
                         author: author.unwrap(),
-                        license: license.unwrap(),
-                        license_url: "TODO".to_string(),
+                        license_url: Image::get_license_url(&license).unwrap(),
+                        license,
                     })
                 } else {
                     None
@@ -284,6 +286,7 @@ WHERE scientific_name = :scientific_name"
         {
             // Type information is needed below, and other attempts weren't working :)
             let img_id: Option<usize> = img_id;
+            let license: String = license;
 
             Some(NativePlant {
                 id: Some(id),
@@ -299,8 +302,8 @@ WHERE scientific_name = :scientific_name"
                         card_url,
                         original_url,
                         author,
+                        license_url: Image::get_license_url(&license).unwrap(),
                         license,
-                        license_url: "TODO".to_string(),
                     })
                 } else {
                     None

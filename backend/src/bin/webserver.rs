@@ -113,16 +113,40 @@ async fn fill_and_send_plants(
 
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
-    if !plants_from_db {
-        let plant_ids: HashSet<usize> = all_plants
-            .iter()
-            .chain(saved_plants.iter())
-            .filter_map(|p| p.id)
-            .collect();
-
-        db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
-            .await;
+    if plants_from_db {
+        info!("plants are from database, not caching");
+        return;
     }
+
+    // Also, don't save the results of this query if we have fewer than the desired number,
+    // this should be a rare occurance and this is a simple way to handle it.  The
+    // alternative would be to (on fetch) get some from the database and the rest from gpt.
+    // Its easier to just get all from gpt, even if its a little more work.
+    if all_plants.len() != 12 {
+        info!("only have {} plants, not caching", all_plants.len());
+        return;
+    }
+
+    // At least one plant is missing an image, so don't store these results.  Very
+    // occasionally we'll run into this, and its okay as a quirk but lets not cache
+    // it forever.
+    let plant_without_image = all_plants.iter().find(|p| p.image.is_none());
+    if let Some(plant_without_image) = plant_without_image {
+        info!(
+            "not all plants have an image (missing for {}), not caching",
+            plant_without_image.scientific
+        );
+        return;
+    }
+
+    let plant_ids: HashSet<usize> = all_plants
+        .iter()
+        .chain(saved_plants.iter())
+        .filter_map(|p| p.id)
+        .collect();
+
+    db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
+        .await;
 }
 
 #[get("/plants")]

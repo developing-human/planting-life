@@ -119,6 +119,8 @@ pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) 
         }
     }
 
+    //TODO: Consider searching for common name in image_search as last ditch effort.
+
     None // No image to show :(
 }
 
