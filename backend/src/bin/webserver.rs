@@ -4,7 +4,6 @@ use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use async_mutex::Mutex;
 use futures::join;
 use futures::stream::{self, Stream, StreamExt};
-use planting_life::citations;
 use planting_life::database::Database;
 use planting_life::domain::{Image, Moisture, NativePlant, Shade};
 use planting_life::flickr;
@@ -256,6 +255,7 @@ async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) -> Opt
     }
 }
 
+/*
 async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
     //TODO: I think citations::find needs to know what citations we already have,
     //      and only try to build out the ones we don't have.  But currently we
@@ -270,6 +270,7 @@ async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
         send_event(sender, "citations", &payload).await;
     }
 }
+*/
 
 #[derive(Serialize, Deserialize, Debug)]
 struct NurseriesRequest {
