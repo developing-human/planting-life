@@ -83,7 +83,12 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
               variant="outlined"
               onChange={handleZipChange}
               sx={{ width: "100%" }}
-              inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
+              inputProps={{
+                inputMode: "numeric",
+                pattern: "[0-9]{5}",
+                maxlength: 5,
+                title: "US Zip Code",
+              }}
             />
           </Grid>
           <Grid item xs={12} sm={4}>

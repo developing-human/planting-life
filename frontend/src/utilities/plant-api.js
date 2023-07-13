@@ -8,7 +8,6 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
 
     sse.addEventListener("plant", (event) => {
       let plant = JSON.parse(event.data);
-      console.log("Got plant: " + plant.scientific);
       setPlants((prevPlants) => [...prevPlants, plant]);
     });
 

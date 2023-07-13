@@ -37,7 +37,11 @@ function NavBar() {
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1, paddingLeft: "5px" }}
+            sx={{
+              flexGrow: 1,
+              paddingTop: "10px",
+              paddingLeft: "5px"
+            }}
           >
             Planting Life
           </Typography>
@@ -52,7 +56,7 @@ function NavBar() {
               textAlign: "center",
               width: "40vw",
               maxWidth: "500px",
-              paddingTop: "5px",
+              paddingTop: "15px",
               paddingBottom: "5px",
               paddingLeft: "10px",
               fontSize: "0.9rem",
