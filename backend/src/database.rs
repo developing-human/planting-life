@@ -5,18 +5,24 @@ use anyhow::anyhow;
 use futures::future;
 use mysql_async::prelude::*;
 use mysql_async::Conn;
+use mysql_async::Opts;
 use mysql_async::Pool;
 use tracing::log::warn;
 
 #[derive(Clone)]
 pub struct Database {
-    pool: Pool,
+    pool: Option<Pool>,
 }
 
 impl Database {
     pub fn new(url: &str) -> Self {
-        Self {
-            pool: Pool::new(url),
+        if Opts::try_from(url).is_err() {
+            warn!("Starting server without database!  Caching/nurseries are unavailable.");
+            Self { pool: None }
+        } else {
+            Self {
+                pool: Some(Pool::new(url)),
+            }
         }
     }
 
@@ -342,12 +348,17 @@ WHERE scientific_name = :scientific_name"
     }
 
     async fn get_connection(&self) -> Result<Conn, ()> {
-        match self.pool.get_conn().await {
-            Ok(conn) => Ok(conn),
-            Err(e) => {
-                warn!("can't get db connection: {}", e);
-                Err(())
+        if let Some(pool) = &self.pool {
+            match pool.get_conn().await {
+                Ok(conn) => Ok(conn),
+                Err(e) => {
+                    warn!("can't get db connection: {}", e);
+                    Err(())
+                }
             }
+        } else {
+            warn!("tried to get db connection, but db is not connected");
+            Err(())
         }
     }
 }

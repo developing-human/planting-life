@@ -340,7 +340,13 @@ async fn fetch_nurseries_handler(
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let db_url = env::var("PLANTING_LIFE_DB_URL").expect("Must define $PLANTING_LIFE_DB_URL");
+    let db_url = match env::var("PLANTING_LIFE_DB_URLx") {
+        Ok(s) => s,
+        _ => {
+            warn!("Configure valid PLANTING_LIFE_DB_URL to use database");
+            "".to_string()
+        }
+    };
     let db = Database::new(&db_url);
 
     HttpServer::new(move || {
