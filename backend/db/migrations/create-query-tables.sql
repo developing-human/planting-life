@@ -1,34 +1,21 @@
 --liquibase formatted sql
 
 --changeset doug:1
-CREATE TABLE queries (
-  id INT PRIMARY KEY,  
+CREATE TABLE IF NOT EXISTS queries (
+  id INT PRIMARY KEY AUTO_INCREMENT,  
   region_id INT,
   shade ENUM('None', 'Some', 'Lots'),
   moisture ENUM('None', 'Some', 'Lots'),
 
-  FOREIGN KEY(region_id) REFERENCES regions(id)
+  CONSTRAINT FK_QueriesRegion FOREIGN KEY(region_id) REFERENCES regions(id),
+  CONSTRAINT UC_Queries UNIQUE (region_id, shade, moisture)
 );
 
-CREATE TABLE queries_plants (
+CREATE TABLE IF NOT EXISTS queries_plants (
   query_id INT,
   plant_id INT,
 
   PRIMARY KEY (query_id, plant_id),
-  FOREIGN KEY(query_id) REFERENCES queries(id),
-  FOREIGN KEY(plant_id) REFERENCES plants(id)
+  CONSTRAINT QueryPlantsQuery FOREIGN KEY(query_id) REFERENCES queries(id),
+  CONSTRAINT QueryPlantsPlant FOREIGN KEY(plant_id) REFERENCES plants(id)
 );
-
---changeset doug:2
-ALTER TABLE queries_plants DROP FOREIGN KEY queries_plants_ibfk_1;
---ALTER TABLE queries_plants DROP INDEX queries_plants_ibfk_1;
-
-ALTER TABLE queries MODIFY id INT NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE queries_plants
-ADD CONSTRAINT queries_plants_ibfk_1
-FOREIGN KEY(query_id) REFERENCES queries(id);
-
---changeset doug:3
-ALTER TABLE queries
-ADD UNIQUE unique_query_index(region_id, shade, moisture);

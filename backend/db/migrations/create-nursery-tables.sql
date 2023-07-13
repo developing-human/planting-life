@@ -1,8 +1,8 @@
 --liquibase formatted sql
 
 --changeset doug:1
-CREATE TABLE nurseries (
-  id INT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS nurseries (
+  id INT PRIMARY KEY AUTO_INCREMENT,
   name VARCHAR(255),
   url VARCHAR(255),
   address VARCHAR(255),
@@ -20,17 +20,6 @@ CREATE TABLE zipcodes_nurseries (
  nursery_id INT,
  miles DECIMAL(3),
  PRIMARY KEY (zipcode, nursery_id),
- FOREIGN KEY (zipcode) REFERENCES zipcodes(zipcode),
- FOREIGN KEY (nursery_id) REFERENCES nurseries(id)
+ CONSTRAINT FK_ZipNurseriesZip FOREIGN KEY (zipcode) REFERENCES zipcodes(zipcode),
+ CONSTRAINT FK_ZipNurseriesNursery FOREIGN KEY (nursery_id) REFERENCES nurseries(id)
 );
-
---changeset doug:3
-ALTER TABLE zipcodes_nurseries DROP FOREIGN KEY zipcodes_nurseries_ibfk_2;
-ALTER TABLE zipcodes_nurseries DROP INDEX zipcodes_nurseries_ibfk_2;
-
-ALTER TABLE nurseries MODIFY id INT NOT NULL AUTO_INCREMENT;
-
-ALTER TABLE zipcodes_nurseries
-ADD CONSTRAINT zipcodes_nurseries_ibfk_2
-FOREIGN KEY(nursery_id) REFERENCES nurseries(id);
-
