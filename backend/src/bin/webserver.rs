@@ -121,8 +121,7 @@ async fn fill_and_send_plants(
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
     if plants_from_db {
-        info!("plants are from database, not caching");
-        return;
+        return; // not logging, this is very common
     }
 
     // Also, don't save the results of this query if we have fewer than the desired number,
@@ -201,6 +200,8 @@ async fn get_plant_stream(
 ) -> anyhow::Result<Pin<Box<impl Stream<Item = NativePlant>>>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
+    //TODO: Lookup region name, pass that to stream_plants instead of zip.
+
     let plants = openai::stream_plants(
         &openai_api_key,
         &payload.zip,
@@ -231,12 +232,10 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
 
 async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) -> Option<Image> {
     if plant.image.is_some() {
-        info!("Skipping image fetch for: {}", plant.scientific);
         // Don't fetch or send if its already available
         // If already populated, its been sent w/ the original plant
         return plant.image.clone();
     }
-    info!("Fetching image for: {}", plant.scientific);
 
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
@@ -340,7 +339,7 @@ async fn fetch_nurseries_handler(
 async fn main() -> std::io::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let db_url = match env::var("PLANTING_LIFE_DB_URLx") {
+    let db_url = match env::var("PLANTING_LIFE_DB_URL") {
         Ok(s) => s,
         _ => {
             warn!("Configure valid PLANTING_LIFE_DB_URL to use database");
