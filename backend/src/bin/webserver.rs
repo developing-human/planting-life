@@ -3,16 +3,15 @@ use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use async_mutex::Mutex;
 use futures::join;
-use futures::stream::{self, Stream, StreamExt};
+use futures::stream::{Stream, StreamExt};
 use planting_life::database::Database;
 use planting_life::domain::{Image, Moisture, NativePlant, Shade};
-use planting_life::flickr;
 use planting_life::openai;
+use planting_life::{flickr, selector};
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashSet;
 use std::env;
-use std::pin::Pin;
 use std::sync::Arc;
 use std::time;
 use tracing::{info, warn};
@@ -24,10 +23,41 @@ struct PlantsRequest {
     moisture: Moisture,
 }
 
+#[get("/plants")]
+async fn fetch_plants_handler(
+    web::Query(payload): web::Query<PlantsRequest>,
+    db: web::Data<Database>,
+) -> impl Responder {
+    info!("{payload:?}");
+
+    //TODO: 10 might be small now that I'm streaming descriptions back.
+    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
+
+    // The real work is done in a new thread so the connection to the front end can stay open.
+    actix_web::rt::spawn(async move {
+        let plant_stream =
+            selector::stream_plants(&db, &payload.zip, &payload.moisture, &payload.shade).await;
+
+        match plant_stream {
+            Ok(plant_stream) => {
+                fill_and_send_plants(db, &payload, plant_stream, &sender, true).await
+            }
+            Err(_) => send_event(&sender, "error", "").await,
+        };
+
+        send_event(&sender, "close", "").await;
+    });
+
+    stream
+        .with_keep_alive(time::Duration::from_secs(1))
+        .customize()
+        .insert_header(("X-Accel-Buffering", "no"))
+}
+
 async fn fill_and_send_plants(
     db: web::Data<Database>,
     payload: &PlantsRequest,
-    mut plants: impl Stream<Item = NativePlant> + Unpin,
+    plants: impl Stream<Item = NativePlant>,
     sender: &Sender,
     plants_from_db: bool,
 ) {
@@ -41,6 +71,8 @@ async fn fill_and_send_plants(
 
     // References to tasks which are running
     let mut handles = vec![];
+
+    let mut plants = Box::pin(plants);
 
     while let Some(plant) = plants.next().await {
         // Make a clone, so the inner and outer tasks can each own a sender
@@ -153,66 +185,6 @@ async fn fill_and_send_plants(
 
     db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
         .await;
-}
-
-#[get("/plants")]
-async fn fetch_plants_handler(
-    web::Query(payload): web::Query<PlantsRequest>,
-    db: web::Data<Database>,
-) -> impl Responder {
-    info!("{payload:?}");
-
-    //TODO: 10 might be small now that I'm streaming descriptions back.
-    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(1);
-
-    // The real work is done in a new thread so the connection to the front end can open.
-    actix_web::rt::spawn(async move {
-        let plants_db = db
-            .lookup_query_results(&payload.zip, &payload.moisture, &payload.shade)
-            .await;
-
-        if !plants_db.is_empty() {
-            fill_and_send_plants(db, &payload, stream::iter(plants_db), &sender, true).await;
-        } else {
-            let plants = match get_plant_stream(&payload).await {
-                Ok(plants) => plants,
-                Err(err) => {
-                    warn!("Failed to get plant stream {err}");
-                    send_event(&sender, "error", "").await;
-                    return;
-                }
-            };
-
-            fill_and_send_plants(db, &payload, plants, &sender, false).await;
-        }
-
-        send_event(&sender, "close", "").await;
-    });
-
-    stream
-        .with_keep_alive(time::Duration::from_secs(1))
-        .customize()
-        .insert_header(("X-Accel-Buffering", "no"))
-}
-
-async fn get_plant_stream(
-    payload: &PlantsRequest,
-) -> anyhow::Result<Pin<Box<impl Stream<Item = NativePlant>>>> {
-    let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-
-    //TODO: Lookup region name, pass that to stream_plants instead of zip.
-
-    let plants = openai::stream_plants(
-        &openai_api_key,
-        &payload.zip,
-        payload.shade.description(),
-        payload.moisture.description(),
-    )
-    .await?;
-
-    // I don't yet understand why this is needed.  But it tells the plants
-    // not to move in memory during async work.
-    Ok(Box::pin(plants))
 }
 
 async fn send_plant(sender: &Sender, plant: &NativePlant) {
