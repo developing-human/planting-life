@@ -134,7 +134,6 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
         .build();
 
-    println!("Start flickr");
     let response = client
         .get("https://api.flickr.com/services/rest")
         .timeout(Duration::from_millis(2_000)) // Typically 350-500ms, sometimes ~1s
@@ -165,7 +164,6 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
 
     let status = response.status();
     let response_body = response.text().await;
-    println!("End flickr");
 
     let response_body = match response_body {
         Ok(rb) => rb,

@@ -32,8 +32,8 @@ async fn main() {
     let saved_plant = db.save_plant(&plant).await;
     println!("saved: {saved_plant:#?}");
 
-    let fetched_by_id = db.get_plant_by_id(saved_plant.id.unwrap()).await;
-    println!("by id: {fetched_by_id:#?}");
+    //let fetched_by_id = db.get_plant_by_id(saved_plant.id.unwrap()).await;
+    //println!("by id: {fetched_by_id:#?}");
 
     let fetched_by_name = db.get_plant_by_scientific_name(scientific_name).await;
     println!("by name: {fetched_by_name:#?}");

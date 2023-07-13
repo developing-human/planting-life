@@ -108,8 +108,15 @@ async fn fill_and_send_plants(
     let plants_to_save = plants_to_save.lock().await;
     let all_plants = all_plants.lock().await;
 
-    // Save any plants which are new or updated.
-    let saved_plants = db.save_plants(&plants_to_save.iter().collect()).await;
+    // Save any plants which are new or updated.  If any fail, don't cache the query results.
+    // This is because missing ids will result in a partial cache.
+    let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
+        Ok(saved_plants) => saved_plants,
+        Err(e) => {
+            warn!("failed to save plants, not caching: {e}");
+            return;
+        }
+    };
 
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.

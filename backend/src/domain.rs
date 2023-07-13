@@ -16,7 +16,7 @@ pub struct NativePlant {
 #[serde(rename_all = "camelCase")]
 pub struct Image {
     pub id: Option<usize>,
-    pub scientific_name: String, //TODO: Duplicate, remove soon.
+    pub scientific_name: String, //TODO: Only here b/c its needed on front end
     pub title: String,
     //pub thumbnail_url: String,
     pub card_url: String,
@@ -108,4 +108,17 @@ pub struct Nursery {
     pub state: String,
     pub zip: usize,
     pub miles: usize,
+}
+
+impl Nursery {
+    pub fn build_default_map_url(&self) -> String {
+        // Pad the zip code to five digits, using zeros.
+        let zip = format!("{:05}", self.zip);
+
+        let query = format!("{} near {}", self.name, zip);
+        let query = query.replace(' ', "+");
+        let url = format!("https://www.google.com/maps/search/?api=1&query={query}");
+
+        url
+    }
 }
