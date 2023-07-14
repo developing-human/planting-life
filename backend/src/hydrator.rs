@@ -2,14 +2,12 @@ use crate::database::Database;
 use crate::domain::NativePlant;
 use crate::flickr;
 use crate::openai;
-use actix_web::web;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
 use std::boxed::Box;
 use std::env;
 use std::pin::Pin;
 use std::sync::mpsc::Sender;
-use std::sync::Arc;
 use tracing::warn;
 
 pub struct HydratedPlant {
@@ -19,12 +17,10 @@ pub struct HydratedPlant {
 }
 
 pub async fn hydrate_plants(
-    db: web::Data<Database>,
+    db: &Database,
     mut plants: impl Stream<Item = NativePlant> + Unpin,
     sender: &mut Sender<HydratedPlant>,
 ) {
-    let db = web::Data::new(Arc::new(db));
-
     // Holds (and owns) all the plants which are returned.
     //let all_plants = Arc::new(Mutex::new(vec![]));
 
@@ -36,10 +32,10 @@ pub async fn hydrate_plants(
     while let Some(plant) = plants.next().await {
         // Make a clone, so the inner and outer tasks can each own a sender
         let mut sender = sender.clone();
+        let db = db.clone();
 
         //let all_plants = all_plants.clone();
         //let plants_to_save = plants_to_save.clone();
-        let db = db.get_ref().clone();
 
         // This inner task is started so the next entry can start processing before
         // the current one finishes.
@@ -240,11 +236,15 @@ async fn send_plant(
     done: bool,
     updated: bool,
 ) {
-    sender.send(HydratedPlant {
-        plant: plant.clone(),
-        done,
-        updated,
-    });
+    sender
+        .send(HydratedPlant {
+            plant: plant.clone(),
+            done,
+            updated,
+        })
+        // This should only fail in the receiver is closed
+        // and panicking seems okay in that scenario
+        .unwrap();
 }
 
 // Looks up an image for this plant.  If one is found, it returns a HydratedPlant

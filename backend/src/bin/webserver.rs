@@ -1,16 +1,16 @@
 use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
-use futures::stream::{Stream, StreamExt};
+use futures::stream::Stream;
 use planting_life::database::Database;
-use planting_life::domain::{Image, Moisture, NativePlant, Shade};
-use planting_life::{flickr, selector};
-use planting_life::{hydrator, openai};
+use planting_life::domain::{Moisture, NativePlant, Shade};
+use planting_life::hydrator;
+use planting_life::selector;
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashSet;
 use std::env;
-use std::sync::{mpsc, Arc};
+use std::sync::mpsc;
 use std::time;
 use tracing::{info, warn};
 
@@ -28,7 +28,8 @@ async fn fetch_plants_handler(
 ) -> impl Responder {
     info!("{payload:?}");
 
-    let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
+    let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
+    let db = db.get_ref().clone();
 
     // The real work is done in a new thread so the connection to the front end can stay open.
     actix_web::rt::spawn(async move {
@@ -36,11 +37,13 @@ async fn fetch_plants_handler(
             selector::stream_plants(&db, &payload.zip, &payload.moisture, &payload.shade).await;
 
         match plant_stream {
-            Ok(plant_stream) => fill_and_send_plants(db, &payload, plant_stream).await,
-            Err(_) => send_event(&sender, "error", "").await,
+            Ok(plant_stream) => {
+                fill_and_send_plants(&db, &payload, plant_stream, &frontend_sender).await
+            }
+            Err(_) => send_event(&frontend_sender, "error", "").await,
         };
 
-        send_event(&sender, "close", "").await;
+        send_event(&frontend_sender, "close", "").await;
     });
 
     stream
@@ -50,31 +53,31 @@ async fn fetch_plants_handler(
 }
 
 async fn fill_and_send_plants(
-    db: web::Data<Database>,
+    db: &Database,
     payload: &PlantsRequest,
-    plants: impl Stream<Item = NativePlant>,
-    //sender: &Sender,
+    plants: impl Stream<Item = NativePlant> + 'static,
+    frontend_sender: &Sender,
     //plants_from_db: bool,
 ) {
-    //TODO: This is tricky... I need to understand how Arc works better I think?
-    //      I feel like I need to not be passing this web::Data construct around
-    let db = Arc::new(db.get_ref());
     let (mut plant_sender, plant_receiver) = mpsc::channel();
+    let db_clone = db.clone();
     actix_web::rt::spawn(async move {
-        hydrator::hydrate_plants(&db.clone(), Box::pin(plants), &mut plant_sender);
+        hydrator::hydrate_plants(&db_clone, Box::pin(plants), &mut plant_sender).await;
     });
     let mut plants_to_save = vec![];
     let mut all_plants = vec![];
+
+    //TODO: Can I get rid of some of the clones here?
     while let Ok(hydrated_plant) = plant_receiver.recv() {
         if hydrated_plant.done {
-            all_plants.push(hydrated_plant.plant);
+            all_plants.push(hydrated_plant.plant.clone());
 
             if hydrated_plant.updated {
-                plants_to_save.push(hydrated_plant.plant);
+                plants_to_save.push(hydrated_plant.plant.clone());
             }
         }
 
-        todo!("send these to front end")
+        send_plant(frontend_sender, &hydrated_plant.plant).await;
     }
 
     //let plants_to_save = plants_to_save.lock().await;
@@ -150,78 +153,6 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
         Err(_) => warn!("Error sending [{}] with message [{}]", event, message),
     }
 }
-
-async fn fetch_and_send_image(sender: &Sender, plant: &NativePlant) -> Option<Image> {
-    if plant.image.is_some() {
-        // Don't fetch or send if its already available
-        // If already populated, its been sent w/ the original plant
-        return plant.image.clone();
-    }
-
-    let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
-
-    let image = flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key).await;
-    if let Some(image) = image {
-        let image_json = serde_json::to_string(&image).expect("image should serialize");
-        send_event(sender, "image", &image_json).await;
-
-        return Some(image);
-    }
-
-    None
-}
-
-async fn fetch_and_send_description(sender: &Sender, plant: &NativePlant) -> Option<String> {
-    if plant.description.is_some() {
-        // Don't fetch or send if its already available
-        // If already populated, its been sent w/ the original plant
-        return plant.description.clone();
-    }
-
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {
-        Ok(stream) => stream,
-        Err(_) => {
-            warn!("Failed to fetch description");
-            return None;
-        }
-    };
-
-    let mut description_deltas = vec![];
-    let mut description_stream = Box::pin(description_stream);
-    while let Some(description_delta) = description_stream.next().await {
-        let payload = format!(
-            r#"{{"scientificName": "{}", "descriptionDelta": "{}"}}"#,
-            plant.scientific, description_delta
-        );
-
-        description_deltas.push(description_delta);
-        send_event(sender, "descriptionDelta", &payload).await;
-    }
-
-    if description_deltas.is_empty() {
-        None
-    } else {
-        Some(description_deltas.join(""))
-    }
-}
-
-/*
-async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
-    //TODO: I think citations::find needs to know what citations we already have,
-    //      and only try to build out the ones we don't have.  But currently we
-    //      don't even have citations in the db.
-    let citations = citations::find(&plant.scientific).await;
-    if !citations.is_empty() {
-        let citations_json = serde_json::to_string(&citations).expect("citations should serialize");
-        let payload = format!(
-            r#"{{"scientificName": "{}", "citations": {}}}"#,
-            plant.scientific, citations_json
-        );
-        send_event(sender, "citations", &payload).await;
-    }
-}
-*/
 
 #[derive(Serialize, Deserialize, Debug)]
 struct NurseriesRequest {
