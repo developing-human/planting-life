@@ -1,18 +1,16 @@
 use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
-use async_mutex::Mutex;
-use futures::join;
 use futures::stream::{Stream, StreamExt};
 use planting_life::database::Database;
 use planting_life::domain::{Image, Moisture, NativePlant, Shade};
-use planting_life::openai;
 use planting_life::{flickr, selector};
+use planting_life::{hydrator, openai};
 use serde::{self, Deserialize, Serialize};
 use std::boxed::Box;
 use std::collections::HashSet;
 use std::env;
-use std::sync::Arc;
+use std::sync::{mpsc, Arc};
 use std::time;
 use tracing::{info, warn};
 
@@ -30,7 +28,6 @@ async fn fetch_plants_handler(
 ) -> impl Responder {
     info!("{payload:?}");
 
-    //TODO: 10 might be small now that I'm streaming descriptions back.
     let (sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
 
     // The real work is done in a new thread so the connection to the front end can stay open.
@@ -39,9 +36,7 @@ async fn fetch_plants_handler(
             selector::stream_plants(&db, &payload.zip, &payload.moisture, &payload.shade).await;
 
         match plant_stream {
-            Ok(plant_stream) => {
-                fill_and_send_plants(db, &payload, plant_stream, &sender, true).await
-            }
+            Ok(plant_stream) => fill_and_send_plants(db, &payload, plant_stream).await,
             Err(_) => send_event(&sender, "error", "").await,
         };
 
@@ -58,90 +53,38 @@ async fn fill_and_send_plants(
     db: web::Data<Database>,
     payload: &PlantsRequest,
     plants: impl Stream<Item = NativePlant>,
-    sender: &Sender,
-    plants_from_db: bool,
+    //sender: &Sender,
+    //plants_from_db: bool,
 ) {
-    let db = web::Data::new(Arc::new(db));
+    //TODO: This is tricky... I need to understand how Arc works better I think?
+    //      I feel like I need to not be passing this web::Data construct around
+    let db = Arc::new(db.get_ref());
+    let (mut plant_sender, plant_receiver) = mpsc::channel();
+    actix_web::rt::spawn(async move {
+        hydrator::hydrate_plants(&db.clone(), Box::pin(plants), &mut plant_sender);
+    });
+    let mut plants_to_save = vec![];
+    let mut all_plants = vec![];
+    while let Ok(hydrated_plant) = plant_receiver.recv() {
+        if hydrated_plant.done {
+            all_plants.push(hydrated_plant.plant);
 
-    // Holds (and owns) all the plants which are returned.
-    let all_plants = Arc::new(Mutex::new(vec![]));
-
-    // Holds references to plants which are either new or updated
-    let plants_to_save = Arc::new(Mutex::new(vec![]));
-
-    // References to tasks which are running
-    let mut handles = vec![];
-
-    let mut plants = Box::pin(plants);
-
-    while let Some(plant) = plants.next().await {
-        // Make a clone, so the inner and outer tasks can each own a sender
-        let sender_clone = sender.clone();
-        let db = db.get_ref().clone();
-
-        let all_plants = all_plants.clone();
-        let plants_to_save = plants_to_save.clone();
-
-        // This inner task is started so the next entry can start processing before
-        // the previous one finishes.
-        let handle = actix_web::rt::spawn(async move {
-            // If this plant didn't come from the datbase, check the database for it.
-            let mut plant = plant;
-            if plant.id.is_none() {
-                let existing_plant = db.get_plant_by_scientific_name(&plant.scientific).await;
-                if let Some(existing_plant) = existing_plant {
-                    plant = existing_plant;
-                }
+            if hydrated_plant.updated {
+                plants_to_save.push(hydrated_plant.plant);
             }
+        }
 
-            // At this point I have a plant from the gpt list + database query
-            // Some parts could be missing (not in db, db is missing parts)
-            // Now, any missing parts need to be filled in.
-
-            // Concurrently send the plant to the front end while handling the image
-            let (_, img, description /*, _*/) = join!(
-                send_plant(&sender_clone, &plant),
-                fetch_and_send_image(&sender_clone, &plant),
-                fetch_and_send_description(&sender_clone, &plant),
-                //TODO: Bring citations back once they can be cached or displayed.
-                //fetch_and_send_citations(&sender_clone, &plant),
-            );
-
-            let updated_plant = NativePlant {
-                image: img,
-                description,
-                ..plant
-            };
-
-            // Only save plants which weren't from the database (no id) or where
-            // the description was updated.  In the future, we'll also want to check
-            // images and citations once those are handled by the db.
-            if updated_plant.id.is_none()
-                || updated_plant.description != plant.description
-                || (plant.image.is_none() && updated_plant.image.is_some())
-            {
-                plants_to_save.lock().await.push(updated_plant.clone());
-            }
-
-            all_plants.lock().await.push(updated_plant);
-        });
-
-        handles.push(handle);
+        todo!("send these to front end")
     }
 
-    send_event(sender, "allPlantsLoaded", "").await;
-
-    // Wait for all inner tasks to finish before closing the stream
-    // This lets any outstanding data be written back to the client
-    for handle in handles {
-        handle.await.unwrap_or_default();
-    }
-
-    let plants_to_save = plants_to_save.lock().await;
-    let all_plants = all_plants.lock().await;
+    //let plants_to_save = plants_to_save.lock().await;
+    //let all_plants = all_plants.lock().await;
 
     // Save any plants which are new or updated.  If any fail, don't cache the query results.
     // This is because missing ids will result in a partial cache.
+
+    //TODO: Still save here? Or inside hydrate plants?  Inside kind of makes sense since it
+    //      populates id
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
         Ok(saved_plants) => saved_plants,
         Err(e) => {
@@ -149,12 +92,18 @@ async fn fill_and_send_plants(
             return;
         }
     };
+    //TODO: For tomorrow... I'm close here.  Need to fight the last few errors and then
+    //      wire the database caching back up.  And go through all the TODOs :D
 
+    //TODO: How can I know if they're from the database?  Looking at plant.id is misleading,
+    //      because we could list with GPT but find all 12 plants in the database already.
+
+    //TODO: Bring this back
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
-    if plants_from_db {
-        return; // not logging, this is very common
-    }
+    //if plants_from_db {
+    //    return; // not logging, this is very common
+    //}
 
     // Also, don't save the results of this query if we have fewer than the desired number,
     // this should be a rare occurance and this is a simple way to handle it.  The

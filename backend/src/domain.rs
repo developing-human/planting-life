@@ -12,6 +12,21 @@ pub struct NativePlant {
     pub image: Option<Image>,
 }
 
+impl NativePlant {
+    // Merges two plants, prioritizing "other" but never overriding Some with None
+    pub fn merge(&self, other: &NativePlant) -> NativePlant {
+        //TODO: Can I write this concisely with fewer clones?
+        NativePlant {
+            id: other.id.or(self.id),
+            common: self.common.clone(),
+            scientific: self.scientific.clone(),
+            bloom: other.bloom.clone().or(self.bloom.clone()),
+            description: other.description.clone().or(self.description.clone()),
+            image: other.image.clone().or(self.image.clone()),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
