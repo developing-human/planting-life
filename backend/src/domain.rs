@@ -3,12 +3,16 @@ use std::fmt::{Display, Formatter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NativePlant {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<usize>,
     pub common: String,
     pub scientific: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
     //pub image_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
 }
 

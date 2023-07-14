@@ -2,14 +2,15 @@ use crate::database::Database;
 use crate::domain::NativePlant;
 use crate::flickr;
 use crate::openai;
+use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
 use std::boxed::Box;
 use std::env;
 use std::pin::Pin;
-use std::sync::mpsc::Sender;
 use tracing::warn;
 
+#[derive(Debug)]
 pub struct HydratedPlant {
     pub plant: NativePlant,
     pub done: bool,
@@ -19,42 +20,38 @@ pub struct HydratedPlant {
 pub async fn hydrate_plants(
     db: &Database,
     mut plants: impl Stream<Item = NativePlant> + Unpin,
-    sender: &mut Sender<HydratedPlant>,
+    sender: &mut UnboundedSender<HydratedPlant>,
 ) {
-    // Holds (and owns) all the plants which are returned.
-    //let all_plants = Arc::new(Mutex::new(vec![]));
-
-    // Holds references to plants which are either new or updated
-    //let plants_to_save = Arc::new(Mutex::new(vec![]));
-
     // References to tasks which are running
     let mut handles = vec![];
     while let Some(plant) = plants.next().await {
         // Make a clone, so the inner and outer tasks can each own a sender
-        let mut sender = sender.clone();
+        let sender = sender.clone();
         let db = db.clone();
-
-        //let all_plants = all_plants.clone();
-        //let plants_to_save = plants_to_save.clone();
 
         // This inner task is started so the next entry can start processing before
         // the current one finishes.
-        let handle = actix_web::rt::spawn(async move {
-            hydrate_one_plant(&db, plant, &mut sender).await;
-        });
-
-        handles.push(handle);
+        handles.push(actix_web::rt::spawn(async move {
+            hydrate_one_plant(&db, plant, Some(sender)).await;
+        }));
     }
 
     for handle in handles {
         handle.await.unwrap_or_default();
     }
+
+    sender.close_channel();
 }
 
+/// Given a partially populated plant, populates it as best it can from
+/// the database and LLM.  If a sender is provided, emits updates it as
+/// they become available.  The last plant emitted will be marked as done
+/// and be populated as is possible.  Also Returns the fully populated
+/// plant.
 async fn hydrate_one_plant(
     db: &Database,
     mut plant: NativePlant,
-    sender: &mut Sender<HydratedPlant>,
+    sender: Option<UnboundedSender<HydratedPlant>>,
 ) {
     // If this plant didn't come from the datbase, check the database for it.
     if plant.id.is_none() {
@@ -66,7 +63,7 @@ async fn hydrate_one_plant(
 
     // At this point I have a plant from the gpt list + database query
     // Some parts could be missing (not in db, db is missing parts)
-    // Now, any missing parts need to be filled in.
+    // Now, fill in any missing parts.
 
     // This ridiculousness is to handle the fact that each async fn returns
     // a unique type, even if they return the same concrete type.  The "dyn"
@@ -89,166 +86,35 @@ async fn hydrate_one_plant(
         if let Some(hydrated_plant) = hydrated_plant {
             updated = true;
             merged_plant = merged_plant.merge(&hydrated_plant.plant);
-            send_plant(sender, &hydrated_plant.plant, false, true).await;
+            send_plant(&sender, &hydrated_plant.plant, false, true).await;
         }
     }
 
-    send_plant(sender, &merged_plant, updated, true).await;
+    send_plant(&sender, &merged_plant, true, updated).await;
 }
-/*
-async fn fill_and_send_plants(
-    db: web::Data<Database>,
-    payload: &PlantsRequest,
-    plants: impl Stream<Item = NativePlant>,
-    sender: &Sender,
-    plants_from_db: bool,
-) {
-    let db = web::Data::new(Arc::new(db));
 
-    // Holds (and owns) all the plants which are returned.
-    let all_plants = Arc::new(Mutex::new(vec![]));
-
-    // Holds references to plants which are either new or updated
-    let plants_to_save = Arc::new(Mutex::new(vec![]));
-
-    // References to tasks which are running
-    let mut handles = vec![];
-
-    let mut plants = Box::pin(plants);
-
-    while let Some(plant) = plants.next().await {
-        // Make a clone, so the inner and outer tasks can each own a sender
-        let sender_clone = sender.clone();
-        let db = db.get_ref().clone();
-
-        let all_plants = all_plants.clone();
-        let plants_to_save = plants_to_save.clone();
-
-        // This inner task is started so the next entry can start processing before
-        // the previous one finishes.
-        let handle = actix_web::rt::spawn(async move {
-            // If this plant didn't come from the datbase, check the database for it.
-            let mut plant = plant;
-            if plant.id.is_none() {
-                let existing_plant = db.get_plant_by_scientific_name(&plant.scientific).await;
-                if let Some(existing_plant) = existing_plant {
-                    plant = existing_plant;
-                }
-            }
-
-            // At this point I have a plant from the gpt list + database query
-            // Some parts could be missing (not in db, db is missing parts)
-            // Now, any missing parts need to be filled in.
-
-            // Concurrently send the plant to the front end while handling the image
-            let (_, img, description /*, _*/) = join!(
-                send_plant(&sender_clone, &plant),
-                fetch_and_send_image(&sender_clone, &plant),
-                fetch_and_send_description(&sender_clone, &plant),
-                //TODO: Bring citations back once they can be cached or displayed.
-                //fetch_and_send_citations(&sender_clone, &plant),
-            );
-
-            let updated_plant = NativePlant {
-                image: img,
-                description,
-                ..plant
-            };
-
-            // Only save plants which weren't from the database (no id) or where
-            // the description was updated.  In the future, we'll also want to check
-            // images and citations once those are handled by the db.
-            if updated_plant.id.is_none()
-                || updated_plant.description != plant.description
-                || (plant.image.is_none() && updated_plant.image.is_some())
-            {
-                plants_to_save.lock().await.push(updated_plant.clone());
-            }
-
-            all_plants.lock().await.push(updated_plant);
-        });
-
-        handles.push(handle);
-    }
-
-    send_event(sender, "allPlantsLoaded", "").await;
-
-    // Wait for all inner tasks to finish before closing the stream
-    // This lets any outstanding data be written back to the client
-    for handle in handles {
-        handle.await.unwrap_or_default();
-    }
-
-    let plants_to_save = plants_to_save.lock().await;
-    let all_plants = all_plants.lock().await;
-
-    // Save any plants which are new or updated.  If any fail, don't cache the query results.
-    // This is because missing ids will result in a partial cache.
-    let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
-        Ok(saved_plants) => saved_plants,
-        Err(e) => {
-            warn!("failed to save plants, not caching: {e}");
-            return;
-        }
-    };
-
-    // We only need to cache the query results if these results aren't from the database
-    // When they are from the database, we know its already there.
-    if plants_from_db {
-        return; // not logging, this is very common
-    }
-
-    // Also, don't save the results of this query if we have fewer than the desired number,
-    // this should be a rare occurance and this is a simple way to handle it.  The
-    // alternative would be to (on fetch) get some from the database and the rest from gpt.
-    // Its easier to just get all from gpt, even if its a little more work.
-    if all_plants.len() != 12 {
-        info!("only have {} plants, not caching", all_plants.len());
-        return;
-    }
-
-    // At least one plant is missing an image, so don't store these results.  Very
-    // occasionally we'll run into this, and its okay as a quirk but lets not cache
-    // it forever.
-    let plant_without_image = all_plants.iter().find(|p| p.image.is_none());
-    if let Some(plant_without_image) = plant_without_image {
-        info!(
-            "not all plants have an image (missing for {}), not caching",
-            plant_without_image.scientific
-        );
-        return;
-    }
-
-    let plant_ids: HashSet<usize> = all_plants
-        .iter()
-        .chain(saved_plants.iter())
-        .filter_map(|p| p.id)
-        .collect();
-
-    db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
-        .await;
-}
-*/
-
+/// Sends a HydratedPlant to the sender, if the sender is populated.
 async fn send_plant(
-    sender: &mut Sender<HydratedPlant>,
+    sender: &Option<UnboundedSender<HydratedPlant>>,
     plant: &NativePlant,
     done: bool,
     updated: bool,
 ) {
-    sender
-        .send(HydratedPlant {
-            plant: plant.clone(),
-            done,
-            updated,
-        })
-        // This should only fail in the receiver is closed
-        // and panicking seems okay in that scenario
-        .unwrap();
+    if let Some(mut sender) = sender.clone() {
+        sender
+            .start_send(HydratedPlant {
+                plant: plant.clone(),
+                done,
+                updated,
+            })
+            // This should only fail in the receiver is closed
+            // and panicking seems okay in that scenario
+            .unwrap();
+    }
 }
 
-// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
-// with the image populated.
+/// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
+/// with the image populated.
 async fn hydrate_image(plant: &NativePlant) -> Option<HydratedPlant> {
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
@@ -264,6 +130,8 @@ async fn hydrate_image(plant: &NativePlant) -> Option<HydratedPlant> {
         })
 }
 
+/// Looks up a description for this plant.  If one is found, it returns a HydratedPlant
+/// with the description populated.
 async fn hydrate_description(plant: &NativePlant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {

@@ -1,16 +1,16 @@
 use actix_cors::Cors;
 use actix_web::{get, web, App, HttpServer, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
+use futures::channel::mpsc;
 use futures::stream::Stream;
+use futures::StreamExt;
 use planting_life::database::Database;
 use planting_life::domain::{Moisture, NativePlant, Shade};
 use planting_life::hydrator;
 use planting_life::selector;
 use serde::{self, Deserialize, Serialize};
-use std::boxed::Box;
 use std::collections::HashSet;
 use std::env;
-use std::sync::mpsc;
 use std::time;
 use tracing::{info, warn};
 
@@ -55,20 +55,19 @@ async fn fetch_plants_handler(
 async fn fill_and_send_plants(
     db: &Database,
     payload: &PlantsRequest,
-    plants: impl Stream<Item = NativePlant> + 'static,
+    plant_stream: impl Stream<Item = NativePlant> + 'static + Unpin,
     frontend_sender: &Sender,
     //plants_from_db: bool,
 ) {
-    let (mut plant_sender, plant_receiver) = mpsc::channel();
+    let (mut plant_sender, mut plant_receiver) = mpsc::unbounded();
     let db_clone = db.clone();
+
     actix_web::rt::spawn(async move {
-        hydrator::hydrate_plants(&db_clone, Box::pin(plants), &mut plant_sender).await;
+        hydrator::hydrate_plants(&db_clone, plant_stream, &mut plant_sender).await;
     });
     let mut plants_to_save = vec![];
     let mut all_plants = vec![];
-
-    //TODO: Can I get rid of some of the clones here?
-    while let Ok(hydrated_plant) = plant_receiver.recv() {
+    while let Some(hydrated_plant) = plant_receiver.next().await {
         if hydrated_plant.done {
             all_plants.push(hydrated_plant.plant.clone());
 
@@ -80,14 +79,9 @@ async fn fill_and_send_plants(
         send_plant(frontend_sender, &hydrated_plant.plant).await;
     }
 
-    //let plants_to_save = plants_to_save.lock().await;
-    //let all_plants = all_plants.lock().await;
-
     // Save any plants which are new or updated.  If any fail, don't cache the query results.
     // This is because missing ids will result in a partial cache.
 
-    //TODO: Still save here? Or inside hydrate plants?  Inside kind of makes sense since it
-    //      populates id
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
         Ok(saved_plants) => saved_plants,
         Err(e) => {
@@ -95,13 +89,11 @@ async fn fill_and_send_plants(
             return;
         }
     };
-    //TODO: For tomorrow... I'm close here.  Need to fight the last few errors and then
-    //      wire the database caching back up.  And go through all the TODOs :D
 
+    //TODO: Bring this back
     //TODO: How can I know if they're from the database?  Looking at plant.id is misleading,
     //      because we could list with GPT but find all 12 plants in the database already.
 
-    //TODO: Bring this back
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
     //if plants_from_db {

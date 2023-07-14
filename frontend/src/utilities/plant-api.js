@@ -7,8 +7,18 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
     setEventSource(sse);
 
     sse.addEventListener("plant", (event) => {
-      let plant = JSON.parse(event.data);
-      setPlants((prevPlants) => [...prevPlants, plant]);
+      let newPlant = JSON.parse(event.data);
+      setPlants((prevPlants) => {
+        const index = prevPlants.findIndex(p => p.scientific === newPlant.scientific);
+        const newPlants = prevPlants.slice();
+        if (index === -1) {
+          newPlants.push(newPlant);
+        } else {
+          newPlants[index] = {...prevPlants[index], ...newPlant };
+        }
+
+        return newPlants;
+      });
     });
 
     // Hides the loading animation when the last plant appears,
@@ -27,52 +37,6 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
       setLoading(false);
       setError("Well that's embarassing... please try again.");
       sse.close();
-    });
-
-    sse.addEventListener("image", (event) => {
-      // get JSON image data
-      const image = JSON.parse(event.data);
-
-      setPlants((prevPlants) => {
-        const newPlants = prevPlants.map((plant) => {
-          if (plant.scientific === image.scientificName) {
-            const updatedPlant = {
-              ...plant,
-              image: image
-            };
-
-            return updatedPlant;
-          }
-
-          return plant;
-        });
-
-        return newPlants;
-      });
-    });
-
-    sse.addEventListener("descriptionDelta", (event) => {
-      // get JSON image data
-      const payload = JSON.parse(event.data);
-      setPlants((prevPlants) => {
-        const newPlants = prevPlants.map((plant) => {
-          if (plant.scientific === payload.scientificName) {
-            const delta = payload.descriptionDelta;
-            const updatedPlant = {
-              ...plant,
-              description: plant.description
-                ? plant.description + delta
-                : delta,
-            };
-
-            return updatedPlant;
-          }
-
-          return plant;
-        });
-
-        return newPlants;
-      });
     });
 
     return () => {
