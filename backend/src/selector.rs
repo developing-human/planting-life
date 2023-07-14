@@ -6,23 +6,32 @@ use std::boxed::Box;
 use std::env;
 use std::pin::Pin;
 
+pub struct PlantStream {
+    pub stream: Pin<Box<dyn Stream<Item = NativePlant> + Send>>,
+    pub from_db: bool,
+}
+
 pub async fn stream_plants(
     db: &Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
-) -> anyhow::Result<Pin<Box<dyn Stream<Item = NativePlant> + Send>>> {
+) -> anyhow::Result<PlantStream> {
     // The complexity of this rather simple operation is due to the database
     // and llm returning different types of streams
     let plants_from_db = db.lookup_query_results(zip, moisture, shade).await;
 
     if !plants_from_db.is_empty() {
-        println!("got stream from db");
-        return Ok(Box::pin(stream::iter(plants_from_db)));
+        return Ok(PlantStream {
+            stream: Box::pin(stream::iter(plants_from_db)),
+            from_db: true,
+        });
     }
 
-    println!("getting llm stream");
-    Ok(Box::pin(get_llm_plant_stream(zip, moisture, shade).await?))
+    Ok(PlantStream {
+        stream: Box::pin(get_llm_plant_stream(zip, moisture, shade).await?),
+        from_db: false,
+    })
 }
 
 async fn get_llm_plant_stream(

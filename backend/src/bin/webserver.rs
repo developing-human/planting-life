@@ -38,7 +38,14 @@ async fn fetch_plants_handler(
 
         match plant_stream {
             Ok(plant_stream) => {
-                fill_and_send_plants(&db, &payload, plant_stream, &frontend_sender).await
+                fill_and_send_plants(
+                    &db,
+                    &payload,
+                    plant_stream.stream,
+                    &frontend_sender,
+                    plant_stream.from_db,
+                )
+                .await
             }
             Err(_) => send_event(&frontend_sender, "error", "").await,
         };
@@ -57,7 +64,7 @@ async fn fill_and_send_plants(
     payload: &PlantsRequest,
     plant_stream: impl Stream<Item = NativePlant> + 'static + Unpin,
     frontend_sender: &Sender,
-    //plants_from_db: bool,
+    plants_from_db: bool,
 ) {
     let (mut plant_sender, mut plant_receiver) = mpsc::unbounded();
     let db_clone = db.clone();
@@ -90,15 +97,11 @@ async fn fill_and_send_plants(
         }
     };
 
-    //TODO: Bring this back
-    //TODO: How can I know if they're from the database?  Looking at plant.id is misleading,
-    //      because we could list with GPT but find all 12 plants in the database already.
-
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
-    //if plants_from_db {
-    //    return; // not logging, this is very common
-    //}
+    if plants_from_db {
+        return; // not logging, this is very common
+    }
 
     // Also, don't save the results of this query if we have fewer than the desired number,
     // this should be a rare occurance and this is a simple way to handle it.  The
