@@ -99,7 +99,6 @@ pub async fn stream_plants(
     moisture: &str,
 ) -> anyhow::Result<impl Stream<Item = NativePlant>> {
     let prompt = build_prompt(region_name, shade, moisture);
-    println!("{prompt}");
 
     let payload = ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
