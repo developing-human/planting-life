@@ -20,7 +20,7 @@ async fn main() {
     let common_name = &args[2];
     let description = &args[3];
 
-    let plant = NativePlant {
+    let plant = Plant {
         scientific: scientific_name.to_string(),
         common: common_name.to_string(),
         description: Some(description.to_string()),
@@ -39,7 +39,7 @@ async fn main() {
     println!("by name: {fetched_by_name:#?}");
 
     /*
-    let first = NativePlant {
+    let first = Plant {
         scientific: "first".to_string(),
         common: common_name.to_string(),
         description: Some(description.to_string()),
@@ -47,7 +47,7 @@ async fn main() {
         image: None,
         id: None,
     };
-    let second = NativePlant {
+    let second = Plant {
         scientific: "second".to_string(),
         common: common_name.to_string(),
         description: Some(description.to_string()),
@@ -55,7 +55,7 @@ async fn main() {
         image: None,
         id: None,
     };
-    let third = NativePlant {
+    let third = Plant {
         scientific: "third".to_string(),
         common: common_name.to_string(),
         description: Some(description.to_string()),

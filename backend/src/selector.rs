@@ -7,7 +7,7 @@ use std::env;
 use std::pin::Pin;
 
 pub struct PlantStream {
-    pub stream: Pin<Box<dyn Stream<Item = NativePlant> + Send>>,
+    pub stream: Pin<Box<dyn Stream<Item = Plant> + Send>>,
     pub from_db: bool,
 }
 
@@ -36,7 +36,7 @@ async fn get_llm_plant_stream(
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
-) -> anyhow::Result<impl Stream<Item = NativePlant>> {
+) -> anyhow::Result<impl Stream<Item = Plant>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
     let region_name = db

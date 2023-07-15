@@ -61,7 +61,7 @@ pub async fn insert_query_plants(
 /// Returns Err if it fails.
 pub async fn update_plant(
     db: &Database,
-    plant: &NativePlant,
+    plant: &Plant,
     img_id: Option<usize>,
 ) -> anyhow::Result<()> {
     let mut conn = db.get_connection().await?;
@@ -83,7 +83,7 @@ pub async fn update_plant(
 /// Returns Err if it fails.
 pub async fn insert_plant(
     db: &Database,
-    plant: &NativePlant,
+    plant: &Plant,
     img_id: Option<usize>,
 ) -> anyhow::Result<usize> {
     let mut conn = db.get_connection().await?;
@@ -111,7 +111,7 @@ pub async fn select_plants_by_zip_moisture_shade(
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
-) -> anyhow::Result<Vec<NativePlant>> {
+) -> anyhow::Result<Vec<Plant>> {
     let mut conn = db.get_connection().await?;
 
     r"
@@ -126,7 +126,7 @@ WHERE z.zipcode = ?
   AND q.shade = ?
 "
         .with((zip, moisture.to_string(), shade.to_string()))
-        .map(&mut conn, |plant: NativePlant| plant)
+        .map(&mut conn, |plant: Plant| plant)
         .await
         .map_err(|e| anyhow!(e))
 }
@@ -136,7 +136,7 @@ WHERE z.zipcode = ?
 pub async fn select_plant_by_scientific_name(
     db: &Database,
     scientific_name: &str,
-) -> anyhow::Result<Option<NativePlant>> {
+) -> anyhow::Result<Option<Plant>> {
     let mut conn = db.get_connection().await?;
 
     r"

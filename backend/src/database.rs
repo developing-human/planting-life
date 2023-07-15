@@ -40,13 +40,13 @@ impl Database {
             })
     }
 
-    /// Finds all NativePlants which match the given parameters.
+    /// Finds all Plants which match the given parameters.
     pub async fn lookup_query_results(
         &self,
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
-    ) -> Vec<NativePlant> {
+    ) -> Vec<Plant> {
         sql::select_plants_by_zip_moisture_shade(self, zip, moisture, shade)
             .await
             .unwrap_or_else(|e| {
@@ -63,8 +63,8 @@ impl Database {
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
-        all_plants: Vec<NativePlant>,
-        saved_plants: Vec<NativePlant>,
+        all_plants: Vec<Plant>,
+        saved_plants: Vec<Plant>,
     ) {
         // Also, don't save the results of this query if we have fewer than the desired number,
         // this should be a rare occurance and this is a simple way to handle it.  The
@@ -108,25 +108,25 @@ impl Database {
         }
     }
 
-    /// Saves a list of NativePlants, returning a list of new NativePlants which
+    /// Saves a list of Plants, returning a list of new Plants which
     /// have their ids populated.  Returns Err if any fail to save.
     pub async fn save_plants(
         &self,
-        plants_in: &Vec<&NativePlant>,
-    ) -> anyhow::Result<Vec<NativePlant>> {
+        plants_in: &Vec<&Plant>,
+    ) -> anyhow::Result<Vec<Plant>> {
         let mut futures = vec![];
         for plant in plants_in {
             futures.push(self.save_plant(plant));
         }
 
         // collect() here is practically magic,
-        // converting Vec<Result<NativePlant>> into Result<Vec<NativePlant>>
+        // converting Vec<Result<Plant>> into Result<Vec<Plant>>
         future::join_all(futures).await.into_iter().collect()
     }
 
-    /// Inserts or updates a single NativePlant, returning a new NativePlant with its
+    /// Inserts or updates a single Plant, returning a new Plant with its
     /// id populated. Returns Err if it fails to save.
-    pub async fn save_plant(&self, plant: &NativePlant) -> anyhow::Result<NativePlant> {
+    pub async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
         let mut img_id = None;
         if let Some(image) = &plant.image {
             img_id = image.id;
@@ -144,7 +144,7 @@ impl Database {
             sql::insert_plant(self, plant, img_id).await?
         };
 
-        Ok(NativePlant {
+        Ok(Plant {
             id: Some(id),
             ..plant.clone()
         })
@@ -161,9 +161,9 @@ impl Database {
         })
     }
 
-    /// Fetches one NativePlant by scientific name.  Returns None if it is not
+    /// Fetches one Plant by scientific name.  Returns None if it is not
     /// found or if there is a database error.
-    pub async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<NativePlant> {
+    pub async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {
         match sql::select_plant_by_scientific_name(self, scientific_name).await {
             Ok(Some(plant)) => Some(plant),
             Ok(None) => None,

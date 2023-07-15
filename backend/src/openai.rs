@@ -1,6 +1,6 @@
 use futures::{stream::StreamExt, TryStreamExt};
 
-use crate::domain::NativePlant;
+use crate::domain::Plant;
 use anyhow::Context;
 use futures::Stream;
 use reqwest::StatusCode;
@@ -36,15 +36,15 @@ struct ChatCompletionMessage {
     content: Option<String>,
 }
 
-struct NativePlantBuilder {
+struct PlantBuilder {
     common: Option<String>,
     scientific: Option<String>,
     bloom: Option<String>,
 }
 
-impl NativePlantBuilder {
+impl PlantBuilder {
     fn new() -> Self {
-        NativePlantBuilder {
+        PlantBuilder {
             common: None,
             scientific: None,
             bloom: None,
@@ -61,16 +61,16 @@ impl NativePlantBuilder {
         self.bloom = None;
     }
 
-    fn build(&self) -> NativePlant {
+    fn build(&self) -> Plant {
         if !self.is_full() {
-            panic!("Building NativePlant without full builder");
+            panic!("Building Plant without full builder");
         }
 
-        NativePlant {
+        Plant {
             id: None,
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
-            bloom: NativePlantBuilder::sanitize_bloom(self.bloom.clone()),
+            bloom: PlantBuilder::sanitize_bloom(self.bloom.clone()),
             description: None,
             image: None,
         }
@@ -91,13 +91,13 @@ impl NativePlantBuilder {
     }
 }
 
-// Returns a Stream of NativePlantEntries after calling openai.
+// Returns a Stream of PlantEntries after calling openai.
 pub async fn stream_plants(
     api_key: &str,
     region_name: &str,
     shade: &str,
     moisture: &str,
-) -> anyhow::Result<impl Stream<Item = NativePlant>> {
+) -> anyhow::Result<impl Stream<Item = Plant>> {
     let prompt = build_prompt(region_name, shade, moisture);
 
     let payload = ChatCompletionRequest {
@@ -133,7 +133,7 @@ pub async fn stream_plants(
         }
     });
 
-    let plant_stream = line_stream.scan(NativePlantBuilder::new(), |builder, line| {
+    let plant_stream = line_stream.scan(PlantBuilder::new(), |builder, line| {
         if line.is_none() {
             return futures::future::ready(Some(None));
         }
@@ -157,7 +157,7 @@ pub async fn stream_plants(
             _ => return futures::future::ready(Some(None)),
         }
 
-        // Once the builder is full, emit a built NativePlant
+        // Once the builder is full, emit a built Plant
         if builder.is_full() {
             let future = futures::future::ready(Some(Some(builder.build())));
             builder.clear();

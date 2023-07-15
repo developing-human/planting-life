@@ -20,7 +20,7 @@ impl FromRow for Nursery {
     }
 }
 
-impl FromRow for NativePlant {
+impl FromRow for Plant {
     fn from_row_opt(row: mysql_async::Row) -> Result<Self, FromRowError>
     where
         Self: Sized,
@@ -45,7 +45,7 @@ impl FromRow for NativePlant {
         let license: Option<String> = license;
         let scientific: String = scientific;
 
-        Ok(NativePlant {
+        Ok(Plant {
             id: Some(id),
             scientific: scientific.to_string(),
             common,

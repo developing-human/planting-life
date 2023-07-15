@@ -1,5 +1,5 @@
 use crate::database::Database;
-use crate::domain::NativePlant;
+use crate::domain::Plant;
 use crate::flickr;
 use crate::openai;
 use futures::channel::mpsc::UnboundedSender;
@@ -12,14 +12,14 @@ use tracing::warn;
 
 #[derive(Debug)]
 pub struct HydratedPlant {
-    pub plant: NativePlant,
+    pub plant: Plant,
     pub done: bool,
     pub updated: bool,
 }
 
 pub async fn hydrate_plants(
     db: &Database,
-    mut plants: impl Stream<Item = NativePlant> + Unpin,
+    mut plants: impl Stream<Item = Plant> + Unpin,
     sender: &mut UnboundedSender<HydratedPlant>,
 ) {
     // References to tasks which are running
@@ -50,7 +50,7 @@ pub async fn hydrate_plants(
 /// plant.
 async fn hydrate_one_plant(
     db: &Database,
-    mut plant: NativePlant,
+    mut plant: Plant,
     sender: Option<UnboundedSender<HydratedPlant>>,
 ) {
     // If this plant didn't come from the datbase, check the database for it.
@@ -96,7 +96,7 @@ async fn hydrate_one_plant(
 /// Sends a HydratedPlant to the sender, if the sender is populated.
 async fn send_plant(
     sender: &Option<UnboundedSender<HydratedPlant>>,
-    plant: &NativePlant,
+    plant: &Plant,
     done: bool,
     updated: bool,
 ) {
@@ -115,7 +115,7 @@ async fn send_plant(
 
 /// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
 /// with the image populated.
-async fn hydrate_image(plant: &NativePlant) -> Option<HydratedPlant> {
+async fn hydrate_image(plant: &Plant) -> Option<HydratedPlant> {
     let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
 
     flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key)
@@ -123,7 +123,7 @@ async fn hydrate_image(plant: &NativePlant) -> Option<HydratedPlant> {
         .map(|image| HydratedPlant {
             updated: true,
             done: false,
-            plant: NativePlant {
+            plant: Plant {
                 image: Some(image),
                 ..plant.clone()
             },
@@ -132,7 +132,7 @@ async fn hydrate_image(plant: &NativePlant) -> Option<HydratedPlant> {
 
 /// Looks up a description for this plant.  If one is found, it returns a HydratedPlant
 /// with the description populated.
-async fn hydrate_description(plant: &NativePlant) -> Option<HydratedPlant> {
+async fn hydrate_description(plant: &Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {
         Ok(stream) => stream,
@@ -154,7 +154,7 @@ async fn hydrate_description(plant: &NativePlant) -> Option<HydratedPlant> {
         Some(HydratedPlant {
             updated: true,
             done: false,
-            plant: NativePlant {
+            plant: Plant {
                 description: Some(description_deltas.join("")),
                 ..plant.clone()
             },
@@ -163,7 +163,7 @@ async fn hydrate_description(plant: &NativePlant) -> Option<HydratedPlant> {
 }
 
 /*
-async fn fetch_and_send_citations(sender: &Sender, plant: &NativePlant) {
+async fn fetch_and_send_citations(sender: &Sender, plant: &Plant) {
     //TODO: I think citations::find needs to know what citations we already have,
     //      and only try to build out the ones we don't have.  But currently we
     //      don't even have citations in the db.

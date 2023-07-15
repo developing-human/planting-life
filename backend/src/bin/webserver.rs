@@ -5,7 +5,7 @@ use futures::channel::mpsc;
 use futures::stream::Stream;
 use futures::StreamExt;
 use planting_life::database::Database;
-use planting_life::domain::{Moisture, NativePlant, Shade};
+use planting_life::domain::{Moisture, Plant, Shade};
 use planting_life::hydrator;
 use planting_life::selector;
 use serde::{self, Deserialize, Serialize};
@@ -61,7 +61,7 @@ async fn fetch_plants_handler(
 async fn hydrate_and_send_plants(
     db: &Database,
     payload: &PlantsRequest,
-    plant_stream: impl Stream<Item = NativePlant> + 'static + Unpin,
+    plant_stream: impl Stream<Item = Plant> + 'static + Unpin,
     frontend_sender: &Sender,
     plants_from_db: bool,
 ) {
@@ -109,7 +109,7 @@ async fn hydrate_and_send_plants(
     }
 }
 
-async fn send_plant(sender: &Sender, plant: &NativePlant) {
+async fn send_plant(sender: &Sender, plant: &Plant) {
     let json = serde_json::to_string(&plant).expect("plant should serialize");
 
     send_event(sender, "plant", &json).await;

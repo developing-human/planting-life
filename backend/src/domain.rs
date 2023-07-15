@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct NativePlant {
+pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<usize>,
     pub common: String,
@@ -16,11 +16,11 @@ pub struct NativePlant {
     pub image: Option<Image>,
 }
 
-impl NativePlant {
+impl Plant {
     // Merges two plants, prioritizing "other" but never overriding Some with None
-    pub fn merge(&self, other: &NativePlant) -> NativePlant {
+    pub fn merge(&self, other: &Plant) -> Plant {
         //TODO: Can I write this concisely with fewer clones?
-        NativePlant {
+        Plant {
             id: other.id.or(self.id),
             common: self.common.clone(),
             scientific: self.scientific.clone(),
