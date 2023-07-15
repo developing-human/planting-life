@@ -9,6 +9,8 @@ use mysql_async::Opts;
 use mysql_async::Pool;
 use tracing::log::warn;
 
+mod sql;
+
 #[derive(Clone)]
 pub struct Database {
     pool: Option<Pool>,
@@ -27,32 +29,7 @@ impl Database {
     }
 
     pub async fn find_nurseries(&self, zip: &str) -> Vec<Nursery> {
-        let mut conn = match self.get_connection().await {
-            Ok(conn) => conn,
-            Err(_) => return vec![],
-        };
-
-        r"
-SELECT miles, name, url, address, city, state, n.zipcode
-FROM zipcodes_nurseries zn
-INNER JOIN nurseries n 
-  ON n.id = zn.nursery_id 
-WHERE zn.zipcode = ?
-ORDER BY miles ASC"
-            .with((zip,))
-            .map(
-                &mut conn,
-                |(miles, name, url, address, city, state, zip)| Nursery {
-                    name,
-                    url,
-                    address,
-                    city,
-                    state,
-                    zip,
-                    miles,
-                    map_url: None,
-                },
-            )
+        sql::select_nurseries_by_zip(self, zip)
             .await
             .unwrap_or_else(|e| {
                 warn!("find_nurseries query failed: {}", e);
@@ -66,63 +43,12 @@ ORDER BY miles ASC"
         moisture: &Moisture,
         shade: &Shade,
     ) -> Vec<NativePlant> {
-        let mut conn = match self.get_connection().await {
-            Ok(conn) => conn,
-            Err(_) => return vec![],
-        };
-
-        r"
-SELECT p.id, p.scientific_name, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
-FROM plants p
-INNER JOIN queries_plants qp ON qp.plant_id = p.id
-INNER JOIN queries q ON qp.query_id = q.id
-INNER JOIN zipcodes z ON z.region_id = q.region_id
-LEFT JOIN images i ON i.id = p.image_id
-WHERE z.zipcode = ?
-  AND q.moisture = ?
-  AND q.shade = ?
-"
-        .with((zip, moisture.to_string(), shade.to_string()))
-        .map(&mut conn, |(id, scientific, common, bloom, description, img_id, title, card_url, original_url, author, license)| {
-
-            // Everything related to the image is optional because the image may not exist
-            // But if img_id is present, everything else is required.  Hence the unwraps.
-            let img_id: Option<usize> = img_id;
-            let card_url: Option<String> = card_url;
-            let original_url: Option<String> = original_url;
-            let author: Option<String> = author;
-            let license: Option<String> = license;
-            let title: Option<String> = title;
-
-            let scientific: String = scientific;
-            let bloom: Option<String> = bloom;
-            NativePlant {
-                id: Some(id),
-                scientific: scientific.to_string(),
-                common,
-                description,
-                bloom,
-                image: img_id.map(|_| {
-                    let license = license.unwrap();
-
-                    Image {
-                        id: img_id,
-                        scientific_name: scientific,
-                        title: title.unwrap(),
-                        card_url: card_url.unwrap(),
-                        original_url: original_url.unwrap(),
-                        author: author.unwrap(),
-                        license_url: Image::get_license_url(&license).unwrap(),
-                        license,
-                    }
-                })
-            }
-        })
-        .await
-        .unwrap_or_else(|e| {
-            warn!("lookup_query_results query failed: {}", e);
-            vec![]
-        })
+        sql::select_plants_by_zip_moisture_shade(self, zip, moisture, shade)
+            .await
+            .unwrap_or_else(|e| {
+                warn!("lookup_query_results query failed: {}", e);
+                vec![]
+            })
     }
 
     /* Saves a new Query and maps it to the plants referenced by plant_ids.
@@ -141,6 +67,7 @@ WHERE z.zipcode = ?
             Err(_) => return,
         };
 
+        //TODO: Move this to sql::insert_query
         let queries_result: Result<Option<i32>, mysql_async::Error> =
             r"INSERT INTO queries (moisture, shade, region_id) VALUES
             (?, ?, (SELECT region_id from zipcodes where zipcode = ?))
@@ -149,6 +76,7 @@ WHERE z.zipcode = ?
                 .first(&mut conn)
                 .await;
 
+        //TODO: I think this can just be Ok/Err from sql::insert_query, Ok(None) is Err
         let query_id = match queries_result {
             Ok(Some(id)) => id,
             Ok(None) => {
@@ -161,6 +89,7 @@ WHERE z.zipcode = ?
             }
         };
 
+        //TODO: Move this to sql::insert_query_plants
         r"INSERT INTO queries_plants (query_id, plant_id)
             VALUES (:query_id, :plant_id)"
             .with(plant_ids.iter().map(|id| {
@@ -212,6 +141,7 @@ WHERE z.zipcode = ?
         }
 
         let id = if let Some(id) = plant.id {
+            //TODO: Move this to sql::update_plant
             r"UPDATE plants 
               SET description = :description, image_id = :image_id
               WHERE id = :id"
@@ -225,6 +155,7 @@ WHERE z.zipcode = ?
                 .map(|_| id)
                 .map_err(|e| anyhow!("save_plant failed to update: {}", e))
         } else {
+            //TODO: Move this to sql::insert_plant
             r"INSERT INTO plants (scientific_name, common_name, bloom, description, image_id)
             VALUES (:scientific_name, :common_name, :bloom, :description, :image_id)
             RETURNING id"
@@ -258,6 +189,7 @@ WHERE z.zipcode = ?
             Err(_) => return Err(anyhow!("can't get db connection")),
         };
 
+        //TODO: Move this to sql::insert_image
         let id = r"INSERT INTO images (title, card_url, original_url, author, license)
             VALUES (:title, :card_url, :original_url, :author, :license)
             RETURNING id"
@@ -291,6 +223,9 @@ WHERE z.zipcode = ?
             Err(_) => return None,
         };
 
+        //TODO: Move this to sql::select_plant_by_scientific_name
+        //      Should be able to reuse existing FromRow for NativePlant
+        //      But will need to select scientific_name from db to match up
         let query_result = r"
 SELECT p.id, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
@@ -347,18 +282,18 @@ WHERE scientific_name = :scientific_name"
         })
     }
 
-    async fn get_connection(&self) -> Result<Conn, ()> {
+    async fn get_connection(&self) -> anyhow::Result<Conn> {
         if let Some(pool) = &self.pool {
             match pool.get_conn().await {
                 Ok(conn) => Ok(conn),
                 Err(e) => {
                     warn!("can't get db connection: {}", e);
-                    Err(())
+                    Err(anyhow!("{e}"))
                 }
             }
         } else {
             warn!("tried to get db connection, but db is not connected");
-            Err(())
+            Err(anyhow!("db is not connected"))
         }
     }
 }
