@@ -8,6 +8,7 @@ use mysql_async::Opts;
 use mysql_async::Pool;
 use tracing::log::warn;
 
+mod conversions;
 mod sql;
 
 #[derive(Clone)]
