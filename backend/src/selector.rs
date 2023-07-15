@@ -26,23 +26,27 @@ pub async fn stream_plants(
     }
 
     Ok(PlantStream {
-        stream: Box::pin(get_llm_plant_stream(zip, moisture, shade).await?),
+        stream: Box::pin(get_llm_plant_stream(db, zip, moisture, shade).await?),
         from_db: false,
     })
 }
 
 async fn get_llm_plant_stream(
+    db: &Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
 ) -> anyhow::Result<impl Stream<Item = NativePlant>> {
     let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-    //TODO: Lookup region name, pass that to stream_plants instead of zip.
+    let region_name = db
+        .get_region_name_by_zip(zip)
+        .await
+        .unwrap_or_else(|| format!("US Zip Code {zip}"));
 
     let plants = openai::stream_plants(
         &openai_api_key,
-        zip,
+        &region_name,
         shade.description(),
         moisture.description(),
     )

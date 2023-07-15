@@ -174,6 +174,22 @@ impl Database {
         }
     }
 
+    /// Fetches the region name for a zipcodes.
+    /// Returns None if not found or if there is a database error.
+    pub async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
+        match sql::select_region_name_by_zip(self, zip).await {
+            Ok(Some(name)) => Some(name),
+            Ok(None) => {
+                warn!("get_region_name_by_zip could not find region name");
+                None
+            }
+            Err(e) => {
+                warn!("get_region_name_by_zip failed to select: {e}");
+                None
+            }
+        }
+    }
+
     async fn get_connection(&self) -> anyhow::Result<Conn> {
         if let Some(pool) = &self.pool {
             match pool.get_conn().await {

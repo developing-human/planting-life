@@ -94,11 +94,12 @@ impl NativePlantBuilder {
 // Returns a Stream of NativePlantEntries after calling openai.
 pub async fn stream_plants(
     api_key: &str,
-    zip: &str,
+    region_name: &str,
     shade: &str,
     moisture: &str,
 ) -> anyhow::Result<impl Stream<Item = NativePlant>> {
-    let prompt = build_prompt(zip, shade, moisture);
+    let prompt = build_prompt(region_name, shade, moisture);
+    println!("{prompt}");
 
     let payload = ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
@@ -202,11 +203,10 @@ pub async fn fetch_description(
     call_model_stream(payload, api_key, false).await
 }
 
-// This is doing fairly well, but trying another approach above
-fn build_prompt(zip: &str, shade: &str, moisture: &str) -> String {
+fn build_prompt(region_name: &str, shade: &str, moisture: &str) -> String {
     // Requests twelve because this forms a nice grid with 1, 2, 3, or 4 columns.
     format!(
-        r#"Choose twelve plants for a new gardener's garden which are NATIVE near zip code {}.
+        r#"Choose twelve plants for a new gardener's garden which are NATIVE near {}.
 Their garden is in {} and {}.
 Only suggest plants which do well in {} and {}.
 Do NOT suggest plants which do better in other conditions.
@@ -221,7 +221,7 @@ scientific: Scientific Name
 common: Common Name
 bloom: season of bloom
 "#,
-        zip,
+        region_name,
         shade.to_uppercase(),
         moisture.to_uppercase(),
         shade.to_uppercase(),

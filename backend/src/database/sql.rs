@@ -189,3 +189,20 @@ ORDER BY miles ASC"
         .await
         .map_err(|e| anyhow!(e))
 }
+
+/// Selects a region's name for the given zipcode.
+/// Returns Err if it fails, Ok(None) if none are found.
+pub async fn select_region_name_by_zip(db: &Database, zip: &str) -> anyhow::Result<Option<String>> {
+    let mut conn = db.get_connection().await?;
+
+    r"
+SELECT name
+FROM regions r
+INNER JOIN zipcodes z
+  ON z.region_id = r.id
+WHERE z.zipcode = ?"
+        .with((zip,))
+        .first(&mut conn)
+        .await
+        .map_err(|e| anyhow!(e))
+}
