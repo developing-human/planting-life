@@ -62,8 +62,38 @@ impl Database {
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
-        plant_ids: HashSet<usize>,
+        all_plants: Vec<NativePlant>,
+        saved_plants: Vec<NativePlant>,
     ) {
+        // Also, don't save the results of this query if we have fewer than the desired number,
+        // this should be a rare occurance and this is a simple way to handle it.  The
+        // alternative would be to (on fetch) get some from the database and the rest from gpt.
+        // Its easier to just get all from gpt, even if its a little more work.
+        if all_plants.len() != 12 {
+            warn!("only have {} plants, not caching", all_plants.len());
+            return;
+        }
+
+        // At least one plant is missing an image, so don't store these results.  Very
+        // occasionally we'll run into this, and its okay as a quirk but lets not cache
+        // it forever.
+        let plant_without_image = all_plants.iter().find(|p| p.image.is_none());
+        if let Some(plant_without_image) = plant_without_image {
+            warn!(
+                "not all plants have an image (missing for {}), not caching",
+                plant_without_image.scientific
+            );
+            return;
+        }
+
+        // Some plants in all_plants may be missing ids.  Merging with saved_plants will
+        // find all of them.
+        let plant_ids: HashSet<usize> = all_plants
+            .iter()
+            .chain(saved_plants.iter())
+            .filter_map(|p| p.id)
+            .collect();
+
         let query_id = match sql::insert_query(self, zip, moisture, shade).await {
             Ok(id) => id,
             Err(e) => {

@@ -17,10 +17,7 @@ pub async fn stream_plants(
     moisture: &Moisture,
     shade: &Shade,
 ) -> anyhow::Result<PlantStream> {
-    // The complexity of this rather simple operation is due to the database
-    // and llm returning different types of streams
     let plants_from_db = db.lookup_query_results(zip, moisture, shade).await;
-
     if !plants_from_db.is_empty() {
         return Ok(PlantStream {
             stream: Box::pin(stream::iter(plants_from_db)),
@@ -51,9 +48,5 @@ async fn get_llm_plant_stream(
     )
     .await?;
 
-    println!("finishing get_llm_plant_stream");
-
-    // I don't yet understand why this is needed.  But it tells the plants
-    // not to move in memory during async work.
     Ok(plants)
 }

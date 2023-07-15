@@ -9,7 +9,6 @@ use planting_life::domain::{Moisture, NativePlant, Shade};
 use planting_life::hydrator;
 use planting_life::selector;
 use serde::{self, Deserialize, Serialize};
-use std::collections::HashSet;
 use std::env;
 use std::time;
 use tracing::{info, warn};
@@ -38,7 +37,7 @@ async fn fetch_plants_handler(
 
         match plant_stream {
             Ok(plant_stream) => {
-                fill_and_send_plants(
+                hydrate_and_send_plants(
                     &db,
                     &payload,
                     plant_stream.stream,
@@ -59,7 +58,7 @@ async fn fetch_plants_handler(
         .insert_header(("X-Accel-Buffering", "no"))
 }
 
-async fn fill_and_send_plants(
+async fn hydrate_and_send_plants(
     db: &Database,
     payload: &PlantsRequest,
     plant_stream: impl Stream<Item = NativePlant> + 'static + Unpin,
@@ -91,46 +90,23 @@ async fn fill_and_send_plants(
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
         Ok(saved_plants) => saved_plants,
         Err(e) => {
-            warn!("failed to save plants, not caching: {e}");
+            warn!("failed to save at least one plant, not caching: {e}");
             return;
         }
     };
 
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.
-    if plants_from_db {
-        return; // not logging, this is very common
-    }
-
-    // Also, don't save the results of this query if we have fewer than the desired number,
-    // this should be a rare occurance and this is a simple way to handle it.  The
-    // alternative would be to (on fetch) get some from the database and the rest from gpt.
-    // Its easier to just get all from gpt, even if its a little more work.
-    if all_plants.len() != 12 {
-        info!("only have {} plants, not caching", all_plants.len());
-        return;
-    }
-
-    // At least one plant is missing an image, so don't store these results.  Very
-    // occasionally we'll run into this, and its okay as a quirk but lets not cache
-    // it forever.
-    let plant_without_image = all_plants.iter().find(|p| p.image.is_none());
-    if let Some(plant_without_image) = plant_without_image {
-        info!(
-            "not all plants have an image (missing for {}), not caching",
-            plant_without_image.scientific
-        );
-        return;
-    }
-
-    let plant_ids: HashSet<usize> = all_plants
-        .iter()
-        .chain(saved_plants.iter())
-        .filter_map(|p| p.id)
-        .collect();
-
-    db.save_query_results(&payload.zip, &payload.moisture, &payload.shade, plant_ids)
+    if !plants_from_db {
+        db.save_query_results(
+            &payload.zip,
+            &payload.moisture,
+            &payload.shade,
+            all_plants,
+            saved_plants,
+        )
         .await;
+    }
 }
 
 async fn send_plant(sender: &Sender, plant: &NativePlant) {
