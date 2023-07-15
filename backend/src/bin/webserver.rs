@@ -86,8 +86,7 @@ async fn fill_and_send_plants(
         send_plant(frontend_sender, &hydrated_plant.plant).await;
     }
 
-    // Save any plants which are new or updated.  If any fail, don't cache the query results.
-    // This is because missing ids will result in a partial cache.
+    send_event(frontend_sender, "allPlantsLoaded", "").await;
 
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
         Ok(saved_plants) => saved_plants,
