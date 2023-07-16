@@ -1,6 +1,6 @@
+use crate::ai;
 use crate::database::Database;
 use crate::domain::*;
-use crate::openai;
 use futures::stream::{self, Stream};
 use std::boxed::Box;
 use std::env;
@@ -44,7 +44,7 @@ async fn get_llm_plant_stream(
         .await
         .unwrap_or_else(|| format!("US Zip Code {zip}"));
 
-    let plants = openai::stream_plants(
+    let plants = ai::stream_plants(
         &openai_api_key,
         &region_name,
         shade.description(),

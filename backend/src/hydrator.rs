@@ -1,7 +1,7 @@
+use crate::ai;
 use crate::database::Database;
 use crate::domain::Plant;
 use crate::flickr;
-use crate::openai;
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
@@ -134,7 +134,7 @@ async fn hydrate_image(plant: &Plant) -> Option<HydratedPlant> {
 /// with the description populated.
 async fn hydrate_description(plant: &Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let description_stream = match openai::fetch_description(&api_key, &plant.scientific).await {
+    let description_stream = match ai::fetch_description(&api_key, &plant.scientific).await {
         Ok(stream) => stream,
         Err(_) => {
             warn!("Failed to fetch description");
