@@ -1,7 +1,7 @@
-use crate::ai;
 use crate::database::Database;
 use crate::domain::Plant;
 use crate::flickr;
+use crate::{ai, citations};
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
@@ -182,6 +182,9 @@ async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
     if plant.animal_rating.is_none() {
         futures_unordered.push(Box::pin(hydrate_animal_rating(plant)));
     }
+    if plant.citations.is_empty() {
+        futures_unordered.push(Box::pin(hydrate_citations(plant)));
+    }
 
     // Merges all fetched details into a single Plant before returning it
     let mut merged_plant: Option<Plant> = None;
@@ -261,19 +264,21 @@ async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
     })
 }
 
-/*
-async fn fetch_and_send_citations(sender: &Sender, plant: &Plant) {
+async fn hydrate_citations(plant: &Plant) -> Option<HydratedPlant> {
     //TODO: I think citations::find needs to know what citations we already have,
     //      and only try to build out the ones we don't have.  But currently we
     //      don't even have citations in the db.
     let citations = citations::find(&plant.scientific).await;
-    if !citations.is_empty() {
-        let citations_json = serde_json::to_string(&citations).expect("citations should serialize");
-        let payload = format!(
-            r#"{{"scientificName": "{}", "citations": {}}}"#,
-            plant.scientific, citations_json
-        );
-        send_event(sender, "citations", &payload).await;
+    if citations.is_empty() {
+        None
+    } else {
+        Some(HydratedPlant {
+            updated: true,
+            done: false,
+            plant: Plant {
+                citations,
+                ..plant.clone()
+            },
+        })
     }
 }
-*/

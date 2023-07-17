@@ -324,6 +324,7 @@ impl PlantBuilder {
             bird_rating: None,
             animal_rating: None,
             image: None,
+            citations: vec![],
         }
     }
 

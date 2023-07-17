@@ -1,10 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Citation {
-    pub label: &'static str,
-    pub url: String,
-}
+use crate::domain::Citation;
 
 mod wikipedia {
     use reqwest::StatusCode;
@@ -19,7 +13,10 @@ mod wikipedia {
 
         if let Some(url) = url {
             if is_valid(&url).await {
-                return Some(super::Citation { label: LABEL, url });
+                return Some(super::Citation {
+                    label: LABEL.to_string(),
+                    url,
+                });
             }
         }
 
@@ -135,7 +132,7 @@ mod usda {
     pub fn find(scientific_name: &str) -> Option<super::Citation> {
         if let Some(symbol) = lookup_symbol(scientific_name) {
             return Some(super::Citation {
-                label: "USDA",
+                label: "USDA".to_string(),
                 url: build_url(symbol),
             });
         }

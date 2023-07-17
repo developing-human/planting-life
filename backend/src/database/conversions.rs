@@ -54,6 +54,7 @@ impl FromRow for Plant {
             pollinator_rating: None, //TODO: Populate this!
             bird_rating: None,       //TODO: Populate this!
             animal_rating: None,     //TODO: Populate this!
+            citations: vec![],       //TODO: Populate this!
             image: img_id.map(|_| {
                 let license = license.unwrap();
 
