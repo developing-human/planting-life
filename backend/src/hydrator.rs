@@ -44,7 +44,7 @@ pub async fn hydrate_plants(
 }
 
 /// Given a partially populated plant, populates it as best it can from
-/// the database and LLM.  If a sender is provided, emits updates it as
+/// the database and LLM.  If a sender is provided, emits updates as
 /// they become available.  The last plant emitted will be marked as done
 /// and be populated as is possible.  Also Returns the fully populated
 /// plant.
@@ -60,6 +60,8 @@ async fn hydrate_one_plant(
             plant = existing_plant;
         }
     }
+
+    send_plant(&sender, &plant, false, false).await;
 
     // At this point I have a plant from the gpt list + database query
     // Some parts could be missing (not in db, db is missing parts)
@@ -78,7 +80,7 @@ async fn hydrate_one_plant(
     if plant.description.is_none() {
         futures_unordered.push(Box::pin(hydrate_description(&plant)));
     }
-    //TODO: This section will grow when more fields are added
+    futures_unordered.push(Box::pin(hydrate_details(&plant)));
 
     let mut updated = false;
     let mut merged_plant = plant.clone();
@@ -160,6 +162,103 @@ async fn hydrate_description(plant: &Plant) -> Option<HydratedPlant> {
             },
         })
     }
+}
+
+/// Hydrates all "details", which includes things like ratings, height,
+/// width, and bloom season.
+///
+/// Returns None if none of those details are updated.
+async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
+    let mut futures_unordered: FuturesUnordered<
+        Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>,
+    > = FuturesUnordered::new();
+
+    if plant.pollinator_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_pollinator_rating(plant)));
+    }
+    if plant.bird_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_bird_rating(plant)));
+    }
+    if plant.animal_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_animal_rating(plant)));
+    }
+
+    // Merges all fetched details into a single Plant before returning it
+    let mut merged_plant: Option<Plant> = None;
+    while let Some(hydrated_plant) = futures_unordered.next().await {
+        if let Some(hydrated_plant) = hydrated_plant {
+            if let Some(some_merged_plant) = merged_plant {
+                merged_plant = Some(some_merged_plant.merge(&hydrated_plant.plant));
+            } else {
+                merged_plant = Some(hydrated_plant.plant.clone());
+            }
+        }
+    }
+
+    merged_plant.map(|plant| HydratedPlant {
+        plant,
+        updated: true,
+        done: false,
+    })
+}
+
+async fn hydrate_pollinator_rating(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let rating = match ai::fetch_pollinator_rating(&api_key, &plant.scientific).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch pollinator rating: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            pollinator_rating: Some(rating),
+            ..plant.clone()
+        },
+    })
+}
+
+async fn hydrate_bird_rating(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let rating = match ai::fetch_bird_rating(&api_key, &plant.scientific).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch bird rating: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            bird_rating: Some(rating),
+            ..plant.clone()
+        },
+    })
+}
+async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let rating = match ai::fetch_animal_rating(&api_key, &plant.scientific).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch animal rating: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            animal_rating: Some(rating),
+            ..plant.clone()
+        },
+    })
 }
 
 /*

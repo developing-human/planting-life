@@ -51,6 +51,9 @@ impl FromRow for Plant {
             common,
             description,
             bloom,
+            pollinator_rating: None, //TODO: Populate this!
+            bird_rating: None,       //TODO: Populate this!
+            animal_rating: None,     //TODO: Populate this!
             image: img_id.map(|_| {
                 let license = license.unwrap();
 

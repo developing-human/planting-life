@@ -36,8 +36,33 @@ function PlantCard({ plant }) {
 
       <CardContent>
         <Typography variant="body2" color="text.secondary">
-          {plant.bloom ? "Blooms in " + plant.bloom.toLowerCase() + ". " : null}
-          {plant.description}
+          {
+            //plant.bloom ? "Blooms in " + plant.bloom.toLowerCase() + ". " : null
+          }
+    {
+      //{plant.description}
+    }
+          {plant.pollinatorRating ? 
+              <span title={plant.pollinatorRating.reason}>
+                Pollinators: {plant.pollinatorRating.rating} / 10<br/> 
+              </span>
+              : null
+          }
+
+          {plant.birdRating ? 
+              <span title={plant.birdRating.reason}>
+                Bird: {plant.birdRating.rating} / 10<br/> 
+              </span>
+              : null
+          }
+
+          {plant.animalRating ? 
+              <span title={plant.animalRating.reason}>
+                Animal: {plant.animalRating.rating} / 10<br/> 
+              </span>
+              : null
+          }
+          
         </Typography>
       </CardContent>
     </Card>

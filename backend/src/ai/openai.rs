@@ -33,6 +33,7 @@ struct ChatCompletionResponse {
 #[derive(Debug, Deserialize)]
 struct ChatCompletionResponseChoice {
     delta: Option<ChatCompletionMessage>,
+    message: Option<ChatCompletionMessage>,
 }
 
 // Returns a stream of short strings from openai
@@ -102,7 +103,7 @@ async fn call_model_with_retries(
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
-        .timeout(Duration::from_millis(1_250)) // typical is 400-800ms
+        .timeout(Duration::from_millis(5000)) // typical is 400-800ms
         .json(&payload)
         .send()
         .await
@@ -126,7 +127,22 @@ pub async fn call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow
     let response = call_model_with_retries(payload, api_key).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
+    let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;
 
-    let slice = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;
-    Ok(slice.to_owned())
+    let parsed: ChatCompletionResponse = serde_json::from_str(json).map_err(|e| anyhow!(e))?;
+
+    if parsed.choices.is_empty() {
+        return Err(anyhow!("no choices in response"));
+    }
+
+    let choice = &parsed.choices[0];
+    let message = match &choice.message {
+        Some(message) => message,
+        None => return Err(anyhow!("no message in choice")),
+    };
+
+    match &message.content {
+        Some(content) => Ok(content.clone()),
+        None => Err(anyhow!("no content in message")),
+    }
 }

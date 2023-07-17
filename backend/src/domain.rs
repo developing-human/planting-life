@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub id: Option<usize>,
@@ -14,6 +15,16 @@ pub struct Plant {
     //pub image_url: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
+
+    pub pollinator_rating: Option<Rating>,
+    pub bird_rating: Option<Rating>,
+    pub animal_rating: Option<Rating>,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Rating {
+    pub rating: u8,
+    pub reason: String,
 }
 
 impl Plant {
@@ -27,6 +38,12 @@ impl Plant {
             bloom: other.bloom.clone().or(self.bloom.clone()),
             description: other.description.clone().or(self.description.clone()),
             image: other.image.clone().or(self.image.clone()),
+            pollinator_rating: other
+                .pollinator_rating
+                .clone()
+                .or(self.pollinator_rating.clone()),
+            bird_rating: other.bird_rating.clone().or(self.bird_rating.clone()),
+            animal_rating: other.animal_rating.clone().or(self.animal_rating.clone()),
         }
     }
 }
