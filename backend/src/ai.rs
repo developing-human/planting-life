@@ -124,22 +124,40 @@ pub async fn fetch_description(
     openai::call_model_stream(payload, api_key, false).await
 }
 
+pub fn build_pollinator_prompt(name: &str) -> String {
+    format!("Explain how well {} supports the pollinators of an ecosystem in 3-5 sentences.  Consider it's contributions as a food source, shelter, and larval host.  If it supports 
+specific species, mention them.  Also explain how it is deficient, if applicable.  
+
+Next, write a 3-5 sentences comparing how well it supports pollinators compared to other plants.
+
+Next, summarize your findings in ~40 words.
+
+Finally, rate how well it supports them on a scale from 1-10 compared to other plants.  
+1 is worst, 5 is average, 10 is best.
+
+
+Your entire response will be formatted as follows, the labels are REQUIRED:
+
+Your explanation.
+Your comparison to other plants.
+
+summary: ~40 words summarizing your explanation, starting with the word \"Supports\".  Do NOT mention the rating.
+rating: an integer rating from 1-10
+
+For example:
+A paragraph explaining.
+
+A paragraph comparing.
+
+summary: Supports... <rest of ~40 word summary>
+rating: 5", name)
+}
+
 pub async fn fetch_pollinator_rating(
     api_key: &str,
     scientific_name: &str,
 ) -> anyhow::Result<Rating> {
-    let prompt = format!("Summarize how {} supports the pollinators of an ecosystem in ~40 words.  Consider it's contributions as a food source, shelter, and larval host.  If it supports specific species, mention them.  Also explain how it is deficient, if applicable.  Rate how well it supports them on a scale from 1-10 compared to other plants.  1-2 is bad, 3-5 is mediocre, 6-8 is good, 9-10 is great.
-
-Your entire response will be formatted as follows, the labels are REQUIRED:
-
-summary: ~40 words summarizing your explanation, starting with the word \"Supports\".  Do NOT repeat the rating.
-rating: an integer rating from 1-10
-
-For example:
-
-summary: Supports... <rest of ~40 word summary>
-rating: 5", scientific_name);
-
+    let prompt = build_pollinator_prompt(scientific_name);
     let payload = build_rating_request(prompt);
     let response = openai::call_model(payload, api_key).await?;
 

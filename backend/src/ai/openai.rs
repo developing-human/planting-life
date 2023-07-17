@@ -103,7 +103,7 @@ async fn call_model_with_retries(
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
-        .timeout(Duration::from_millis(5000)) // typical is 400-800ms
+        .timeout(Duration::from_millis(20000)) // typical is 400-800ms
         .json(&payload)
         .send()
         .await
