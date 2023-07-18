@@ -6,6 +6,7 @@ use reqwest::{Response, StatusCode};
 use reqwest_middleware::ClientBuilder;
 use reqwest_retry::{policies::ExponentialBackoff, RetryTransientMiddleware};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::time::Duration;
 use tokio::io::AsyncBufReadExt;
 use tokio_util::io::StreamReader;
@@ -13,6 +14,7 @@ use tokio_util::io::StreamReader;
 #[derive(Debug, Serialize)]
 pub struct ChatCompletionRequest {
     pub model: String,
+    pub functions: Vec<ChatCompletionFunction>,
     pub messages: Vec<ChatCompletionMessage>,
     pub max_tokens: u32,
     pub stream: bool,
@@ -20,9 +22,36 @@ pub struct ChatCompletionRequest {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct ChatCompletionFunction {
+    pub name: String,
+    pub parameters: ChatCompletionParameters,
+    pub required: Vec<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatCompletionParameters {
+    pub r#type: String,
+    pub properties: HashMap<String, ChatCompletionProperty>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatCompletionProperty {
+    pub r#type: String,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ChatCompletionMessage {
     pub role: Option<String>,
     pub content: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub function_call: Option<ChatCompletionFunctionCall>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatCompletionFunctionCall {
+    name: String,
+    arguments: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -145,4 +174,44 @@ pub async fn call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow
         Some(content) => Ok(content.clone()),
         None => Err(anyhow!("no content in message")),
     }
+}
+
+// Calls the model, expecting it to call a specific function.
+// Returns the JSON string with the arguments to that function.
+pub async fn call_model_function(
+    payload: ChatCompletionRequest,
+    api_key: &str,
+    function_name: &str,
+) -> anyhow::Result<String> {
+    let response = call_model_with_retries(payload, api_key).await?;
+
+    let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
+    let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;
+
+    let parsed: ChatCompletionResponse = serde_json::from_str(json).map_err(|e| anyhow!(e))?;
+
+    if parsed.choices.is_empty() {
+        return Err(anyhow!("no choices in response"));
+    }
+
+    let choice = &parsed.choices[0];
+    let message = match &choice.message {
+        Some(message) => message,
+        None => return Err(anyhow!("no message in choice")),
+    };
+
+    let function_call = match &message.function_call {
+        Some(function_call) => function_call,
+        None => return Err(anyhow!("no function_call in message")),
+    };
+
+    if function_call.name != function_name {
+        return Err(anyhow!(
+            "did not call {}, called {} instead",
+            function_name,
+            function_call.name
+        ));
+    }
+
+    Ok(function_call.arguments.clone())
 }

@@ -1,7 +1,12 @@
+use serde::Deserialize;
+use std::collections::HashMap;
+
 use anyhow::anyhow;
 use futures::{Stream, StreamExt};
 
 use crate::domain::{Plant, Rating};
+
+use self::openai::ChatCompletionFunction;
 
 mod openai;
 
@@ -16,14 +21,17 @@ pub async fn stream_plants(
 
     let payload = openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
+        functions: vec![],
         messages: vec![
             openai::ChatCompletionMessage {
                 role: Some(String::from("system")),
                 content: Some(String::from("You are a helpful assistant")),
+                function_call: None,
             },
             openai::ChatCompletionMessage {
                 role: Some(String::from("user")),
                 content: Some(prompt),
+                function_call: None,
             },
         ],
         max_tokens: 500,
@@ -106,14 +114,17 @@ pub async fn fetch_description(
 
     let payload = openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
+        functions: vec![],
         messages: vec![
             openai::ChatCompletionMessage {
                 role: Some(String::from("system")),
                 content: Some(String::from("You are a knowledgeable gardener")),
+                function_call: None,
             },
             openai::ChatCompletionMessage {
                 role: Some(String::from("user")),
                 content: Some(prompt),
+                function_call: None,
             },
         ],
         max_tokens: 200,
@@ -125,32 +136,15 @@ pub async fn fetch_description(
 }
 
 pub fn build_pollinator_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the pollinators of an ecosystem in 3-5 sentences.  Consider it's contributions as a food source, shelter, and larval host.  If it supports 
-specific species, mention them.  Also explain how it is deficient, if applicable.  
+    format!("Explain how well {} supports the pollinators of an ecosystem.  Consider its contributions as a food source, shelter, and larval host. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
+}
 
-Next, write a 3-5 sentences comparing how well it supports pollinators compared to other plants.
+pub fn build_bird_prompt(name: &str) -> String {
+    format!("Explain how well {} supports the birds of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
+}
 
-Next, summarize your findings in ~40 words.
-
-Finally, rate how well it supports them on a scale from 1-10 compared to other plants.  
-1 is worst, 5 is average, 10 is best.
-
-
-Your entire response will be formatted as follows, the labels are REQUIRED:
-
-Your explanation.
-Your comparison to other plants.
-
-summary: ~40 words summarizing your explanation, starting with the word \"Supports\".  Do NOT mention the rating.
-rating: an integer rating from 1-10
-
-For example:
-A paragraph explaining.
-
-A paragraph comparing.
-
-summary: Supports... <rest of ~40 word summary>
-rating: 5", name)
+pub fn build_animal_prompt(name: &str) -> String {
+    format!("Explain how well {} supports the small ground animals of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
 }
 
 pub async fn fetch_pollinator_rating(
@@ -159,45 +153,23 @@ pub async fn fetch_pollinator_rating(
 ) -> anyhow::Result<Rating> {
     let prompt = build_pollinator_prompt(scientific_name);
     let payload = build_rating_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     parse_rating(&response)
 }
 
 pub async fn fetch_bird_rating(api_key: &str, scientific_name: &str) -> anyhow::Result<Rating> {
-    let prompt = format!("Summarize how {} supports the birds of an ecosystem in ~40 words.  Consider it's contributions as a food source and shelter.  If it supports specific species, mention them.  Also explain how it is deficient, if applicable.  Rate how well it supports them on a scale from 1-10 compared to other plants.  1-2 is bad, 3-5 is mediocre, 6-8 is good, 9-10 is great.
-Your entire response will be formatted as follows, the labels are REQUIRED:
-
-summary: ~40 words summarizing your explanation, starting with the word \"Supports\".  Do NOT repeat the rating.
-rating: an integer rating from 1-10
-
-For example:
-
-summary: Supports... <rest of ~40 word summary>
-rating: 5", scientific_name);
-
+    let prompt = build_bird_prompt(scientific_name);
     let payload = build_rating_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     parse_rating(&response)
 }
 
 pub async fn fetch_animal_rating(api_key: &str, scientific_name: &str) -> anyhow::Result<Rating> {
-    let prompt = format!("Summarize how {} supports the small ground animals (such as mammals and reptiles) of an ecosystem in ~40 words.  Consider it's contributions as a food source and shelter.  If it supports specific species, mention them.  Also explain how it is deficient, if applicable.  Rate how well it supports them on a scale from 1-10 compared to other plants.  1-2 is bad, 3-5 is mediocre, 6-8 is good, 9-10 is great.
-
-Your entire response will be formatted as follows, the labels are REQUIRED:
-
-summary: ~40 words summarizing your explanation, starting with the word \"Supports\".  Do NOT repeat the rating.
-rating: an integer rating from 1-10
-
-For example:
-
-summary: Supports... rest of ~40 word summary
-rating: 5
-", scientific_name);
-
+    let prompt = build_animal_prompt(scientific_name);
     let payload = build_rating_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     parse_rating(&response)
 }
@@ -205,56 +177,85 @@ rating: 5
 fn build_rating_request(prompt: String) -> openai::ChatCompletionRequest {
     openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
+        functions: vec![build_rating_function()],
         messages: vec![
             openai::ChatCompletionMessage {
                 role: Some(String::from("system")),
-                content: Some(String::from("You are a knowledgeable gardener")),
+                content: Some(String::from("You are a discerning gardener")),
+                function_call: None,
             },
             openai::ChatCompletionMessage {
                 role: Some(String::from("user")),
                 content: Some(prompt),
+                function_call: None,
             },
         ],
-        max_tokens: 500,
+        max_tokens: 750,
         stream: false,
         temperature: 0.3,
     }
 }
 
+#[derive(Deserialize)]
+struct AiRating {
+    summary: String,
+    rating: u8,
+}
+
 fn parse_rating(input: &str) -> anyhow::Result<Rating> {
-    let lines: Vec<&str> = input.split('\n').collect();
+    let parsed: AiRating = serde_json::from_str(input).map_err(|e| anyhow!(e))?;
 
-    // Find the line which contains the rating
-    let rating_line = lines
-        .iter()
-        .find(|line| line.to_lowercase().starts_with("rating: "));
+    Ok(Rating {
+        reason: parsed.summary,
+        rating: parsed.rating,
+    })
+}
 
-    // Remove the label, accounting for both upper and lower case
-    let rating_str = rating_line.map(|s| s.replace("rating: ", ""));
-    let rating_str = rating_str.map(|s| s.replace("Rating: ", ""));
+fn build_rating_function() -> ChatCompletionFunction {
+    let mut properties = HashMap::new();
+    properties.insert(
+        "explanation".to_string(),
+        openai::ChatCompletionProperty {
+            r#type: "string".to_string(),
+            description: "3-4 sentence explanation of the plant's strengths and weaknesses"
+                .to_string(),
+        },
+    );
+    properties.insert(
+        "comparison".to_string(),
+        openai::ChatCompletionProperty {
+            r#type: "string".to_string(),
+            description: "3-4 sentence comparison of the plant's contribution to other plants"
+                .to_string(),
+        },
+    );
+    properties.insert(
+        "summary".to_string(),
+        openai::ChatCompletionProperty {
+            r#type: "string".to_string(),
+            description: "~40 word summary of the explanation and comparison".to_string(),
+        },
+    );
+    properties.insert(
+        "rating".to_string(),
+        openai::ChatCompletionProperty {
+            r#type: "integer".to_string(),
+            description: "REQUIRED: an integer rating from 1-10. 1-3 is suboptimal, 4-7 is for solid contributors, 8-10 is for the very best".to_string(),
+        },
+    );
 
-    // Parse the rating into an integer
-    let rating = match rating_str.map(|line| line.parse()) {
-        Some(Ok(rating)) => rating,
-        Some(Err(_)) => return Err(anyhow!("invalid rating: {input}",)),
-        None => return Err(anyhow!("rating not in response: {input}")),
-    };
-
-    // Find the line which contains the summary
-    let summary_line = lines
-        .iter()
-        .find(|line| line.to_lowercase().starts_with("summary:"));
-
-    // Remove the label, accounting for both upper and lower case
-    let summary_str = summary_line.map(|s| s.replace("summary: ", ""));
-    let summary_str = summary_str.map(|s| s.replace("Summary: ", ""));
-
-    match summary_str {
-        Some(summary) => Ok(Rating {
-            rating,
-            reason: summary,
-        }),
-        None => Err(anyhow!("summary not in response: {input}")),
+    openai::ChatCompletionFunction {
+        name: "save_rating".to_string(),
+        parameters: openai::ChatCompletionParameters {
+            r#type: "object".to_string(),
+            properties,
+        },
+        required: vec![
+            "explanation".to_string(),
+            "comparison".to_string(),
+            "summary".to_string(),
+            "rating".to_string(),
+        ],
     }
 }
 
