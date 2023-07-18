@@ -46,7 +46,10 @@ async fn fetch_plants_handler(
                 )
                 .await
             }
-            Err(_) => send_event(&frontend_sender, "error", "").await,
+            Err(e) => {
+                warn!("error getting plant stream: {e}");
+                send_event(&frontend_sender, "error", "").await
+            }
         };
 
         send_event(&frontend_sender, "close", "").await;

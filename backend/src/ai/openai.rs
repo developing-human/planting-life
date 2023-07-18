@@ -14,6 +14,7 @@ use tokio_util::io::StreamReader;
 #[derive(Debug, Serialize)]
 pub struct ChatCompletionRequest {
     pub model: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub functions: Vec<ChatCompletionFunction>,
     pub messages: Vec<ChatCompletionMessage>,
     pub max_tokens: u32,
