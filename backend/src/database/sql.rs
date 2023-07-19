@@ -67,11 +67,26 @@ pub async fn update_plant(
     let mut conn = db.get_connection().await?;
 
     r"UPDATE plants 
-              SET description = :description, image_id = :image_id
+              SET pollinator_rating = :pollinator_rating,
+                  pollinator_reason = :pollinator_reason,
+                  bird_rating = :bird_rating,
+                  bird_reason = :bird_reason,
+                  animal_rating = :animal_rating,
+                  animal_reason = :animal_reason,
+                  usda_source = :usda_source,
+                  wiki_source = :wiki_source,
+                  image_id = :image_id
               WHERE id = :id"
         .with(params! {
             "id" => plant.id,
-            "description" => plant.description.clone(),
+            "pollinator_rating" => plant.pollinator_rating.as_ref().map(|r| r.rating),
+            "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| &r.reason),
+            "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
+            "bird_reason" => plant.bird_rating.as_ref().map(|r| &r.reason),
+            "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
+            "animal_reason" => plant.animal_rating.as_ref().map(|r| &r.reason),
+            "usda_source" => plant.citations.iter().find(|c| c.label == "USDA").map(|c| &c.url),
+            "wiki_source" => plant.citations.iter().find(|c| c.label == "Wikipedia").map(|c| &c.url),
             "image_id" => img_id
         })
         .ignore(&mut conn)
@@ -87,15 +102,35 @@ pub async fn insert_plant(
     img_id: Option<usize>,
 ) -> anyhow::Result<usize> {
     let mut conn = db.get_connection().await?;
+    println!("inserting plant: {plant:?}");
 
-    r"INSERT INTO plants (scientific_name, common_name, bloom, description, image_id)
-            VALUES (:scientific_name, :common_name, :bloom, :description, :image_id)
+    r"INSERT INTO plants 
+        (scientific_name, common_name, bloom, 
+         pollinator_rating, pollinator_reason,
+         bird_rating, bird_reason,
+         animal_rating, animal_reason,
+         usda_source, wiki_source,
+         image_id)
+      VALUES 
+        (:scientific_name, :common_name, :bloom, 
+         :pollinator_rating, :pollinator_reason,
+         :bird_rating, :bird_reason,
+         :animal_rating, :animal_reason,
+         :usda_source, :wiki_source,
+         :image_id)
             RETURNING id"
         .with(params! {
             "scientific_name" => &plant.scientific,
             "common_name" => &plant.common,
             "bloom" => &plant.bloom,
-            "description" => plant.description.clone().unwrap_or("null".to_string()),
+            "pollinator_rating" => plant.pollinator_rating.as_ref().map(|r| r.rating),
+            "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| r.reason.clone()),
+            "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
+            "bird_reason" => plant.bird_rating.as_ref().map(|r| r.reason.clone()),
+            "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
+            "animal_reason" => plant.animal_rating.as_ref().map(|r| r.reason.clone()),
+            "usda_source" => plant.citations.iter().find(|c| c.label == "USDA").map(|c| &c.url),
+            "wiki_source" => plant.citations.iter().find(|c| c.label == "Wikipedia").map(|c| &c.url),
             "image_id" => img_id
         })
         .fetch(&mut conn)
@@ -115,7 +150,13 @@ pub async fn select_plants_by_zip_moisture_shade(
     let mut conn = db.get_connection().await?;
 
     r"
-SELECT p.id, p.scientific_name, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
+SELECT 
+  p.id, p.scientific_name, p.common_name, p.bloom, 
+  p.pollinator_rating, p.pollinator_reason,
+  p.bird_rating, p.bird_reason,
+  p.animal_rating, p.animal_reason,
+  p.usda_source, p.wiki_source,
+  i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN queries_plants qp ON qp.plant_id = p.id
 INNER JOIN queries q ON qp.query_id = q.id
@@ -125,10 +166,10 @@ WHERE z.zipcode = ?
   AND q.moisture = ?
   AND q.shade = ?
 "
-        .with((zip, moisture.to_string(), shade.to_string()))
-        .map(&mut conn, |plant: Plant| plant)
-        .await
-        .map_err(|e| anyhow!(e))
+    .with((zip, moisture.to_string(), shade.to_string()))
+    .map(&mut conn, |plant: Plant| plant)
+    .await
+    .map_err(|e| anyhow!(e))
 }
 
 /// Selects one plant by scientific name.  
@@ -140,7 +181,13 @@ pub async fn select_plant_by_scientific_name(
     let mut conn = db.get_connection().await?;
 
     r"
-SELECT p.id, p.scientific_name, p.common_name, p.bloom, p.description, i.id, i.title, i.card_url, i.original_url, i.author, i.license
+SELECT
+  p.id, p.scientific_name, p.common_name, p.bloom, 
+  p.pollinator_rating, p.pollinator_reason,
+  p.bird_rating, p.bird_reason,
+  p.animal_rating, p.animal_reason,
+  p.usda_source, p.wiki_source,
+  i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN images i ON i.id = p.image_id
 WHERE scientific_name = :scientific_name"

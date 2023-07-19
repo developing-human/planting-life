@@ -77,9 +77,6 @@ async fn hydrate_one_plant(
     if plant.image.is_none() {
         futures_unordered.push(Box::pin(hydrate_image(&plant)));
     }
-    if plant.description.is_none() {
-        futures_unordered.push(Box::pin(hydrate_description(&plant)));
-    }
     futures_unordered.push(Box::pin(hydrate_details(&plant)));
 
     let mut updated = false;
@@ -130,38 +127,6 @@ async fn hydrate_image(plant: &Plant) -> Option<HydratedPlant> {
                 ..plant.clone()
             },
         })
-}
-
-/// Looks up a description for this plant.  If one is found, it returns a HydratedPlant
-/// with the description populated.
-async fn hydrate_description(plant: &Plant) -> Option<HydratedPlant> {
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let description_stream = match ai::fetch_description(&api_key, &plant.scientific).await {
-        Ok(stream) => stream,
-        Err(_) => {
-            warn!("Failed to fetch description");
-            return None;
-        }
-    };
-
-    let mut description_deltas = vec![];
-    let mut description_stream = Box::pin(description_stream);
-    while let Some(description_delta) = description_stream.next().await {
-        description_deltas.push(description_delta);
-    }
-
-    if description_deltas.is_empty() {
-        None
-    } else {
-        Some(HydratedPlant {
-            updated: true,
-            done: false,
-            plant: Plant {
-                description: Some(description_deltas.join("")),
-                ..plant.clone()
-            },
-        })
-    }
 }
 
 /// Hydrates all "details", which includes things like ratings, height,

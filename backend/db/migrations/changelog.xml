@@ -15,4 +15,6 @@
   <include file="migrations/populate-nurseries.sql"/>
   <include file="migrations/populate-regions.sql"/>
 
+  <include file="migrations/add-plant-details.sql"/>
+
 </databaseChangeLog>

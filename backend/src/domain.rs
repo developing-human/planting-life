@@ -8,11 +8,10 @@ pub struct Plant {
     pub id: Option<usize>,
     pub common: String,
     pub scientific: String,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    //pub image_url: Option<String>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
 
@@ -36,6 +35,22 @@ pub struct Citation {
     pub url: String,
 }
 
+impl Citation {
+    pub fn create_usda(url: &str) -> Self {
+        Self {
+            label: "USDA".to_string(),
+            url: url.to_string(),
+        }
+    }
+
+    pub fn create_wikipedia(url: &str) -> Self {
+        Self {
+            label: "Wikipedia".to_string(),
+            url: url.to_string(),
+        }
+    }
+}
+
 impl Plant {
     // Merges two plants, prioritizing "other" but never overriding Some with None
     pub fn merge(&self, other: &Plant) -> Plant {
@@ -56,7 +71,6 @@ impl Plant {
             common: self.common.clone(),
             scientific: self.scientific.clone(),
             bloom: other.bloom.clone().or(self.bloom.clone()),
-            description: other.description.clone().or(self.description.clone()),
             image: other.image.clone().or(self.image.clone()),
             pollinator_rating: other
                 .pollinator_rating

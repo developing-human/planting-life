@@ -21,42 +21,63 @@ impl FromRow for Nursery {
 }
 
 impl FromRow for Plant {
-    fn from_row_opt(row: mysql_async::Row) -> Result<Self, FromRowError>
+    fn from_row_opt(mut row: mysql_async::Row) -> Result<Self, FromRowError>
     where
         Self: Sized,
     {
-        let (
-            id,
-            scientific,
-            common,
-            bloom,
-            description,
-            img_id,
-            title,
-            card_url,
-            original_url,
-            author,
-            license,
-        ) = mysql_async::from_row_opt(row)?;
+        // Required fields use take + unwrap (to get value)
+        // Optional fields use take_opt + unwrap + ok (to get option)
+        let id = row.take("id").unwrap();
+        let scientific: String = row.take("scientific_name").unwrap();
+        let common = row.take("common_name").unwrap();
+        let bloom = row.take("bloom").unwrap();
+        let pollinator_rating = row.take_opt("pollinator_rating").unwrap().ok();
+        let pollinator_reason = row.take_opt("pollinator_reason").unwrap().ok();
+        let bird_rating = row.take_opt("bird_rating").unwrap().ok();
+        let bird_reason = row.take_opt("bird_reason").unwrap().ok();
+        let animal_rating = row.take_opt("animal_rating").unwrap().ok();
+        let animal_reason = row.take_opt("animal_reason").unwrap().ok();
+        let img_id = row.take_opt("image_id").unwrap().ok();
+        let title = row.take_opt("title").unwrap().ok();
+        let card_url = row.take_opt("card_url").unwrap().ok();
+        let original_url = row.take_opt("original_url").unwrap().ok();
+        let author = row.take_opt("author").unwrap().ok();
+        let license = row.take_opt("license").unwrap().ok();
+        let usda: Option<String> = row.take_opt("usda_source").unwrap().ok();
+        let wiki: Option<String> = row.take_opt("wiki_source").unwrap().ok();
 
-        // Everything related to the image is optional because the image may not exist
-        // But if img_id is present, everything else is required.  Hence the unwraps.
-        let img_id: Option<usize> = img_id;
-        let license: Option<String> = license;
-        let scientific: String = scientific;
+        let mut citations = vec![];
+        if let Some(usda) = usda {
+            citations.push(Citation::create_usda(&usda));
+        }
+        if let Some(wiki) = wiki {
+            citations.push(Citation::create_wikipedia(&wiki));
+        }
 
         Ok(Plant {
             id: Some(id),
-            scientific: scientific.to_string(),
+            scientific: scientific.clone(),
             common,
-            description,
             bloom,
-            pollinator_rating: None, //TODO: Populate this!
-            bird_rating: None,       //TODO: Populate this!
-            animal_rating: None,     //TODO: Populate this!
-            citations: vec![],       //TODO: Populate this!
+            pollinator_rating: pollinator_rating.map(|rating| Rating {
+                rating,
+                reason: pollinator_reason.unwrap(),
+            }),
+            bird_rating: bird_rating.map(|rating| Rating {
+                rating,
+                reason: bird_reason.unwrap(),
+            }),
+            animal_rating: animal_rating.map(|rating| Rating {
+                rating,
+                reason: animal_reason.unwrap(),
+            }),
+            citations,
             image: img_id.map(|_| {
-                let license = license.unwrap();
+                let license: String = license.unwrap();
+                let title: String = title.unwrap();
+                let card_url: String = card_url.unwrap();
+                let original_url: String = original_url.unwrap();
+                let author: String = author.unwrap();
 
                 Image {
                     id: img_id,

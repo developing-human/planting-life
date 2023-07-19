@@ -1,22 +1,19 @@
 use crate::domain::Citation;
 
 mod wikipedia {
+    use crate::domain::Citation;
     use reqwest::StatusCode;
     use std::time::Duration;
     use tracing::warn;
 
-    const LABEL: &str = "Wikipedia";
     const BASE_URL: &str = "https://en.wikipedia.org/wiki/";
 
-    pub async fn find(scientific_name: &str) -> Option<super::Citation> {
+    pub async fn find(scientific_name: &str) -> Option<Citation> {
         let url = build_url(scientific_name);
 
         if let Some(url) = url {
             if is_valid(&url).await {
-                return Some(super::Citation {
-                    label: LABEL.to_string(),
-                    url,
-                });
+                return Some(Citation::create_wikipedia(&url));
             }
         }
 
@@ -101,6 +98,7 @@ mod usda {
     use std::fs::File;
     use std::io::BufReader;
 
+    use crate::domain::Citation;
     use lazy_static::lazy_static;
     use tracing::log::error;
 
@@ -129,12 +127,9 @@ mod usda {
 
     const BASE_URL: &str = "https://plants.usda.gov/home/plantProfile?symbol=";
 
-    pub fn find(scientific_name: &str) -> Option<super::Citation> {
+    pub fn find(scientific_name: &str) -> Option<Citation> {
         if let Some(symbol) = lookup_symbol(scientific_name) {
-            return Some(super::Citation {
-                label: "USDA".to_string(),
-                url: build_url(symbol),
-            });
+            return Some(Citation::create_usda(&build_url(symbol)));
         }
 
         None

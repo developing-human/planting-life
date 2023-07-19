@@ -110,10 +110,7 @@ impl Database {
 
     /// Saves a list of Plants, returning a list of new Plants which
     /// have their ids populated.  Returns Err if any fail to save.
-    pub async fn save_plants(
-        &self,
-        plants_in: &Vec<&Plant>,
-    ) -> anyhow::Result<Vec<Plant>> {
+    pub async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>> {
         let mut futures = vec![];
         for plant in plants_in {
             futures.push(self.save_plant(plant));

@@ -1,12 +1,21 @@
 --liquibase formatted sql
 
---changeset doug:1
+--changeset doug:2
 CREATE TABLE IF NOT EXISTS plants (
   id INT PRIMARY KEY AUTO_INCREMENT,
   scientific_name VARCHAR(100),
   common_name VARCHAR(100),
-  description VARCHAR(400),
   bloom VARCHAR(100),
+
+  pollinator_rating INT,
+  pollinator_reason VARCHAR(400),
+  bird_rating INT,
+  bird_reason VARCHAR(400),
+  animal_rating INT,
+  animal_reason VARCHAR(400),
+
+  usda_source VARCHAR(100),
+  wiki_source VARCHAR(100),
 
   -- optional, may not find image
   image_id INT,

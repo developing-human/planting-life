@@ -18,12 +18,10 @@ async fn main() {
 
     let scientific_name = &args[1];
     let common_name = &args[2];
-    let description = &args[3];
 
     let plant = Plant {
         scientific: scientific_name.to_string(),
         common: common_name.to_string(),
-        description: Some(description.to_string()),
         bloom: None,
         image: None,
         id: None,
@@ -46,7 +44,6 @@ async fn main() {
     let first = Plant {
         scientific: "first".to_string(),
         common: common_name.to_string(),
-        description: Some(description.to_string()),
         bloom: None,
         image: None,
         id: None,
@@ -54,7 +51,6 @@ async fn main() {
     let second = Plant {
         scientific: "second".to_string(),
         common: common_name.to_string(),
-        description: Some(description.to_string()),
         bloom: None,
         image: None,
         id: None,
@@ -62,7 +58,6 @@ async fn main() {
     let third = Plant {
         scientific: "third".to_string(),
         common: common_name.to_string(),
-        description: Some(description.to_string()),
         bloom: None,
         image: None,
         id: None,

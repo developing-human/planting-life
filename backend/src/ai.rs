@@ -102,49 +102,22 @@ pub async fn stream_plants(
     Ok(plant_stream.filter_map(|plant| async { plant }))
 }
 
-pub async fn fetch_description(
-    api_key: &str,
-    scientific_name: &str,
-) -> anyhow::Result<impl Stream<Item = String>> {
-    let prompt = format!(
-        "Describe the specific wildlife {} supports in 25-35 words by completing this sentence: 
-         Supports ...",
-        scientific_name
-    );
-
-    let payload = openai::ChatCompletionRequest {
-        model: String::from("gpt-3.5-turbo"),
-        functions: vec![],
-        messages: vec![
-            openai::ChatCompletionMessage {
-                role: Some(String::from("system")),
-                content: Some(String::from("You are a knowledgeable gardener")),
-                function_call: None,
-            },
-            openai::ChatCompletionMessage {
-                role: Some(String::from("user")),
-                content: Some(prompt),
-                function_call: None,
-            },
-        ],
-        max_tokens: 200,
-        stream: true,
-        temperature: 0.3,
-    };
-
-    openai::call_model_stream(payload, api_key, false).await
-}
-
 pub fn build_pollinator_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the pollinators of an ecosystem.  Consider its contributions as a food source, shelter, and larval host. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
+    format!("Explain how well {} supports the pollinators of an ecosystem.  Consider its contributions as a food source, shelter, and larval host. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
+
+Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
 }
 
 pub fn build_bird_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the birds of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
+    format!("Explain how well {} supports the birds of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
+
+Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
 }
 
 pub fn build_animal_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the small ground animals of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. Then compare them to other plants, summarize, and rate them.  Remember, the rating is required as a separate field!", name)
+    format!("Explain how well {} supports the small ground animals of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
+
+Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
 }
 
 pub async fn fetch_pollinator_rating(
@@ -230,17 +203,17 @@ fn build_rating_function() -> ChatCompletionFunction {
         },
     );
     properties.insert(
-        "summary".to_string(),
-        openai::ChatCompletionProperty {
-            r#type: "string".to_string(),
-            description: "~40 word summary of the explanation and comparison".to_string(),
-        },
-    );
-    properties.insert(
         "rating".to_string(),
         openai::ChatCompletionProperty {
             r#type: "integer".to_string(),
             description: "REQUIRED: an integer rating from 1-10. 1-3 is suboptimal, 4-7 is for solid contributors, 8-10 is for the very best".to_string(),
+        },
+    );
+    properties.insert(
+        "summary".to_string(),
+        openai::ChatCompletionProperty {
+            r#type: "string".to_string(),
+            description: "30-40 word summary of the explanation and comparison".to_string(),
         },
     );
 
@@ -253,8 +226,8 @@ fn build_rating_function() -> ChatCompletionFunction {
         required: vec![
             "explanation".to_string(),
             "comparison".to_string(),
-            "summary".to_string(),
             "rating".to_string(),
+            "summary".to_string(),
         ],
     }
 }
@@ -320,7 +293,6 @@ impl PlantBuilder {
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
             bloom: PlantBuilder::sanitize_bloom(self.bloom.clone()),
-            description: None,
             pollinator_rating: None,
             bird_rating: None,
             animal_rating: None,
