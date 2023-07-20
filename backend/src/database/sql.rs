@@ -102,7 +102,6 @@ pub async fn insert_plant(
     img_id: Option<usize>,
 ) -> anyhow::Result<usize> {
     let mut conn = db.get_connection().await?;
-    println!("inserting plant: {plant:?}");
 
     r"INSERT INTO plants 
         (scientific_name, common_name, bloom, 

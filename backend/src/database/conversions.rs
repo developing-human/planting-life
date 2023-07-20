@@ -48,7 +48,7 @@ impl FromRow for Plant {
 
         Ok(Plant {
             id: Some(id),
-            scientific: scientific.clone(),
+            scientific,
             common,
             bloom,
             pollinator_rating: pollinator_rating.map(|rating| Rating {
@@ -74,7 +74,6 @@ impl FromRow for Plant {
 
                 Image {
                     id: img_id,
-                    scientific_name: scientific,
                     title,
                     card_url,
                     original_url,

@@ -63,9 +63,7 @@ impl Plant {
 #[serde(rename_all = "camelCase")]
 pub struct Image {
     pub id: Option<usize>,
-    pub scientific_name: String, //TODO: Only here b/c its needed on front end
     pub title: String,
-    //pub thumbnail_url: String,
     pub card_url: String,
     pub original_url: String,
     pub author: String,

@@ -38,10 +38,9 @@ struct ImageSearchPhotoDescription {
 }
 
 impl Image {
-    fn from_photo(photo: &ImageSearchPhoto, scientific_name: &str) -> Option<Image> {
+    fn from_photo(photo: &ImageSearchPhoto) -> Option<Image> {
         Some(Image {
             id: None,
-            scientific_name: String::from(scientific_name),
             title: photo.title.clone(),
             card_url: photo.url_z.clone().unwrap(), // only photos with url_z are chosen
             original_url: format!("https://www.flickr.com/photos/{}/{}", photo.owner, photo.id),
@@ -97,24 +96,14 @@ pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) 
 
     // First, look for this plant in bloom
     if let Some(response) = blooming_result {
-        if let Some(image) = find_best_photo(
-            response,
-            scientific_name,
-            truncated_scientific_name,
-            common_name,
-        ) {
+        if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
             return Some(image);
         }
     }
 
     // If it can't be found in bloom, look for any other image of it
     if let Some(response) = non_blooming_result {
-        if let Some(image) = find_best_photo(
-            response,
-            scientific_name,
-            truncated_scientific_name,
-            common_name,
-        ) {
+        if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
             return Some(image);
         }
     }
@@ -191,7 +180,6 @@ async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchRes
 
 fn find_best_photo(
     response: ImageSearchResponse,
-    scientific_name: &str,
     truncated_scientific_name: &str,
     common_name: &str,
 ) -> Option<Image> {
@@ -287,7 +275,5 @@ fn find_best_photo(
         b_views.cmp(&a_views)
     });
 
-    valid_photos
-        .first()
-        .and_then(|photo| Image::from_photo(photo, scientific_name))
+    valid_photos.first().and_then(Image::from_photo)
 }
