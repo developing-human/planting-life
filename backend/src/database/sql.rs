@@ -73,20 +73,33 @@ pub async fn update_plant(
                   bird_reason = :bird_reason,
                   animal_rating = :animal_rating,
                   animal_reason = :animal_reason,
+
                   usda_source = :usda_source,
                   wiki_source = :wiki_source,
+
+                  bloom = :bloom,
+                  height = :height,
+                  spread = :spread,
+
                   image_id = :image_id
               WHERE id = :id"
         .with(params! {
             "id" => plant.id,
+
             "pollinator_rating" => plant.pollinator_rating.as_ref().map(|r| r.rating),
             "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| &r.reason),
             "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
             "bird_reason" => plant.bird_rating.as_ref().map(|r| &r.reason),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| &r.reason),
+
             "usda_source" => &plant.usda_source,
             "wiki_source" => &plant.wiki_source,
+
+            "bloom" => &plant.bloom,
+            "height" => &plant.height,
+            "spread" => &plant.spread,
+
             "image_id" => img_id
         })
         .ignore(&mut conn)
