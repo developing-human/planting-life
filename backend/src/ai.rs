@@ -297,7 +297,8 @@ impl PlantBuilder {
             bird_rating: None,
             animal_rating: None,
             image: None,
-            citations: vec![],
+            usda_source: None,
+            wiki_source: None,
         }
     }
 

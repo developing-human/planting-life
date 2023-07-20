@@ -88,6 +88,8 @@ async fn hydrate_and_send_plants(
         send_plant(frontend_sender, &hydrated_plant.plant).await;
     }
 
+    println!("{all_plants:?}");
+
     //TODO: Should send this once 12 unique plant names have been sent
     //      this has ntohing to do with done/updated.  use a hash set.
     send_event(frontend_sender, "allPlantsLoaded", "").await;

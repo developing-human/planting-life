@@ -1,19 +1,16 @@
-use crate::domain::Citation;
-
-mod wikipedia {
-    use crate::domain::Citation;
+pub mod wikipedia {
     use reqwest::StatusCode;
     use std::time::Duration;
     use tracing::warn;
 
     const BASE_URL: &str = "https://en.wikipedia.org/wiki/";
 
-    pub async fn find(scientific_name: &str) -> Option<Citation> {
+    pub async fn find(scientific_name: &str) -> Option<String> {
         let url = build_url(scientific_name);
 
         if let Some(url) = url {
             if is_valid(&url).await {
-                return Some(Citation::create_wikipedia(&url));
+                return Some(url);
             }
         }
 
@@ -93,12 +90,11 @@ mod wikipedia {
     }
 }
 
-mod usda {
+pub mod usda {
     use std::collections::HashMap;
     use std::fs::File;
     use std::io::BufReader;
 
-    use crate::domain::Citation;
     use lazy_static::lazy_static;
     use tracing::log::error;
 
@@ -127,9 +123,9 @@ mod usda {
 
     const BASE_URL: &str = "https://plants.usda.gov/home/plantProfile?symbol=";
 
-    pub fn find(scientific_name: &str) -> Option<Citation> {
+    pub fn find(scientific_name: &str) -> Option<String> {
         if let Some(symbol) = lookup_symbol(scientific_name) {
-            return Some(Citation::create_usda(&build_url(symbol)));
+            return Some(build_url(symbol));
         }
 
         None
@@ -146,18 +142,4 @@ mod usda {
     fn build_url(symbol: &str) -> String {
         format!("{BASE_URL}{symbol}")
     }
-}
-
-pub async fn find(scientific_name: &str) -> Vec<Citation> {
-    let mut citations = vec![];
-
-    if let Some(citation) = wikipedia::find(scientific_name).await {
-        citations.push(citation);
-    }
-
-    if let Some(citation) = usda::find(scientific_name) {
-        citations.push(citation);
-    }
-
-    citations
 }

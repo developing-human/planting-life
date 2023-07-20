@@ -11,7 +11,9 @@ async fn main() {
 
     let scientific_name = &args[1];
 
-    let citations = citations::find(scientific_name).await;
+    let usda_source = citations::usda::find(scientific_name);
+    let wiki_source = citations::wikipedia::find(scientific_name).await;
 
-    println!("{citations:#?}");
+    println!("{usda_source:?}");
+    println!("{wiki_source:?}");
 }

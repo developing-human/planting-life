@@ -43,16 +43,8 @@ impl FromRow for Plant {
         let original_url = row.take_opt("original_url").unwrap().ok();
         let author = row.take_opt("author").unwrap().ok();
         let license = row.take_opt("license").unwrap().ok();
-        let usda: Option<String> = row.take_opt("usda_source").unwrap().ok();
-        let wiki: Option<String> = row.take_opt("wiki_source").unwrap().ok();
-
-        let mut citations = vec![];
-        if let Some(usda) = usda {
-            citations.push(Citation::create_usda(&usda));
-        }
-        if let Some(wiki) = wiki {
-            citations.push(Citation::create_wikipedia(&wiki));
-        }
+        let usda_source: Option<String> = row.take_opt("usda_source").unwrap().ok();
+        let wiki_source: Option<String> = row.take_opt("wiki_source").unwrap().ok();
 
         Ok(Plant {
             id: Some(id),
@@ -71,7 +63,8 @@ impl FromRow for Plant {
                 rating,
                 reason: animal_reason.unwrap(),
             }),
-            citations,
+            usda_source,
+            wiki_source,
             image: img_id.map(|_| {
                 let license: String = license.unwrap();
                 let title: String = title.unwrap();

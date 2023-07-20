@@ -85,8 +85,8 @@ pub async fn update_plant(
             "bird_reason" => plant.bird_rating.as_ref().map(|r| &r.reason),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| &r.reason),
-            "usda_source" => plant.citations.iter().find(|c| c.label == "USDA").map(|c| &c.url),
-            "wiki_source" => plant.citations.iter().find(|c| c.label == "Wikipedia").map(|c| &c.url),
+            "usda_source" => &plant.usda_source,
+            "wiki_source" => &plant.wiki_source,
             "image_id" => img_id
         })
         .ignore(&mut conn)
@@ -129,8 +129,8 @@ pub async fn insert_plant(
             "bird_reason" => plant.bird_rating.as_ref().map(|r| r.reason.clone()),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| r.reason.clone()),
-            "usda_source" => plant.citations.iter().find(|c| c.label == "USDA").map(|c| &c.url),
-            "wiki_source" => plant.citations.iter().find(|c| c.label == "Wikipedia").map(|c| &c.url),
+            "usda_source" => &plant.usda_source,
+            "wiki_source" => &plant.wiki_source,
             "image_id" => img_id
         })
         .fetch(&mut conn)

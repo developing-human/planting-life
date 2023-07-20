@@ -15,12 +15,20 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
 
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub pollinator_rating: Option<Rating>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub bird_rating: Option<Rating>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub animal_rating: Option<Rating>,
 
-    #[serde(skip_serializing_if = "Vec::is_empty")]
-    pub citations: Vec<Citation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub usda_source: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub wiki_source: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -29,42 +37,9 @@ pub struct Rating {
     pub reason: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Citation {
-    pub label: String,
-    pub url: String,
-}
-
-impl Citation {
-    pub fn create_usda(url: &str) -> Self {
-        Self {
-            label: "USDA".to_string(),
-            url: url.to_string(),
-        }
-    }
-
-    pub fn create_wikipedia(url: &str) -> Self {
-        Self {
-            label: "Wikipedia".to_string(),
-            url: url.to_string(),
-        }
-    }
-}
-
 impl Plant {
     // Merges two plants, prioritizing "other" but never overriding Some with None
     pub fn merge(&self, other: &Plant) -> Plant {
-        // Merge citations, prioritizing other when labels match
-        let mut new_citations = vec![];
-        for citation in self.citations.iter() {
-            let other_citation = other.citations.iter().find(|o| o.label == citation.label);
-            if let Some(other_citation) = other_citation {
-                new_citations.push(other_citation.clone());
-            } else {
-                new_citations.push(citation.clone());
-            }
-        }
-
         //TODO: Can I write this concisely with fewer clones?
         Plant {
             id: other.id.or(self.id),
@@ -78,7 +53,8 @@ impl Plant {
                 .or(self.pollinator_rating.clone()),
             bird_rating: other.bird_rating.clone().or(self.bird_rating.clone()),
             animal_rating: other.animal_rating.clone().or(self.animal_rating.clone()),
-            citations: new_citations,
+            usda_source: other.usda_source.clone().or(self.usda_source.clone()),
+            wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
         }
     }
 }

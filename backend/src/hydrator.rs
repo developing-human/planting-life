@@ -147,8 +147,11 @@ async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
     if plant.animal_rating.is_none() {
         futures_unordered.push(Box::pin(hydrate_animal_rating(plant)));
     }
-    if plant.citations.is_empty() {
-        futures_unordered.push(Box::pin(hydrate_citations(plant)));
+    if plant.usda_source.is_none() {
+        futures_unordered.push(Box::pin(hydrate_usda_source(plant)));
+    }
+    if plant.wiki_source.is_none() {
+        futures_unordered.push(Box::pin(hydrate_wikipedia_source(plant)));
     }
 
     // Merges all fetched details into a single Plant before returning it
@@ -229,21 +232,28 @@ async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
     })
 }
 
-async fn hydrate_citations(plant: &Plant) -> Option<HydratedPlant> {
-    //TODO: I think citations::find needs to know what citations we already have,
-    //      and only try to build out the ones we don't have.  But currently we
-    //      don't even have citations in the db.
-    let citations = citations::find(&plant.scientific).await;
-    if citations.is_empty() {
-        None
-    } else {
-        Some(HydratedPlant {
-            updated: true,
-            done: false,
-            plant: Plant {
-                citations,
-                ..plant.clone()
-            },
-        })
-    }
+async fn hydrate_usda_source(plant: &Plant) -> Option<HydratedPlant> {
+    let usda_source = citations::usda::find(&plant.scientific)?;
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            usda_source: Some(usda_source),
+            ..plant.clone()
+        },
+    })
+}
+
+async fn hydrate_wikipedia_source(plant: &Plant) -> Option<HydratedPlant> {
+    let wiki_source = citations::wikipedia::find(&plant.scientific).await?;
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            wiki_source: Some(wiki_source),
+            ..plant.clone()
+        },
+    })
 }

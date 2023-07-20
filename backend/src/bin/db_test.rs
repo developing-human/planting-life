@@ -28,7 +28,8 @@ async fn main() {
         pollinator_rating: None,
         bird_rating: None,
         animal_rating: None,
-        citations: vec![],
+        usda_source: None,
+        wiki_source: None,
     };
 
     let saved_plant = db.save_plant(&plant).await;
