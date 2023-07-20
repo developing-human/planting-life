@@ -104,14 +104,16 @@ pub async fn insert_plant(
     let mut conn = db.get_connection().await?;
 
     r"INSERT INTO plants 
-        (scientific_name, common_name, bloom, 
+        (scientific_name, common_name, 
+         bloom, height, spread,
          pollinator_rating, pollinator_reason,
          bird_rating, bird_reason,
          animal_rating, animal_reason,
          usda_source, wiki_source,
          image_id)
       VALUES 
-        (:scientific_name, :common_name, :bloom, 
+        (:scientific_name, :common_name, 
+         :bloom, :height, :spread,
          :pollinator_rating, :pollinator_reason,
          :bird_rating, :bird_reason,
          :animal_rating, :animal_reason,
@@ -121,15 +123,21 @@ pub async fn insert_plant(
         .with(params! {
             "scientific_name" => &plant.scientific,
             "common_name" => &plant.common,
+
             "bloom" => &plant.bloom,
+            "height" => &plant.height,
+            "spread" => &plant.spread,
+
             "pollinator_rating" => plant.pollinator_rating.as_ref().map(|r| r.rating),
             "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| r.reason.clone()),
             "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
             "bird_reason" => plant.bird_rating.as_ref().map(|r| r.reason.clone()),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| r.reason.clone()),
+
             "usda_source" => &plant.usda_source,
             "wiki_source" => &plant.wiki_source,
+
             "image_id" => img_id
         })
         .fetch(&mut conn)
@@ -150,7 +158,8 @@ pub async fn select_plants_by_zip_moisture_shade(
 
     r"
 SELECT 
-  p.id, p.scientific_name, p.common_name, p.bloom, 
+  p.id, p.scientific_name, p.common_name, 
+  p.bloom, p.height, p.spread, 
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,
@@ -181,7 +190,8 @@ pub async fn select_plant_by_scientific_name(
 
     r"
 SELECT
-  p.id, p.scientific_name, p.common_name, p.bloom, 
+  p.id, p.scientific_name, p.common_name, 
+  p.bloom, p.height, p.spread, 
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,

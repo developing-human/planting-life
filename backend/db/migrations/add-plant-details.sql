@@ -24,3 +24,8 @@ MODIFY COLUMN bird_reason VARCHAR(600);
 
 ALTER TABLE plants
 MODIFY COLUMN animal_reason VARCHAR(600);
+
+--changeset doug:5
+ALTER TABLE plants
+ADD COLUMN height VARCHAR(50),
+ADD COLUMN spread VARCHAR(50);

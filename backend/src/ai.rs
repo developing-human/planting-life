@@ -1,3 +1,4 @@
+use regex::Regex;
 use serde::Deserialize;
 use std::collections::HashMap;
 
@@ -83,7 +84,6 @@ pub async fn stream_plants(
         match key {
             "scientific" => builder.scientific = value,
             "common" => builder.common = value,
-            "bloom" => builder.bloom = value,
             _ => return futures::future::ready(Some(None)),
         }
 
@@ -174,9 +174,41 @@ First, explain how well it supports the small ground animals of an ecosystem.  C
 {}", name, build_rating_formatting_instructions())
 }
 
+pub fn build_height_prompt(name: &str) -> String {
+    format!("How tall is {}?  On the last line of your response, list only feet and inches using ' and \" for abbreviations.  Here are two examples: 
+
+```
+<plant name> typically grows to a height of 10 to 20 feet.
+10'-20'
+```
+
+```
+<plant name> typically grows to a height of 18 to 24 inches.
+18\"-24\"
+```", name)
+}
+
+pub fn build_spread_prompt(name: &str) -> String {
+    format!("What is {}'s width or spread?  On the last line of your response, list only feet and inches using ' and \" for abbreviations.  Here are two examples: 
+
+```
+<plant name>'s typically spread is 10 to 20 feet.
+10'-20'
+```
+
+```
+<plant name>'s typically spread is 18 to 24 inches.
+18\"-24\"
+```", name)
+}
+
+pub fn build_bloom_prompt(name: &str) -> String {
+    format!("In what season does {} typically start blooming?  Choose one of: early spring, spring, late spring, early summer, summer, late summer, early fall, fall, or late fall.  If it does not bloom, say 'does not bloom'.", name)
+}
+
 pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_pollinator_prompt(name);
-    let payload = build_rating_request(prompt);
+    let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key).await?;
 
     parse_rating(&response)
@@ -184,7 +216,7 @@ pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Resul
 
 pub async fn fetch_bird_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_bird_prompt(name);
-    let payload = build_rating_request(prompt);
+    let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key).await?;
 
     parse_rating(&response)
@@ -192,13 +224,37 @@ pub async fn fetch_bird_rating(api_key: &str, name: &str) -> anyhow::Result<Rati
 
 pub async fn fetch_animal_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_animal_prompt(name);
-    let payload = build_rating_request(prompt);
+    let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key).await?;
 
     parse_rating(&response)
 }
 
-fn build_rating_request(prompt: String) -> openai::ChatCompletionRequest {
+pub async fn fetch_height(api_key: &str, name: &str) -> anyhow::Result<String> {
+    let prompt = build_height_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key).await?;
+
+    parse_measurement(&response)
+}
+
+pub async fn fetch_spread(api_key: &str, name: &str) -> anyhow::Result<String> {
+    let prompt = build_spread_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key).await?;
+
+    parse_measurement(&response)
+}
+
+pub async fn fetch_bloom(api_key: &str, name: &str) -> anyhow::Result<String> {
+    let prompt = build_bloom_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key).await?;
+
+    parse_bloom(&response)
+}
+
+fn build_plant_detail_request(prompt: String) -> openai::ChatCompletionRequest {
     openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
         functions: vec![],
@@ -263,10 +319,46 @@ fn parse_rating(input: &str) -> anyhow::Result<Rating> {
     }
 }
 
-#[derive(Deserialize)]
-struct AiRating {
-    summary: String,
-    rating: u8,
+/// Parses the measurement as a string out of the llm response.
+/// The last line should be like: 18"-24"
+fn parse_measurement(input: &str) -> anyhow::Result<String> {
+    let re = Regex::new(r#"[0-9]+['"]-[0-9]+['"]"#).unwrap();
+    match re.find(input).map(|m| m.as_str()) {
+        Some(measurement) => Ok(measurement.to_string()),
+        None => Err(anyhow!("could not find measurement in: {input}")),
+    }
+}
+
+/// Parses the bloom season as a string out of the llm response.
+/// Looks for the first occurance of: early spring, spring, late spring, early summer,
+/// summer, late summer, early fall, fall, or late fall
+fn parse_bloom(input: &str) -> anyhow::Result<String> {
+    let seasons = vec![
+        "early spring",
+        "late spring",
+        "spring",
+        "early summer",
+        "late summer",
+        "summer",
+        "early fall",
+        "late fall",
+        "fall",
+        "early autumn",
+        "late autumn",
+        "autumn",
+        "does not bloom",
+    ];
+
+    let input_lc = input.to_lowercase();
+    for season in seasons {
+        if input_lc.contains(season) {
+            return Ok(season
+                .replace("autumn", "fall")
+                .replace("does not bloom", "N/A"));
+        }
+    }
+
+    Err(anyhow!("could not find season in: {input}"))
 }
 
 fn build_prompt(region_name: &str, shade: &str, moisture: &str) -> String {
@@ -281,11 +373,9 @@ No prose.  Your entire response will be formatted like:
 
 scientific: Scientific Name
 common: Common Name
-bloom: season of bloom
 
 scientific: Scientific Name
 common: Common Name
-bloom: season of bloom
 "#,
         region_name,
         shade.to_uppercase(),
@@ -298,7 +388,6 @@ bloom: season of bloom
 struct PlantBuilder {
     common: Option<String>,
     scientific: Option<String>,
-    bloom: Option<String>,
 }
 
 impl PlantBuilder {
@@ -306,18 +395,16 @@ impl PlantBuilder {
         PlantBuilder {
             common: None,
             scientific: None,
-            bloom: None,
         }
     }
 
     fn is_full(&self) -> bool {
-        self.common.is_some() && self.scientific.is_some() && self.bloom.is_some()
+        self.common.is_some() && self.scientific.is_some()
     }
 
     fn clear(&mut self) {
         self.common = None;
         self.scientific = None;
-        self.bloom = None;
     }
 
     fn build(&self) -> Plant {
@@ -329,7 +416,9 @@ impl PlantBuilder {
             id: None,
             common: self.common.clone().unwrap(),
             scientific: self.scientific.clone().unwrap(),
-            bloom: PlantBuilder::sanitize_bloom(self.bloom.clone()),
+            bloom: None,
+            height: None,
+            spread: None,
             pollinator_rating: None,
             bird_rating: None,
             animal_rating: None,
@@ -338,20 +427,6 @@ impl PlantBuilder {
             wiki_source: None,
         }
     }
-
-    fn sanitize_bloom(bloom: Option<String>) -> Option<String> {
-        if let Some(bloom) = bloom {
-            for season in &["spring", "summer", "fall", "autumn", "winter"] {
-                // Only use the "bloom" if it contains a season name
-                // Sometimes we get values like "n/a" or "does not bloom"
-                if bloom.contains(season) {
-                    return Some(bloom);
-                }
-            }
-        }
-
-        None
-    }
 }
 
 pub async fn _fetch_pollinator_rating_fn(
@@ -359,7 +434,7 @@ pub async fn _fetch_pollinator_rating_fn(
     scientific_name: &str,
 ) -> anyhow::Result<Rating> {
     let prompt = build_pollinator_function_prompt(scientific_name);
-    let payload = build_rating_request(prompt);
+    let payload = _build_rating_request_fn(prompt);
     let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     _parse_rating_fn(&response)
@@ -367,7 +442,7 @@ pub async fn _fetch_pollinator_rating_fn(
 
 pub async fn _fetch_bird_rating_fn(api_key: &str, scientific_name: &str) -> anyhow::Result<Rating> {
     let prompt = build_bird_function_prompt(scientific_name);
-    let payload = build_rating_request(prompt);
+    let payload = _build_rating_request_fn(prompt);
     let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     _parse_rating_fn(&response)
@@ -378,10 +453,16 @@ pub async fn _fetch_animal_rating_fn(
     scientific_name: &str,
 ) -> anyhow::Result<Rating> {
     let prompt = build_animal_function_prompt(scientific_name);
-    let payload = build_rating_request(prompt);
+    let payload = _build_rating_request_fn(prompt);
     let response = openai::call_model_function(payload, api_key, "save_rating").await?;
 
     _parse_rating_fn(&response)
+}
+
+#[derive(Deserialize)]
+struct AiRating {
+    summary: String,
+    rating: u8,
 }
 
 fn _parse_rating_fn(input: &str) -> anyhow::Result<Rating> {

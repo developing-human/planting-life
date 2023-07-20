@@ -147,11 +147,22 @@ async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
     if plant.animal_rating.is_none() {
         futures_unordered.push(Box::pin(hydrate_animal_rating(plant)));
     }
+
     if plant.usda_source.is_none() {
         futures_unordered.push(Box::pin(hydrate_usda_source(plant)));
     }
     if plant.wiki_source.is_none() {
         futures_unordered.push(Box::pin(hydrate_wikipedia_source(plant)));
+    }
+
+    if plant.height.is_none() {
+        futures_unordered.push(Box::pin(hydrate_height(plant)));
+    }
+    if plant.spread.is_none() {
+        futures_unordered.push(Box::pin(hydrate_spread(plant)));
+    }
+    if plant.bloom.is_none() {
+        futures_unordered.push(Box::pin(hydrate_bloom(plant)));
     }
 
     // Merges all fetched details into a single Plant before returning it
@@ -253,6 +264,66 @@ async fn hydrate_wikipedia_source(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             wiki_source: Some(wiki_source),
+            ..plant.clone()
+        },
+    })
+}
+
+async fn hydrate_height(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let height = match ai::fetch_height(&api_key, &plant.common).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch height: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            height: Some(height),
+            ..plant.clone()
+        },
+    })
+}
+
+async fn hydrate_spread(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let spread = match ai::fetch_spread(&api_key, &plant.common).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch spread: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            spread: Some(spread),
+            ..plant.clone()
+        },
+    })
+}
+
+async fn hydrate_bloom(plant: &Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let bloom = match ai::fetch_bloom(&api_key, &plant.common).await {
+        Ok(stream) => stream,
+        Err(e) => {
+            warn!("Failed to fetch bloom: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        done: false,
+        plant: Plant {
+            bloom: Some(bloom),
             ..plant.clone()
         },
     })

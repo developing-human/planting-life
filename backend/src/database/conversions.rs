@@ -45,12 +45,16 @@ impl FromRow for Plant {
         let license = row.take_opt("license").unwrap().ok();
         let usda_source: Option<String> = row.take_opt("usda_source").unwrap().ok();
         let wiki_source: Option<String> = row.take_opt("wiki_source").unwrap().ok();
+        let height: Option<String> = row.take_opt("height").unwrap().ok();
+        let spread: Option<String> = row.take_opt("spread").unwrap().ok();
 
         Ok(Plant {
             id: Some(id),
             scientific,
             common,
             bloom,
+            height,
+            spread,
             pollinator_rating: pollinator_rating.map(|rating| Rating {
                 rating,
                 reason: pollinator_reason.unwrap(),

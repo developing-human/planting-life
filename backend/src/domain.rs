@@ -29,6 +29,12 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub wiki_source: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub height: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub spread: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -55,6 +61,8 @@ impl Plant {
             animal_rating: other.animal_rating.clone().or(self.animal_rating.clone()),
             usda_source: other.usda_source.clone().or(self.usda_source.clone()),
             wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
+            height: other.height.clone().or(self.height.clone()),
+            spread: other.spread.clone().or(self.spread.clone()),
         }
     }
 }

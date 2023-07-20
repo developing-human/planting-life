@@ -23,6 +23,8 @@ async fn main() {
         scientific: scientific_name.to_string(),
         common: common_name.to_string(),
         bloom: None,
+        height: None,
+        spread: None,
         image: None,
         id: None,
         pollinator_rating: None,

@@ -44,3 +44,5 @@ geo = "0.25.1"
 mysql_async = "0.32.2"
 
 async-mutex = "1.4.0"
+
+regex = "1.9.1"
