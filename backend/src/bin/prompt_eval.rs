@@ -23,6 +23,10 @@ async fn main() {
         "wild ginger",
     ];
 
+    //TODO: Uncomment this to do a cheap/quick check
+    //let prompts_per_plant = 1;
+    //let plant_names = vec!["mowed lawn grass"];
+
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)

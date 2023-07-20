@@ -175,7 +175,7 @@ async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
 
 async fn hydrate_pollinator_rating(plant: &Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let rating = match ai::fetch_pollinator_rating(&api_key, &plant.scientific).await {
+    let rating = match ai::fetch_pollinator_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
         Err(e) => {
             warn!("Failed to fetch pollinator rating: {e}");
@@ -195,7 +195,7 @@ async fn hydrate_pollinator_rating(plant: &Plant) -> Option<HydratedPlant> {
 
 async fn hydrate_bird_rating(plant: &Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let rating = match ai::fetch_bird_rating(&api_key, &plant.scientific).await {
+    let rating = match ai::fetch_bird_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
         Err(e) => {
             warn!("Failed to fetch bird rating: {e}");
@@ -214,7 +214,7 @@ async fn hydrate_bird_rating(plant: &Plant) -> Option<HydratedPlant> {
 }
 async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let rating = match ai::fetch_animal_rating(&api_key, &plant.scientific).await {
+    let rating = match ai::fetch_animal_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
         Err(e) => {
             warn!("Failed to fetch animal rating: {e}");

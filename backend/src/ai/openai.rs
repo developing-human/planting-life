@@ -154,7 +154,7 @@ async fn call_model_with_retries(
 
 /// Calls the model, gets a String back.
 /// Currently unused, but this is too likely to be used again for me to delete.
-pub async fn _call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow::Result<String> {
+pub async fn call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow::Result<String> {
     let response = call_model_with_retries(payload, api_key).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
