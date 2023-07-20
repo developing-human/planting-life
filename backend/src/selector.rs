@@ -3,6 +3,7 @@ use crate::database::Database;
 use crate::domain::*;
 use futures::stream::{self, Stream};
 use std::boxed::Box;
+use std::cmp::Reverse;
 use std::env;
 use std::pin::Pin;
 
@@ -17,8 +18,10 @@ pub async fn stream_plants(
     moisture: &Moisture,
     shade: &Shade,
 ) -> anyhow::Result<PlantStream> {
-    let plants_from_db = db.lookup_query_results(zip, moisture, shade).await;
+    let mut plants_from_db = db.lookup_query_results(zip, moisture, shade).await;
     if !plants_from_db.is_empty() {
+        plants_from_db.sort_by_key(|p| Reverse(p.score()));
+
         return Ok(PlantStream {
             stream: Box::pin(stream::iter(plants_from_db)),
             from_db: true,

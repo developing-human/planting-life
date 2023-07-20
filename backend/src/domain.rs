@@ -65,6 +65,24 @@ impl Plant {
             spread: other.spread.clone().or(self.spread.clone()),
         }
     }
+
+    pub fn score(&self) -> usize {
+        let pollinator = self
+            .pollinator_rating
+            .as_ref()
+            .map(|r| r.rating)
+            .unwrap_or(0);
+        let bird = self.bird_rating.as_ref().map(|r| r.rating).unwrap_or(0);
+        let animal = self.animal_rating.as_ref().map(|r| r.rating).unwrap_or(0);
+
+        let pollinator = pollinator as usize;
+        let bird = bird as usize;
+        let animal = animal as usize;
+
+        // This prioritizes high scores very highly, making a plant that is
+        // 9/5/5 more interesting than 7/6/6
+        pollinator * pollinator + bird * bird + animal * animal
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
