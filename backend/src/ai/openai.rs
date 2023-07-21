@@ -71,9 +71,10 @@ struct ChatCompletionResponseChoice {
 pub async fn call_model_stream(
     payload: ChatCompletionRequest,
     api_key: &str,
+    timeout_per_attempt_ms: u64,
     trailing_newline: bool,
 ) -> anyhow::Result<impl Stream<Item = String>> {
-    let response = call_model_with_retries(payload, api_key).await?;
+    let response = call_model_with_retries(payload, api_key, timeout_per_attempt_ms).await?;
 
     let body = response
         .bytes_stream()
@@ -122,6 +123,7 @@ pub async fn call_model_stream(
 async fn call_model_with_retries(
     payload: ChatCompletionRequest,
     api_key: &str,
+    timeout_per_attempt_ms: u64,
 ) -> anyhow::Result<Response> {
     let retry_policy = ExponentialBackoff::builder()
         .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
@@ -133,7 +135,7 @@ async fn call_model_with_retries(
     let response = client
         .post("https://api.openai.com/v1/chat/completions")
         .header("Authorization", format!("Bearer {}", api_key))
-        .timeout(Duration::from_millis(20000)) // typical is 400-800ms
+        .timeout(Duration::from_millis(timeout_per_attempt_ms))
         .json(&payload)
         .send()
         .await
@@ -154,8 +156,12 @@ async fn call_model_with_retries(
 
 /// Calls the model, gets a String back.
 /// Currently unused, but this is too likely to be used again for me to delete.
-pub async fn call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow::Result<String> {
-    let response = call_model_with_retries(payload, api_key).await?;
+pub async fn call_model(
+    payload: ChatCompletionRequest,
+    api_key: &str,
+    timeout_per_attempt_ms: u64,
+) -> anyhow::Result<String> {
+    let response = call_model_with_retries(payload, api_key, timeout_per_attempt_ms).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
     let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;
@@ -183,9 +189,10 @@ pub async fn call_model(payload: ChatCompletionRequest, api_key: &str) -> anyhow
 pub async fn call_model_function(
     payload: ChatCompletionRequest,
     api_key: &str,
+    timeout_per_attempt_ms: u64,
     function_name: &str,
 ) -> anyhow::Result<String> {
-    let response = call_model_with_retries(payload, api_key).await?;
+    let response = call_model_with_retries(payload, api_key, timeout_per_attempt_ms).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
     let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;

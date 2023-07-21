@@ -40,7 +40,7 @@ pub async fn stream_plants(
         temperature: 0.5,
     };
 
-    let response = openai::call_model_stream(payload, api_key, true).await?;
+    let response = openai::call_model_stream(payload, api_key, 2000, true).await?;
 
     // Convert chunk stream to line stream
     // Emits Some(Some(line)) if the chunk finished a line
@@ -209,7 +209,7 @@ pub fn build_bloom_prompt(name: &str) -> String {
 pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_pollinator_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 20000).await?;
 
     parse_rating(&response)
 }
@@ -217,7 +217,7 @@ pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Resul
 pub async fn fetch_bird_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_bird_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 20000).await?;
 
     parse_rating(&response)
 }
@@ -225,7 +225,7 @@ pub async fn fetch_bird_rating(api_key: &str, name: &str) -> anyhow::Result<Rati
 pub async fn fetch_animal_rating(api_key: &str, name: &str) -> anyhow::Result<Rating> {
     let prompt = build_animal_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 20000).await?;
 
     parse_rating(&response)
 }
@@ -233,7 +233,7 @@ pub async fn fetch_animal_rating(api_key: &str, name: &str) -> anyhow::Result<Ra
 pub async fn fetch_height(api_key: &str, name: &str) -> anyhow::Result<String> {
     let prompt = build_height_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 5000).await?;
 
     parse_measurement(&response)
 }
@@ -241,7 +241,7 @@ pub async fn fetch_height(api_key: &str, name: &str) -> anyhow::Result<String> {
 pub async fn fetch_spread(api_key: &str, name: &str) -> anyhow::Result<String> {
     let prompt = build_spread_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 5000).await?;
 
     parse_measurement(&response)
 }
@@ -249,7 +249,7 @@ pub async fn fetch_spread(api_key: &str, name: &str) -> anyhow::Result<String> {
 pub async fn fetch_bloom(api_key: &str, name: &str) -> anyhow::Result<String> {
     let prompt = build_bloom_prompt(name);
     let payload = build_plant_detail_request(prompt);
-    let response = openai::call_model(payload, api_key).await?;
+    let response = openai::call_model(payload, api_key, 5000).await?;
 
     parse_bloom(&response)
 }
@@ -435,7 +435,7 @@ pub async fn _fetch_pollinator_rating_fn(
 ) -> anyhow::Result<Rating> {
     let prompt = build_pollinator_function_prompt(scientific_name);
     let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
+    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
 
     _parse_rating_fn(&response)
 }
@@ -443,7 +443,7 @@ pub async fn _fetch_pollinator_rating_fn(
 pub async fn _fetch_bird_rating_fn(api_key: &str, scientific_name: &str) -> anyhow::Result<Rating> {
     let prompt = build_bird_function_prompt(scientific_name);
     let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
+    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
 
     _parse_rating_fn(&response)
 }
@@ -454,7 +454,7 @@ pub async fn _fetch_animal_rating_fn(
 ) -> anyhow::Result<Rating> {
     let prompt = build_animal_function_prompt(scientific_name);
     let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, "save_rating").await?;
+    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
 
     _parse_rating_fn(&response)
 }
