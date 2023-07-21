@@ -86,7 +86,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
               inputProps={{
                 inputMode: "numeric",
                 pattern: "[0-9]{5}",
-                maxlength: 5,
+                maxLength: 5,
                 title: "US Zip Code",
               }}
             />

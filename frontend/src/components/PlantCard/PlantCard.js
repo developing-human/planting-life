@@ -1,5 +1,6 @@
 // attribution popover component
 import AttributionPopover from "../AttributionPopover/AttributionPopover";
+import RatingPopover from "../RatingPopover/RatingPopover";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -40,22 +41,34 @@ function PlantCard({ plant }) {
           <CardContent>
             <Typography variant="body2" color="text.secondary">
               {plant.pollinatorRating ? 
-                  <span title={plant.pollinatorRating.reason}>
-                    Pollinators: {plant.pollinatorRating.rating} / 10<br/> 
+                  <span>
+                    Pollinators: {plant.pollinatorRating.rating} / 10
+                    <RatingPopover id="pollinator-rating" 
+                                   header="Explanation of Pollinator Rating" 
+                                   text={plant.pollinatorRating.reason} />
+                    <br/> 
                   </span>
                   : null
               }
 
               {plant.birdRating ? 
-                  <span title={plant.birdRating.reason}>
-                    Bird: {plant.birdRating.rating} / 10<br/> 
+                  <span>
+                    Birds: {plant.birdRating.rating} / 10
+                    <RatingPopover id="bird-rating" 
+                                   header="Explanation of Bird Rating" 
+                                   text={plant.birdRating.reason} />
+                    <br/> 
                   </span>
                   : null
               }
 
               {plant.animalRating ? 
-                  <span title={plant.animalRating.reason}>
-                    Animal: {plant.animalRating.rating} / 10<br/> 
+                  <span>
+                    Animals: {plant.animalRating.rating} / 10
+                    <RatingPopover id="animal-rating" 
+                                   header="Explanation of Animal Rating" 
+                                   text={plant.animalRating.reason} />
+                    <br/> 
                   </span>
                   : null
               }
