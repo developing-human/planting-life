@@ -77,6 +77,8 @@ async fn hydrate_one_plant(
     if plant.image.is_none() {
         futures_unordered.push(Box::pin(hydrate_image(&plant)));
     }
+    futures_unordered.push(Box::pin(hydrate_ratings(&plant)));
+    futures_unordered.push(Box::pin(hydrate_citations(&plant)));
     futures_unordered.push(Box::pin(hydrate_details(&plant)));
 
     let mut updated = false;
@@ -129,43 +131,62 @@ async fn hydrate_image(plant: &Plant) -> Option<HydratedPlant> {
         })
 }
 
-/// Hydrates all "details", which includes things like ratings, height,
+/// Hydrates all "details", which includes things like height,
 /// width, and bloom season.
 ///
 /// Returns None if none of those details are updated.
 async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
-    let mut futures_unordered: FuturesUnordered<
-        Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>,
-    > = FuturesUnordered::new();
-
-    if plant.pollinator_rating.is_none() {
-        futures_unordered.push(Box::pin(hydrate_pollinator_rating(plant)));
-    }
-    if plant.bird_rating.is_none() {
-        futures_unordered.push(Box::pin(hydrate_bird_rating(plant)));
-    }
-    if plant.animal_rating.is_none() {
-        futures_unordered.push(Box::pin(hydrate_animal_rating(plant)));
-    }
-
-    if plant.usda_source.is_none() {
-        futures_unordered.push(Box::pin(hydrate_usda_source(plant)));
-    }
-    if plant.wiki_source.is_none() {
-        futures_unordered.push(Box::pin(hydrate_wikipedia_source(plant)));
-    }
+    let futures_unordered: FuturesUnordered<Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>> =
+        FuturesUnordered::new();
 
     if plant.height.is_none() {
-        futures_unordered.push(Box::pin(hydrate_height(plant)));
+        futures_unordered.push(Box::pin(hydrate_height(plant.clone())));
     }
     if plant.spread.is_none() {
-        futures_unordered.push(Box::pin(hydrate_spread(plant)));
+        futures_unordered.push(Box::pin(hydrate_spread(plant.clone())));
     }
     if plant.bloom.is_none() {
-        futures_unordered.push(Box::pin(hydrate_bloom(plant)));
+        futures_unordered.push(Box::pin(hydrate_bloom(plant.clone())));
     }
 
-    // Merges all fetched details into a single Plant before returning it
+    merge_hydrated_plants(futures_unordered).await
+}
+
+async fn hydrate_ratings(plant: &Plant) -> Option<HydratedPlant> {
+    let futures_unordered: FuturesUnordered<Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>> =
+        FuturesUnordered::new();
+
+    if plant.pollinator_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_pollinator_rating(plant.clone())));
+    }
+    if plant.bird_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_bird_rating(plant.clone())));
+    }
+    if plant.animal_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_animal_rating(plant.clone())));
+    }
+
+    merge_hydrated_plants(futures_unordered).await
+}
+
+async fn hydrate_citations(plant: &Plant) -> Option<HydratedPlant> {
+    let futures_unordered: FuturesUnordered<Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>> =
+        FuturesUnordered::new();
+
+    if plant.usda_source.is_none() {
+        futures_unordered.push(Box::pin(hydrate_usda_source(plant.clone())));
+    }
+    if plant.wiki_source.is_none() {
+        futures_unordered.push(Box::pin(hydrate_wikipedia_source(plant.clone())));
+    }
+
+    merge_hydrated_plants(futures_unordered).await
+}
+
+/// Merges all fetched details into a single Plant before returning it
+async fn merge_hydrated_plants(
+    mut futures_unordered: FuturesUnordered<Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>>,
+) -> Option<HydratedPlant> {
     let mut merged_plant: Option<Plant> = None;
     while let Some(hydrated_plant) = futures_unordered.next().await {
         if let Some(hydrated_plant) = hydrated_plant {
@@ -184,7 +205,7 @@ async fn hydrate_details(plant: &Plant) -> Option<HydratedPlant> {
     })
 }
 
-async fn hydrate_pollinator_rating(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_pollinator_rating(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let rating = match ai::fetch_pollinator_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -199,12 +220,12 @@ async fn hydrate_pollinator_rating(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             pollinator_rating: Some(rating),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_bird_rating(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_bird_rating(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let rating = match ai::fetch_bird_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -219,11 +240,11 @@ async fn hydrate_bird_rating(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             bird_rating: Some(rating),
-            ..plant.clone()
+            ..plant
         },
     })
 }
-async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_animal_rating(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let rating = match ai::fetch_animal_rating(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -238,12 +259,12 @@ async fn hydrate_animal_rating(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             animal_rating: Some(rating),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_usda_source(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_usda_source(plant: Plant) -> Option<HydratedPlant> {
     let usda_source = citations::usda::find(&plant.scientific)?;
 
     Some(HydratedPlant {
@@ -251,12 +272,12 @@ async fn hydrate_usda_source(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             usda_source: Some(usda_source),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_wikipedia_source(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_wikipedia_source(plant: Plant) -> Option<HydratedPlant> {
     let wiki_source = citations::wikipedia::find(&plant.scientific).await?;
 
     Some(HydratedPlant {
@@ -264,12 +285,12 @@ async fn hydrate_wikipedia_source(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             wiki_source: Some(wiki_source),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_height(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_height(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let height = match ai::fetch_height(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -284,12 +305,12 @@ async fn hydrate_height(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             height: Some(height),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_spread(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_spread(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let spread = match ai::fetch_spread(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -304,12 +325,12 @@ async fn hydrate_spread(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             spread: Some(spread),
-            ..plant.clone()
+            ..plant
         },
     })
 }
 
-async fn hydrate_bloom(plant: &Plant) -> Option<HydratedPlant> {
+async fn hydrate_bloom(plant: Plant) -> Option<HydratedPlant> {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let bloom = match ai::fetch_bloom(&api_key, &plant.common).await {
         Ok(stream) => stream,
@@ -324,7 +345,7 @@ async fn hydrate_bloom(plant: &Plant) -> Option<HydratedPlant> {
         done: false,
         plant: Plant {
             bloom: Some(bloom),
-            ..plant.clone()
+            ..plant
         },
     })
 }

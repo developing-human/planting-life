@@ -46,10 +46,10 @@ function PlantCard({ plant }) {
                     <RatingPopover id="pollinator-rating" 
                                    header="Explanation of Pollinator Rating" 
                                    text={plant.pollinatorRating.reason} />
-                    <br/> 
                   </span>
                   : null
               }
+              <br/> 
 
               {plant.birdRating ? 
                   <span>
@@ -57,10 +57,10 @@ function PlantCard({ plant }) {
                     <RatingPopover id="bird-rating" 
                                    header="Explanation of Bird Rating" 
                                    text={plant.birdRating.reason} />
-                    <br/> 
                   </span>
                   : null
               }
+              <br/> 
 
               {plant.animalRating ? 
                   <span>
@@ -68,11 +68,10 @@ function PlantCard({ plant }) {
                     <RatingPopover id="animal-rating" 
                                    header="Explanation of Animal Rating" 
                                    text={plant.animalRating.reason} />
-                    <br/> 
                   </span>
                   : null
               }
-              <br />
+              <br /><br />
               {plant.wikiSource ? 
                   <a href={plant.wikiSource} target="_blank" rel="noreferrer">Wikipedia</a> 
                   : null}
