@@ -9,6 +9,7 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
+import CircularProgress from "@mui/material/CircularProgress"
 
 // styling
 import "./PlantCard.css"
@@ -85,9 +86,17 @@ function PlantCard({ plant }) {
         <Grid item xs={6}>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              {plant.bloom ? <span>Bloom: {plant.bloom}<br/></span> : null}
-              {plant.height ? <span>Height: {plant.height}<br/></span> : null}
-              {plant.spread ? <span>Spread: {plant.spread}<br/></span> : null}
+              {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}<br/>
+              {plant.height ? <span>Height: {plant.height}</span> : null}<br/>
+              {plant.spread ? <span>Spread: {plant.spread}</span> : null}<br/>
+              <br />
+
+              {plant.doneLoading ? 
+                null : 
+                <div className="card-loading">
+                  <CircularProgress size={20} color="success"/>
+                </div>
+              }
             </Typography>
           </CardContent>
         </Grid>

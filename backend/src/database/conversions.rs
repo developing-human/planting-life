@@ -86,6 +86,7 @@ impl FromRow for Plant {
                     license,
                 }
             }),
+            done_loading: false,
         })
     }
 }

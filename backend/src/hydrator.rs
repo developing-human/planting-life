@@ -13,7 +13,6 @@ use tracing::warn;
 #[derive(Debug)]
 pub struct HydratedPlant {
     pub plant: Plant,
-    pub done: bool,
     pub updated: bool,
 }
 
@@ -104,8 +103,10 @@ async fn send_plant(
     if let Some(mut sender) = sender.clone() {
         sender
             .start_send(HydratedPlant {
-                plant: plant.clone(),
-                done,
+                plant: Plant {
+                    done_loading: done,
+                    ..plant.clone()
+                },
                 updated,
             })
             // This should only fail in the receiver is closed
@@ -123,7 +124,6 @@ async fn hydrate_image(plant: &Plant) -> Option<HydratedPlant> {
         .await
         .map(|image| HydratedPlant {
             updated: true,
-            done: false,
             plant: Plant {
                 image: Some(image),
                 ..plant.clone()
@@ -201,7 +201,6 @@ async fn merge_hydrated_plants(
     merged_plant.map(|plant| HydratedPlant {
         plant,
         updated: true,
-        done: false,
     })
 }
 
@@ -217,7 +216,6 @@ async fn hydrate_pollinator_rating(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             pollinator_rating: Some(rating),
             ..plant
@@ -237,7 +235,6 @@ async fn hydrate_bird_rating(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             bird_rating: Some(rating),
             ..plant
@@ -256,7 +253,6 @@ async fn hydrate_animal_rating(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             animal_rating: Some(rating),
             ..plant
@@ -269,7 +265,6 @@ async fn hydrate_usda_source(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             usda_source: Some(usda_source),
             ..plant
@@ -282,7 +277,6 @@ async fn hydrate_wikipedia_source(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             wiki_source: Some(wiki_source),
             ..plant
@@ -302,7 +296,6 @@ async fn hydrate_height(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             height: Some(height),
             ..plant
@@ -322,7 +315,6 @@ async fn hydrate_spread(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             spread: Some(spread),
             ..plant
@@ -342,7 +334,6 @@ async fn hydrate_bloom(plant: Plant) -> Option<HydratedPlant> {
 
     Some(HydratedPlant {
         updated: true,
-        done: false,
         plant: Plant {
             bloom: Some(bloom),
             ..plant

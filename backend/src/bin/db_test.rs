@@ -32,6 +32,7 @@ async fn main() {
         animal_rating: None,
         usda_source: None,
         wiki_source: None,
+        done_loading: false,
     };
 
     let saved_plant = db.save_plant(&plant).await;

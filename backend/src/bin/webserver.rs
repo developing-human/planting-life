@@ -80,7 +80,7 @@ async fn hydrate_and_send_plants(
     let mut unique_plants_sent = HashSet::new();
     let mut sent_all_plants_loaded = false;
     while let Some(hydrated_plant) = plant_receiver.next().await {
-        if hydrated_plant.done {
+        if hydrated_plant.plant.done_loading {
             all_plants.push(hydrated_plant.plant.clone());
 
             if hydrated_plant.updated {

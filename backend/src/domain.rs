@@ -35,6 +35,8 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spread: Option<String>,
+
+    pub done_loading: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -63,6 +65,7 @@ impl Plant {
             wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
             height: other.height.clone().or(self.height.clone()),
             spread: other.spread.clone().or(self.spread.clone()),
+            done_loading: false,
         }
     }
 

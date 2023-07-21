@@ -425,6 +425,7 @@ impl PlantBuilder {
             image: None,
             usda_source: None,
             wiki_source: None,
+            done_loading: false,
         }
     }
 }
