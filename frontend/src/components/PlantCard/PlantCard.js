@@ -16,7 +16,7 @@ import "./PlantCard.css"
 
 function PlantCard({ plant }) {
   return (
-    <Card raised={true} sx={{ width: 350, maxWidth: "90vw", minHeight: 575, maxHeight: 575 }}>
+    <Card raised={true} sx={{ width: 350, maxWidth: "90vw", minHeight: 585, maxHeight: 585 }}>
       <CardHeader title={plant.common} subheader={plant.scientific} />
 
       <CardMedia
