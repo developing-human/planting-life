@@ -120,7 +120,7 @@ impl Image {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum Shade {
     #[serde(rename = "Full Sun")]
     None,
@@ -146,7 +146,7 @@ impl Display for Shade {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum Moisture {
     #[serde(rename = "Low")]
     None,

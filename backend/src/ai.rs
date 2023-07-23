@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use anyhow::anyhow;
 use futures::{Stream, StreamExt};
 
-use crate::domain::{Plant, Rating};
+use crate::domain::{Moisture, Plant, Rating, Shade};
 
 use self::openai::ChatCompletionFunction;
 
@@ -383,6 +383,97 @@ common: Common Name
         shade.to_uppercase(),
         moisture.to_uppercase(),
     )
+}
+
+pub struct Conditions {
+    pub shade: Vec<Shade>,
+    pub moisture: Vec<Moisture>,
+}
+
+pub async fn fetch_conditions(api_key: &str, name: &str) -> anyhow::Result<Conditions> {
+    let prompt = build_conditions_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key, 5000).await?;
+
+    parse_conditions(&response)
+}
+
+fn build_conditions_prompt(name: &str) -> String {
+    format!("Your goal is to answer yes/no questions about the ideal shade and moisture conditions for {}.  First, describe the ideal growing conditions in 40-50 words.  Then answer the following questions:
+
+low moisture? yes/no
+medium moisture? yes/no
+high moisture? yes/no
+full shade? yes/no
+partial sun? yes/no
+full sun? yes/no", name)
+}
+
+fn parse_conditions(input: &str) -> anyhow::Result<Conditions> {
+    println!("{input}");
+    let input = input.to_lowercase();
+    let lines: Vec<&str> = input.split('\n').collect();
+
+    let mut conditions = Conditions {
+        shade: vec![],
+        moisture: vec![],
+    };
+
+    let question_moisture = vec![
+        ("low moisture", Moisture::None),
+        ("medium moisture", Moisture::Lots),
+        ("high moisture", Moisture::Some),
+    ];
+
+    let question_shade = vec![
+        ("full shade", Shade::Lots),
+        ("partial sun", Shade::Some),
+        ("full sun", Shade::None),
+    ];
+
+    let mut answer_count = 0;
+    for line in lines {
+        // Sometimes GPT responds with leading hyphens
+        let line = line.replace("- ", "");
+        // I assume the response could produce "dry soil? yes" or "dry soil: yes"
+        for (question, moisture) in question_moisture.iter() {
+            if line.starts_with(question) {
+                answer_count += 1;
+                if line.contains("yes") {
+                    conditions.moisture.push(*moisture)
+                }
+            }
+        }
+
+        for (question, shade) in question_shade.iter() {
+            if line.starts_with(question) {
+                answer_count += 1;
+                if line.contains("yes") {
+                    conditions.shade.push(*shade)
+                }
+            }
+        }
+    }
+
+    if answer_count != 6 {
+        return Err(anyhow!(
+            "did not find all six condition answers in response: {input}"
+        ));
+    }
+
+    if conditions.shade.is_empty() {
+        return Err(anyhow!(
+            "did not find any acceptable shade conditions: {input}"
+        ));
+    }
+
+    if conditions.moisture.is_empty() {
+        return Err(anyhow!(
+            "did not find any acceptable moisture conditions: {input}"
+        ));
+    }
+
+    Ok(conditions)
 }
 
 struct PlantBuilder {
