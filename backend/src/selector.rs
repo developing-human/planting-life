@@ -1,7 +1,7 @@
 use crate::ai;
 use crate::database::Database;
 use crate::domain::*;
-use futures::stream::{self, Stream};
+use futures::stream::{self, Stream, StreamExt};
 use std::boxed::Box;
 use std::cmp::Reverse;
 use std::env;
@@ -28,8 +28,25 @@ pub async fn stream_plants(
         });
     }
 
+    let db = db.clone();
+    let plant_stream = get_llm_plant_stream(&db, zip, moisture, shade)
+        .await?
+        .then(move |plant| {
+            // This splits the "move" from "async move" so the db reference
+            // can be cloned and shared between threads.
+            let db_clone = db.clone();
+            async move {
+                let fetch_future = db_clone.get_plant_by_scientific_name(&plant.scientific);
+                if let Some(existing_plant) = fetch_future.await {
+                    existing_plant
+                } else {
+                    plant
+                }
+            }
+        });
+
     Ok(PlantStream {
-        stream: Box::pin(get_llm_plant_stream(db, zip, moisture, shade).await?),
+        stream: Box::pin(plant_stream),
         from_db: false,
     })
 }

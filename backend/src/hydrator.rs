@@ -1,4 +1,3 @@
-use crate::database::Database;
 use crate::domain::Plant;
 use crate::flickr;
 use crate::{ai, citations};
@@ -17,7 +16,6 @@ pub struct HydratedPlant {
 }
 
 pub async fn hydrate_plants(
-    db: &Database,
     mut plants: impl Stream<Item = Plant> + Unpin,
     sender: &mut UnboundedSender<HydratedPlant>,
 ) {
@@ -26,12 +24,11 @@ pub async fn hydrate_plants(
     while let Some(plant) = plants.next().await {
         // Make a clone, so the inner and outer tasks can each own a sender
         let sender = sender.clone();
-        let db = db.clone();
 
         // This inner task is started so the next entry can start processing before
         // the current one finishes.
         handles.push(actix_web::rt::spawn(async move {
-            hydrate_one_plant(&db, plant, Some(sender)).await;
+            hydrate_one_plant(plant, Some(sender)).await;
         }));
     }
 
@@ -47,19 +44,7 @@ pub async fn hydrate_plants(
 /// they become available.  The last plant emitted will be marked as done
 /// and be populated as is possible.  Also Returns the fully populated
 /// plant.
-async fn hydrate_one_plant(
-    db: &Database,
-    mut plant: Plant,
-    sender: Option<UnboundedSender<HydratedPlant>>,
-) {
-    // If this plant didn't come from the datbase, check the database for it.
-    if plant.id.is_none() {
-        let existing_plant = db.get_plant_by_scientific_name(&plant.scientific).await;
-        if let Some(existing_plant) = existing_plant {
-            plant = existing_plant;
-        }
-    }
-
+async fn hydrate_one_plant(plant: Plant, sender: Option<UnboundedSender<HydratedPlant>>) {
     send_plant(&sender, &plant, false, false).await;
 
     // At this point I have a plant from the gpt list + database query

@@ -70,10 +70,9 @@ async fn hydrate_and_send_plants(
     plants_from_db: bool,
 ) {
     let (mut plant_sender, mut plant_receiver) = mpsc::unbounded();
-    let db_clone = db.clone();
 
     actix_web::rt::spawn(async move {
-        hydrator::hydrate_plants(&db_clone, plant_stream, &mut plant_sender).await;
+        hydrator::hydrate_plants(plant_stream, &mut plant_sender).await;
     });
     let mut plants_to_save = vec![];
     let mut all_plants = vec![];
