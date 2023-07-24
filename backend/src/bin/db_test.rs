@@ -19,21 +19,9 @@ async fn main() {
     let scientific_name = &args[1];
     let common_name = &args[2];
 
-    let plant = Plant {
-        scientific: scientific_name.to_string(),
-        common: common_name.to_string(),
-        bloom: None,
-        height: None,
-        spread: None,
-        image: None,
-        id: None,
-        pollinator_rating: None,
-        bird_rating: None,
-        animal_rating: None,
-        usda_source: None,
-        wiki_source: None,
-        done_loading: false,
-    };
+    let mut plant = Plant::new(scientific_name, common_name);
+    plant.moistures = vec![Moisture::Some, Moisture::Lots];
+    plant.shades = vec![Shade::None, Shade::Some];
 
     let saved_plant = db.save_plant(&plant).await;
     println!("saved: {saved_plant:#?}");

@@ -16,5 +16,6 @@
   <include file="migrations/populate-regions.sql"/>
 
   <include file="migrations/add-plant-details.sql"/>
+  <include file="migrations/add-moistures-shades.sql"/>
 
 </databaseChangeLog>

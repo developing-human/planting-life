@@ -48,6 +48,21 @@ impl FromRow for Plant {
         let height: Option<String> = row.take_opt("height").unwrap().ok();
         let spread: Option<String> = row.take_opt("spread").unwrap().ok();
 
+        // These are comma separted, ex: "Some,Lots"
+        // This parses them into their respective vectors of enums
+        let moistures: Vec<Moisture> = row
+            .take_opt("moistures")
+            .unwrap()
+            .ok()
+            .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
+            .unwrap_or_else(Vec::new);
+        let shades: Vec<Shade> = row
+            .take_opt("shades")
+            .unwrap()
+            .ok()
+            .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
+            .unwrap_or_else(Vec::new);
+
         Ok(Plant {
             id: Some(id),
             scientific,
@@ -55,6 +70,8 @@ impl FromRow for Plant {
             bloom,
             height,
             spread,
+            moistures,
+            shades,
             pollinator_rating: pollinator_rating.map(|rating| Rating {
                 rating,
                 reason: pollinator_reason.unwrap(),

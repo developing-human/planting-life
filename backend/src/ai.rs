@@ -503,21 +503,10 @@ impl PlantBuilder {
             panic!("Building Plant without full builder");
         }
 
-        Plant {
-            id: None,
-            common: self.common.clone().unwrap(),
-            scientific: self.scientific.clone().unwrap(),
-            bloom: None,
-            height: None,
-            spread: None,
-            pollinator_rating: None,
-            bird_rating: None,
-            animal_rating: None,
-            image: None,
-            usda_source: None,
-            wiki_source: None,
-            done_loading: false,
-        }
+        Plant::new(
+            &self.scientific.clone().unwrap(),
+            &self.common.clone().unwrap(),
+        )
     }
 }
 

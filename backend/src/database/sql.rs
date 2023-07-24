@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, fmt::Display};
 
 use crate::domain::*;
 use anyhow::anyhow;
@@ -81,6 +81,9 @@ pub async fn update_plant(
                   height = :height,
                   spread = :spread,
 
+                  moistures = :moistures,
+                  shades = :shades,
+
                   image_id = :image_id
               WHERE id = :id"
         .with(params! {
@@ -100,11 +103,21 @@ pub async fn update_plant(
             "height" => &plant.height,
             "spread" => &plant.spread,
 
+            "moistures" => to_comma_separated_string(&plant.moistures),
+            "shades" => to_comma_separated_string(&plant.shades),
+
             "image_id" => img_id
         })
         .ignore(&mut conn)
         .await
         .map_err(|e| anyhow!("update_plant failed to update: {}", e))
+}
+
+fn to_comma_separated_string<T: Display>(vec: &[T]) -> String {
+    vec.iter()
+        .map(|m| m.to_string())
+        .collect::<Vec<String>>()
+        .join(",")
 }
 
 /// Inserts one plant.  
@@ -119,6 +132,7 @@ pub async fn insert_plant(
     r"INSERT INTO plants 
         (scientific_name, common_name, 
          bloom, height, spread,
+         moistures, shades,
          pollinator_rating, pollinator_reason,
          bird_rating, bird_reason,
          animal_rating, animal_reason,
@@ -127,6 +141,7 @@ pub async fn insert_plant(
       VALUES 
         (:scientific_name, :common_name, 
          :bloom, :height, :spread,
+         :moistures, :shades,
          :pollinator_rating, :pollinator_reason,
          :bird_rating, :bird_reason,
          :animal_rating, :animal_reason,
@@ -151,6 +166,9 @@ pub async fn insert_plant(
             "usda_source" => &plant.usda_source,
             "wiki_source" => &plant.wiki_source,
 
+            "moistures" => to_comma_separated_string(&plant.moistures),
+            "shades" => to_comma_separated_string(&plant.shades),
+
             "image_id" => img_id
         })
         .fetch(&mut conn)
@@ -173,6 +191,7 @@ pub async fn select_plants_by_zip_moisture_shade(
 SELECT 
   p.id, p.scientific_name, p.common_name, 
   p.bloom, p.height, p.spread, 
+  p.moistures, p.shades,
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,
@@ -205,13 +224,14 @@ pub async fn select_plant_by_scientific_name(
 SELECT
   p.id, p.scientific_name, p.common_name, 
   p.bloom, p.height, p.spread, 
+  p.moistures, p.shades,
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
-INNER JOIN images i ON i.id = p.image_id
+LEFT JOIN images i ON i.id = p.image_id
 WHERE scientific_name = :scientific_name"
         .with(params! {
             "scientific_name" => scientific_name,

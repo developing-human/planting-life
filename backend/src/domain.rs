@@ -1,5 +1,9 @@
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
-use std::fmt::{Display, Formatter};
+use std::{
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -8,6 +12,12 @@ pub struct Plant {
     pub id: Option<usize>,
     pub common: String,
     pub scientific: String,
+
+    #[serde(skip_serializing)]
+    pub shades: Vec<Shade>,
+
+    #[serde(skip_serializing)]
+    pub moistures: Vec<Moisture>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
@@ -46,6 +56,25 @@ pub struct Rating {
 }
 
 impl Plant {
+    pub fn new(scientific_name: &str, common_name: &str) -> Plant {
+        Plant {
+            id: None,
+            common: common_name.to_string(),
+            scientific: scientific_name.to_string(),
+            shades: vec![],
+            moistures: vec![],
+            bloom: None,
+            height: None,
+            spread: None,
+            pollinator_rating: None,
+            bird_rating: None,
+            animal_rating: None,
+            image: None,
+            usda_source: None,
+            wiki_source: None,
+            done_loading: false,
+        }
+    }
     // Merges two plants, prioritizing "other" but never overriding Some with None
     pub fn merge(&self, other: &Plant) -> Plant {
         //TODO: Can I write this concisely with fewer clones?
@@ -53,6 +82,8 @@ impl Plant {
             id: other.id.or(self.id),
             common: self.common.clone(),
             scientific: self.scientific.clone(),
+            moistures: other.moistures.clone(),
+            shades: other.shades.clone(),
             bloom: other.bloom.clone().or(self.bloom.clone()),
             image: other.image.clone().or(self.image.clone()),
             pollinator_rating: other
@@ -146,6 +177,19 @@ impl Display for Shade {
     }
 }
 
+impl FromStr for Shade {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "None" => Ok(Shade::None),
+            "Some" => Ok(Shade::Some),
+            "Lots" => Ok(Shade::Lots),
+            _ => Err(anyhow!("can't create Shade from {s}")),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy)]
 pub enum Moisture {
     #[serde(rename = "Low")]
@@ -169,6 +213,19 @@ impl Moisture {
 impl Display for Moisture {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
+    }
+}
+
+impl FromStr for Moisture {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "None" => Ok(Moisture::None),
+            "Some" => Ok(Moisture::Some),
+            "Lots" => Ok(Moisture::Lots),
+            _ => Err(anyhow!("can't create Moisture from {s}")),
+        }
     }
 }
 
