@@ -9,7 +9,6 @@ use planting_life::domain::{Moisture, Plant, Shade};
 use planting_life::hydrator;
 use planting_life::selector;
 use serde::{self, Deserialize, Serialize};
-use std::collections::HashSet;
 use std::env;
 use std::time;
 use tracing::{info, warn};
@@ -76,9 +75,12 @@ async fn hydrate_and_send_plants(
     });
     let mut plants_to_save = vec![];
     let mut all_plants = vec![];
-    let mut unique_plants_sent = HashSet::new();
-    let mut sent_all_plants_loaded = false;
     while let Some(hydrated_plant) = plant_receiver.next().await {
+        if hydrated_plant.plant.scientific == hydrator::ALL_PLANTS_HYDRATING_MARKER {
+            send_event(frontend_sender, "allPlantsLoaded", "").await;
+
+            continue;
+        }
         if hydrated_plant.plant.done_loading {
             all_plants.push(hydrated_plant.plant.clone());
 
@@ -88,13 +90,6 @@ async fn hydrate_and_send_plants(
         }
 
         send_plant(frontend_sender, &hydrated_plant.plant).await;
-
-        // Once the last plant is sent, let the front end know nothing else is coming.
-        unique_plants_sent.insert(hydrated_plant.plant.scientific);
-        if !sent_all_plants_loaded && unique_plants_sent.len() >= 12 {
-            send_event(frontend_sender, "allPlantsLoaded", "").await;
-            sent_all_plants_loaded = true;
-        }
     }
 
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {

@@ -15,6 +15,8 @@ pub struct HydratedPlant {
     pub updated: bool,
 }
 
+pub const ALL_PLANTS_HYDRATING_MARKER: &str = "ALL PLANTS HYDRATING";
+
 pub async fn hydrate_plants(
     mut plants: impl Stream<Item = Plant> + Unpin,
     sender: &mut UnboundedSender<HydratedPlant>,
@@ -32,10 +34,17 @@ pub async fn hydrate_plants(
         }));
     }
 
-    //TODO: When I get here, I'm done reading from plants but some
-    //      may still be hydrating.  How do I send allPlantsLoaded here?
-    //      Either pass in a callback, send a marker plant, or pass in the
-    //      frontend sender.  I think I like the callback best.  May be ugly tho.
+    // Alright... this is janky... I was having a hard time getting an async callback
+    // to work, so I'm sending back a "marker plant" which tells the caller that we've
+    // started hydrating all plants.  This ultimately lets the front end know it can
+    // stop showing the large loading symbol.
+    send_plant(
+        &Some(sender.clone()),
+        &Plant::new(ALL_PLANTS_HYDRATING_MARKER, ALL_PLANTS_HYDRATING_MARKER),
+        false,
+        false,
+    )
+    .await;
 
     for handle in handles {
         handle.await.unwrap_or_default();
