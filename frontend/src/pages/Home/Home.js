@@ -32,7 +32,8 @@ const Home = () => {
 
       <section className="card-container">
         {plants.map((plant, index) => (
-          <PlantCard plant={plant} key={index} />
+          plant.image ? <PlantCard plant={plant} key={index} /> 
+            : null
         ))}
 
         {loading ? <Spinner /> : null}
