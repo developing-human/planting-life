@@ -32,6 +32,11 @@ pub async fn hydrate_plants(
         }));
     }
 
+    //TODO: When I get here, I'm done reading from plants but some
+    //      may still be hydrating.  How do I send allPlantsLoaded here?
+    //      Either pass in a callback, send a marker plant, or pass in the
+    //      frontend sender.  I think I like the callback best.  May be ugly tho.
+
     for handle in handles {
         handle.await.unwrap_or_default();
     }

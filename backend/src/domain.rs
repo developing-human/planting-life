@@ -151,7 +151,7 @@ impl Image {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub enum Shade {
     #[serde(rename = "Full Sun")]
     None,
@@ -190,7 +190,7 @@ impl FromStr for Shade {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
 pub enum Moisture {
     #[serde(rename = "Low")]
     None,
@@ -203,9 +203,9 @@ pub enum Moisture {
 impl Moisture {
     pub fn description(&self) -> &str {
         match self {
-            Moisture::None => "dry soil",
-            Moisture::Some => "moderately wet soil",
-            Moisture::Lots => "wet soil",
+            Moisture::None => "low moisture",
+            Moisture::Some => "medium moisture",
+            Moisture::Lots => "high moisture",
         }
     }
 }

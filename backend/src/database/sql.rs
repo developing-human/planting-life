@@ -8,47 +8,72 @@ use super::Database;
 
 /// Inserts a new Query into the database.  
 /// Returns Err if it fails.
-pub async fn insert_query(
+pub async fn upsert_query(
+    db: &Database,
+    zip: &str,
+    moisture: &Moisture,
+    shade: &Shade,
+) -> anyhow::Result<()> {
+    let mut conn = db.get_connection().await?;
+    let queries_result: Result<Option<usize>, mysql_async::Error> =
+        r"INSERT INTO queries (moisture, shade, region_id, count) VALUES
+            (?, ?, (SELECT region_id from zipcodes where zipcode = ?), 1)
+            ON DUPLICATE KEY UPDATE count = count + 1
+            "
+        .with((moisture.to_string(), shade.to_string(), zip))
+        .first(&mut conn)
+        .await;
+
+    match queries_result {
+        Ok(_) => Ok(()),
+        Err(e) => Err(anyhow!("insert into queries failed: {}", e)),
+    }
+}
+
+/// Selects one plant by scientific name.  
+/// Returns Err if it fails, Ok(None) if not found.
+pub async fn select_query_count(
     db: &Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
 ) -> anyhow::Result<usize> {
     let mut conn = db.get_connection().await?;
-    let queries_result: Result<Option<usize>, mysql_async::Error> =
-        r"INSERT INTO queries (moisture, shade, region_id) VALUES
-            (?, ?, (SELECT region_id from zipcodes where zipcode = ?))
-            RETURNING id"
-            .with((moisture.to_string(), shade.to_string(), zip))
-            .first(&mut conn)
-            .await;
 
-    match queries_result {
-        Ok(Some(id)) => Ok(id),
-        Ok(None) => Err(anyhow!(
-            "save_query_results saved query but did not receive id"
-        )),
-        Err(e) => Err(anyhow!(
-            "save_query_results insert into queries failed: {}",
-            e
-        )),
-    }
+    r"
+SELECT count
+FROM queries
+WHERE moisture = :moisture
+AND shade = :shade
+AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
+        .with(params! {
+            "moisture" => moisture.to_string(),
+            "shade" => shade.to_string(),
+            "zip" => zip,
+        })
+        .first(&mut conn)
+        .await
+        .map(|count| count.unwrap_or(0)) // Not found, count as 0
+        .map_err(|e| anyhow!("select_query_count failed: {e}"))
 }
 
-/// Inserts into queries_plants.  
+/// Inserts into regions_plants.  
 /// Returns Err if it fails.
-pub async fn insert_query_plants(
+pub async fn insert_region_plants(
     db: &Database,
-    query_id: usize,
+    zip: &str,
     plant_ids: HashSet<usize>,
 ) -> anyhow::Result<()> {
     let mut conn = db.get_connection().await?;
 
-    r"INSERT INTO queries_plants (query_id, plant_id)
-            VALUES (:query_id, :plant_id)"
+    // Some rows could already exist, this ignores duplicate key errors
+    // The "dummy update" is required to make this statement valid.
+    r"INSERT INTO regions_plants (region_id, plant_id)
+            VALUES ((SELECT region_id from zipcodes where zipcode = :zip), :plant_id)
+            ON DUPLICATE KEY UPDATE region_id=region_id, plant_id=plant_id"
         .with(plant_ids.iter().map(|id| {
             params! {
-                "query_id" => query_id,
+                "zip" => zip,
                 "plant_id" => id
             }
         }))
@@ -113,11 +138,19 @@ pub async fn update_plant(
         .map_err(|e| anyhow!("update_plant failed to update: {}", e))
 }
 
-fn to_comma_separated_string<T: Display>(vec: &[T]) -> String {
-    vec.iter()
-        .map(|m| m.to_string())
-        .collect::<Vec<String>>()
-        .join(",")
+fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {
+    // If the vector is empty, we want to keep these as null in the db
+    // A null value indicates we should try to populate it again next time
+    if vec.is_empty() {
+        return None;
+    }
+
+    Some(
+        vec.iter()
+            .map(|m| m.to_string())
+            .collect::<Vec<String>>()
+            .join(","),
+    )
 }
 
 /// Inserts one plant.  
@@ -198,15 +231,24 @@ SELECT
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
-INNER JOIN queries_plants qp ON qp.plant_id = p.id
-INNER JOIN queries q ON qp.query_id = q.id
-INNER JOIN zipcodes z ON z.region_id = q.region_id
+
+INNER JOIN regions_plants rp on rp.plant_id = p.id
+INNER JOIN zipcodes z ON z.region_id = rp.region_id
 LEFT JOIN images i ON i.id = p.image_id
-WHERE z.zipcode = ?
-  AND q.moisture = ?
-  AND q.shade = ?
+WHERE z.zipcode = :zipcode
+  AND FIND_IN_SET(:moisture, p.moistures)
+  AND FIND_IN_SET(:shade, p.shades)
+ORDER BY
+  POW(p.pollinator_rating, 3) +
+  POW(p.bird_rating, 3) +
+  POW(p.animal_rating, 3) desc
+  
 "
-    .with((zip, moisture.to_string(), shade.to_string()))
+    .with(params! {
+        "zipcode" => zip,
+        "moisture" => moisture.to_string(),
+        "shade" => shade.to_string(),
+    })
     .map(&mut conn, |plant: Plant| plant)
     .await
     .map_err(|e| anyhow!(e))

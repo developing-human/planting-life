@@ -210,6 +210,7 @@ pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Resul
     let prompt = build_pollinator_prompt(name);
     let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key, 20000).await?;
+    println!("{response}");
 
     parse_rating(&response)
 }
@@ -362,9 +363,8 @@ fn parse_bloom(input: &str) -> anyhow::Result<String> {
 }
 
 fn build_prompt(region_name: &str, shade: &str, moisture: &str) -> String {
-    // Requests twelve because this forms a nice grid with 1, 2, 3, or 4 columns.
     format!(
-        r#"Choose twelve plants for a new gardener's garden which are NATIVE near {}.
+        r#"Choose thirty plants for a new gardener's garden which are NATIVE near {}.
 Their garden is in {} and {}.
 Only suggest plants which do well in {} and {}.
 Do NOT suggest plants which do better in other conditions.
@@ -421,8 +421,8 @@ fn parse_conditions(input: &str) -> anyhow::Result<Conditions> {
 
     let question_moisture = vec![
         ("low moisture", Moisture::None),
-        ("medium moisture", Moisture::Lots),
-        ("high moisture", Moisture::Some),
+        ("medium moisture", Moisture::Some),
+        ("high moisture", Moisture::Lots),
     ];
 
     let question_shade = vec![
@@ -433,6 +433,9 @@ fn parse_conditions(input: &str) -> anyhow::Result<Conditions> {
 
     let mut answer_count = 0;
     for line in lines {
+        //TODO: Need to also handle numbered lists
+        //      maybe regex replace [1-6]\. with ""
+
         // Sometimes GPT responds with leading hyphens
         let line = line.replace("- ", "");
         // I assume the response could produce "dry soil? yes" or "dry soil: yes"

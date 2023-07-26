@@ -66,45 +66,34 @@ impl Database {
         all_plants: Vec<Plant>,
         saved_plants: Vec<Plant>,
     ) {
-        // Also, don't save the results of this query if we have fewer than the desired number,
-        // this should be a rare occurance and this is a simple way to handle it.  The
-        // alternative would be to (on fetch) get some from the database and the rest from gpt.
-        // Its easier to just get all from gpt, even if its a little more work.
-        if all_plants.len() != 12 {
-            warn!("only have {} plants, not caching", all_plants.len());
-            return;
+        if let Err(e) = sql::upsert_query(self, zip, moisture, shade).await {
+            // Log this failure, but continue on
+            warn!("save_query_results failed to upsert query: {e}")
         }
 
-        // At least one plant is missing an image, so don't store these results.  Very
-        // occasionally we'll run into this, and its okay as a quirk but lets not cache
-        // it forever.
-        let plant_without_image = all_plants.iter().find(|p| p.image.is_none());
-        if let Some(plant_without_image) = plant_without_image {
-            warn!(
-                "not all plants have an image (missing for {}), not caching",
-                plant_without_image.scientific
-            );
-            return;
-        }
-
-        // Some plants in all_plants may be missing ids.  Merging with saved_plants will
-        // find all of them.
+        // Some plants in plants_with_images may be missing ids.  Merging with
+        // saved_plants will find all of them.
         let plant_ids: HashSet<usize> = all_plants
             .iter()
             .chain(saved_plants.iter())
             .filter_map(|p| p.id)
             .collect();
 
-        let query_id = match sql::insert_query(self, zip, moisture, shade).await {
-            Ok(id) => id,
-            Err(e) => {
-                warn!("save_query_results failed to insert Query: {}", e);
-                return;
-            }
-        };
+        if let Err(e) = sql::insert_region_plants(self, zip, plant_ids).await {
+            warn!("save_query_results failed to insert region plants: {}", e);
+        }
+    }
 
-        if let Err(e) = sql::insert_query_plants(self, query_id, plant_ids).await {
-            warn!("save_query_results failed to insert Query Plants: {}", e);
+    /// Returns how many times the query for these parameters has been executed
+    ///
+    /// Failures are logged, but are otherwise ignored.
+    pub async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
+        match sql::select_query_count(self, zip, moisture, shade).await {
+            Ok(count) => count,
+            Err(e) => {
+                warn!("get_query_count failed to select count, returning zero: {e}");
+                0
+            }
         }
     }
 
