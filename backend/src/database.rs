@@ -84,6 +84,21 @@ impl Database {
         }
     }
 
+    pub async fn save_plant_region(&self, plant: &Plant, zip: &str) {
+        if plant.id.is_none() {
+            warn!("save_plant_region requires plant.id");
+            return;
+        }
+
+        // I don't love this, maybe make a better interface to insert_region_plants.
+        let mut plant_ids = HashSet::new();
+        plant_ids.insert(plant.id.unwrap());
+
+        if let Err(e) = sql::insert_region_plants(self, &zip, plant_ids).await {
+            warn!("save_query_results failed to insert region plants: {}", e);
+        }
+    }
+
     /// Returns how many times the query for these parameters has been executed
     ///
     /// Failures are logged, but are otherwise ignored.

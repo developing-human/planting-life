@@ -44,10 +44,8 @@ pub async fn stream_plants(
         .then(update_plant_from_database(db.clone()))
         .map(update_plant_with_conditions)
         .buffer_unordered(12)
-        .then(save_plant(db.clone()))
+        .then(save_plant(db.clone(), zip.to_string()))
         .filter(move |plant| {
-            //TODO: If conditions are still unknown, should I give it the benefit
-            //      of the doubt?  Currently no.
             let should_keep = plant.moistures.contains(&moisture) && plant.shades.contains(&shade);
 
             if !should_keep {
@@ -85,17 +83,26 @@ fn update_plant_from_database(
     }
 }
 
-fn save_plant(db: Database) -> impl FnMut(Plant) -> Pin<Box<dyn Future<Output = Plant> + Send>> {
+fn save_plant(
+    db: Database,
+    zip: String,
+) -> impl FnMut(Plant) -> Pin<Box<dyn Future<Output = Plant> + Send>> {
     move |plant: Plant| {
-        let db_clone = db.clone();
+        let db = db.clone();
+        let zip = zip.clone();
+
         Box::pin(async move {
-            match db_clone.save_plant(&plant).await {
+            let plant = match db.save_plant(&plant).await {
                 Ok(updated_plant) => updated_plant,
                 Err(e) => {
                     warn!("Failed to save plant: {e}");
                     plant
                 }
-            }
+            };
+
+            db.save_plant_region(&plant, &zip).await;
+
+            plant
         })
     }
 }
@@ -107,13 +114,10 @@ async fn get_unfiltered_plant_stream(
     shade: &Shade,
 ) -> anyhow::Result<PlantStream> {
     let db_plants = db.lookup_query_results(zip, moisture, shade).await;
-    //db_plants.sort_by_key(|p| Reverse(p.score()));
 
     // If this query has been executed "enough", then return the database
     // results without consulting the llm.
     if db.get_query_count(zip, moisture, shade).await >= 3 {
-        //db_plants.sort_by_key(|p| Reverse(p.score()));
-
         return Ok(PlantStream {
             stream: Box::pin(stream::iter(db_plants)),
             from_db: true,
