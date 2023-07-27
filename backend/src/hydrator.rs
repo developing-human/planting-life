@@ -7,6 +7,8 @@ use futures::Future;
 use std::boxed::Box;
 use std::env;
 use std::pin::Pin;
+use std::sync::Arc;
+use tokio::sync::Semaphore;
 use tracing::warn;
 
 #[derive(Debug)]
@@ -21,15 +23,24 @@ pub async fn hydrate_plants(
     mut plants: impl Stream<Item = Plant> + Unpin,
     sender: &mut UnboundedSender<HydratedPlant>,
 ) {
+    // This semaphore only allows X plants to hydrate at once.  This provides
+    // rate limiting so we don't crush the services we populate data from.
+    let semaphore = Arc::new(Semaphore::new(6));
+
     // References to tasks which are running
     let mut handles = vec![];
+
     while let Some(plant) = plants.next().await {
-        // Make a clone, so the inner and outer tasks can each own a sender
+        // Make clones to share with the async task
         let sender = sender.clone();
+        let permit = Arc::clone(&semaphore);
 
         // This inner task is started so the next entry can start processing before
         // the current one finishes.
         handles.push(actix_web::rt::spawn(async move {
+            // Don't hydrate until a permit is available.
+            let _permit = permit.acquire().await.unwrap();
+
             hydrate_one_plant(plant, Some(sender)).await;
         }));
     }

@@ -124,6 +124,17 @@ async fn get_unfiltered_plant_stream(
         });
     }
 
+    // I have never seen anything return from the LLM for full shade and
+    // low moisture.  Not in the midwest, not in death valley.  Don't even
+    // try.  But if something was found in the database from another search
+    // go ahead and return it.
+    if *moisture == Moisture::None && *shade == Shade::Lots {
+        return Ok(PlantStream {
+            stream: Box::pin(stream::iter(db_plants)),
+            from_db: true,
+        });
+    }
+
     let db = db.clone();
     let llm_stream = get_llm_plant_stream(&db, zip, moisture, shade).await?;
 
