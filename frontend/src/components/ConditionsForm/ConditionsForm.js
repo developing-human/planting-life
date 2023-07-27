@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 // components
 import DropdownSelect from "../DropdownSelect/DropdownSelect";
@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpanded }) {
+function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -25,6 +25,9 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
   const [shade, setShade] = useState(defaultShade);
   const [moisture, setMoisture] = useState(defaultMoisture);
   const [eventSource, setEventSource] = useState(null);
+
+  const plantsRef = useRef(plants);
+  plantsRef.current = plants;
 
   const handleZipChange = (event) => {
     setZip(event.target.value);
@@ -45,6 +48,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
     setNurseries([]);
     setLoading(true);
     setError(null);
+    setInfoMessage(null);
     let formData = {
       zip: zip,
       shade: shade,
@@ -57,7 +61,14 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setExpa
       eventSource.close();
     }
 
-    sendRequest(formData, setPlants, setLoading, setError, setEventSource, () => {
+    sendRequest(formData, setPlants, setLoading, setError, setInfoMessage, setEventSource, () => {
+      console.log(plantsRef.current);
+      console.log(plantsRef.current.length);
+      //TODO: Sometimes plants.length is 0 despite plants being on screen??
+      //      when the previous search had zero.
+      if (plantsRef.current.length === 0) {
+        setInfoMessage(`Can't find anything near ${zip} which thrives in ${shade} and ${moisture} moisture`);
+      }
 
       // This is a callback to make the nurseries not load until after
       // plants are loaded.  Loading it first made it distracting and

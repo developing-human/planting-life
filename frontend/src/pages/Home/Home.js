@@ -16,6 +16,7 @@ const Home = () => {
   const [nurseries, setNurseries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState('welcome');
 
   return (
@@ -24,11 +25,16 @@ const Home = () => {
                       setNurseries={setNurseries} 
                       setLoading={setLoading} 
                       setError={setError} 
-                      setExpanded={setExpanded}/>
+                      setInfoMessage={setInfoMessage} 
+                      setExpanded={setExpanded}
+                      plants={plants} />
 
       <div className="accordion-container"><IntroAccordion expanded={expanded} setExpanded={setExpanded}/></div>
 
-      {error ? <Alert severity="error">{error}</Alert> : null}
+      <div className="alert-container">
+        {error ? <Alert severity="error">{error}</Alert> : null}
+        {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
+      </div>
 
       <section className="card-container">
         {plants.map((plant, index) => (
