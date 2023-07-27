@@ -174,6 +174,46 @@ First, explain how well it supports the small ground animals of an ecosystem.  C
 {}", name, build_rating_formatting_instructions())
 }
 
+pub fn build_spread_rating_prompt(name: &str) -> String {
+    format!("Your goal is to rate how aggressively {} spreads.  To do this, lets think step by step.
+
+First, explain how aggressively it spreads.  Then, rate this aggressiveness on a scale from 1 to 10.
+
+Your entire response will be formatted as follows, the rating label is REQUIRED:
+```
+Your 3-5 sentence description.
+
+rating: Your integer rating from 1-10, compared to other plants. 1-4 is doesn't spread much, 5-7 is for spreading noticably, 8-10 will be very difficult to control.
+```
+
+For example:' and 'rating:' labels are REQUIRED):
+```
+<plant name> spreads... (2-4 sentences)
+
+rating: 3
+", name)
+}
+
+pub fn build_deer_resistance_prompt(name: &str) -> String {
+    format!("Your goal is to rate the deer resistance of {}.  To do this, lets think step by step.
+
+First, explain how it resists deer.  Then, rate this resistance on a scale from 1 to 10.
+
+Your entire response will be formatted as follows, the rating label is REQUIRED:
+```
+Your 3-5 sentence description.
+
+rating: Your integer rating from 1-10, compared to other plants. 1-4 is not deer resistant, 4-6 is not preferred by deer, 7-10 deer will not eat.
+```
+
+For example: ('rating:' label is REQUIRED):
+```
+<plant name> is... (3-5 sentences)
+
+rating: 3
+", name)
+}
+
 pub fn build_height_prompt(name: &str) -> String {
     format!("How tall is {}?  On the last line of your response, list only feet and inches using ' and \" for abbreviations.  Here are two examples: 
 
@@ -254,6 +294,24 @@ pub async fn fetch_bloom(api_key: &str, name: &str) -> anyhow::Result<String> {
     parse_bloom(&response)
 }
 
+pub async fn fetch_spread_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
+    let prompt = build_spread_rating_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key, 20000).await?;
+
+    parse_rating_u8(&response.split('\n').collect())
+}
+
+pub async fn fetch_deer_resistance_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
+    let prompt = build_deer_resistance_prompt(name);
+    let payload = build_plant_detail_request(prompt);
+    let response = openai::call_model(payload, api_key, 20000).await?;
+
+    println!("deer resistance rating response: {response}");
+
+    parse_rating_u8(&response.split('\n').collect())
+}
+
 fn build_plant_detail_request(prompt: String) -> openai::ChatCompletionRequest {
     openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
@@ -281,21 +339,7 @@ fn build_plant_detail_request(prompt: String) -> openai::ChatCompletionRequest {
 fn parse_rating(input: &str) -> anyhow::Result<Rating> {
     let lines: Vec<&str> = input.split('\n').collect();
 
-    // Find the line which contains the rating
-    let rating_line = lines
-        .iter()
-        .find(|line| line.to_lowercase().starts_with("rating: "));
-
-    // Remove the label, accounting for both upper and lower case
-    let rating_str = rating_line.map(|s| s.replace("rating: ", ""));
-    let rating_str = rating_str.map(|s| s.replace("Rating: ", ""));
-
-    // Parse the rating into an integer
-    let rating = match rating_str.map(|line| line.parse()) {
-        Some(Ok(rating)) => rating,
-        Some(Err(_)) => return Err(anyhow!("invalid rating: {input}",)),
-        None => return Err(anyhow!("rating not in response: {input}")),
-    };
+    let rating = parse_rating_u8(&lines)?;
 
     // Find the line which contains the summary
     // Sometimes it misses the "summary: " label and starts with "supports ".
@@ -316,6 +360,23 @@ fn parse_rating(input: &str) -> anyhow::Result<Rating> {
             reason: summary,
         }),
         None => Err(anyhow!("summary not in response: {input}")),
+    }
+}
+
+fn parse_rating_u8(lines: &Vec<&str>) -> anyhow::Result<u8> {
+    // Find the line which contains the rating
+    let rating_line = lines
+        .iter()
+        .find(|line| line.to_lowercase().starts_with("rating: "));
+
+    // Remove the label, accounting for both upper and lower case
+    let rating_str = rating_line.map(|s| s.replace("rating: ", ""));
+    let rating_str = rating_str.map(|s| s.replace("Rating: ", ""));
+
+    match rating_str.map(|line| line.parse::<u8>()) {
+        Some(Ok(rating)) => Ok(rating),
+        Some(Err(_)) => Err(anyhow!("invalid rating: {lines:?}",)),
+        None => Err(anyhow!("rating not in response: {lines:?}")),
     }
 }
 

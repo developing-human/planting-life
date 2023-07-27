@@ -35,6 +35,12 @@ pub struct Plant {
     pub animal_rating: Option<Rating>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub spread_rating: Option<u8>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deer_resistance_rating: Option<u8>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub usda_source: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -45,6 +51,8 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spread: Option<String>,
+
+    pub highlights: Vec<Highlight>,
 
     pub done_loading: bool,
 }
@@ -69,10 +77,13 @@ impl Plant {
             pollinator_rating: None,
             bird_rating: None,
             animal_rating: None,
+            spread_rating: None,
+            deer_resistance_rating: None,
             image: None,
             usda_source: None,
             wiki_source: None,
             done_loading: false,
+            highlights: vec![],
         }
     }
     // Merges two plants, prioritizing "other" but never overriding Some with None
@@ -91,31 +102,16 @@ impl Plant {
                 .clone()
                 .or(self.pollinator_rating.clone()),
             bird_rating: other.bird_rating.clone().or(self.bird_rating.clone()),
+            spread_rating: other.spread_rating.or(self.spread_rating),
+            deer_resistance_rating: other.deer_resistance_rating.or(self.deer_resistance_rating),
             animal_rating: other.animal_rating.clone().or(self.animal_rating.clone()),
             usda_source: other.usda_source.clone().or(self.usda_source.clone()),
             wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
             height: other.height.clone().or(self.height.clone()),
             spread: other.spread.clone().or(self.spread.clone()),
+            highlights: other.highlights.clone(),
             done_loading: false,
         }
-    }
-
-    pub fn score(&self) -> usize {
-        let pollinator = self
-            .pollinator_rating
-            .as_ref()
-            .map(|r| r.rating)
-            .unwrap_or(0);
-        let bird = self.bird_rating.as_ref().map(|r| r.rating).unwrap_or(0);
-        let animal = self.animal_rating.as_ref().map(|r| r.rating).unwrap_or(0);
-
-        let pollinator = pollinator as usize;
-        let bird = bird as usize;
-        let animal = animal as usize;
-
-        // This prioritizes high scores very highly, making a plant that is
-        // 9/5/5 more interesting than 7/6/6
-        pollinator * pollinator + bird * bird + animal * animal
     }
 }
 
@@ -227,6 +223,27 @@ impl FromStr for Moisture {
             _ => Err(anyhow!("can't create Moisture from {s}")),
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Highlight {
+    pub label: String,
+    pub category: HighlightCategory,
+
+    #[serde(skip_serializing)]
+    pub priority: usize,
+}
+
+#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone)]
+pub enum HighlightCategory {
+    #[serde(rename = "great")]
+    Great,
+    #[serde(rename = "good")]
+    Good,
+    #[serde(rename = "bad")]
+    Bad,
+    #[serde(rename = "worse")]
+    Worse,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

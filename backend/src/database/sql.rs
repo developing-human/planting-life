@@ -99,6 +99,9 @@ pub async fn update_plant(
                   animal_rating = :animal_rating,
                   animal_reason = :animal_reason,
 
+                  spread_rating = :spread_rating,
+                  deer_resistance_rating = :deer_resistance_rating,
+
                   usda_source = :usda_source,
                   wiki_source = :wiki_source,
 
@@ -120,6 +123,9 @@ pub async fn update_plant(
             "bird_reason" => plant.bird_rating.as_ref().map(|r| &r.reason),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| &r.reason),
+
+            "spread_rating" => plant.spread_rating,
+            "deer_resistance_rating" => plant.deer_resistance_rating,
 
             "usda_source" => &plant.usda_source,
             "wiki_source" => &plant.wiki_source,
@@ -169,6 +175,7 @@ pub async fn insert_plant(
          pollinator_rating, pollinator_reason,
          bird_rating, bird_reason,
          animal_rating, animal_reason,
+         spread_rating, deer_resistance_rating,
          usda_source, wiki_source,
          image_id)
       VALUES 
@@ -178,6 +185,7 @@ pub async fn insert_plant(
          :pollinator_rating, :pollinator_reason,
          :bird_rating, :bird_reason,
          :animal_rating, :animal_reason,
+         :spread_rating, :deer_resistance_rating,
          :usda_source, :wiki_source,
          :image_id)
             RETURNING id"
@@ -195,6 +203,9 @@ pub async fn insert_plant(
             "bird_reason" => plant.bird_rating.as_ref().map(|r| r.reason.clone()),
             "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
             "animal_reason" => plant.animal_rating.as_ref().map(|r| r.reason.clone()),
+
+            "spread_rating" => plant.spread_rating,
+            "deer_resistance_rating" => plant.deer_resistance_rating,
 
             "usda_source" => &plant.usda_source,
             "wiki_source" => &plant.wiki_source,
@@ -228,6 +239,7 @@ SELECT
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,
+  p.spread_rating, p.deer_resistance_rating,
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
@@ -269,6 +281,7 @@ SELECT
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
   p.animal_rating, p.animal_reason,
+  p.spread_rating, p.deer_resistance_rating,
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p

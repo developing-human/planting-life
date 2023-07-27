@@ -10,3 +10,7 @@ figcaption {
     justify-content: flex-end;
     margin-top: -5px;
 }
+
+.highlight-container {
+    min-height: 75px;
+}

@@ -1,6 +1,6 @@
 use crate::domain::Plant;
-use crate::flickr;
 use crate::{ai, citations};
+use crate::{flickr, highlights};
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
@@ -175,8 +175,29 @@ async fn hydrate_ratings(plant: &Plant) -> Option<HydratedPlant> {
     if plant.animal_rating.is_none() {
         futures_unordered.push(Box::pin(hydrate_animal_rating(plant.clone())));
     }
+    if plant.spread_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_spread_rating(plant.clone())));
+    }
+    if plant.deer_resistance_rating.is_none() {
+        futures_unordered.push(Box::pin(hydrate_deer_resistance_rating(plant.clone())));
+    }
 
-    merge_hydrated_plants(futures_unordered).await
+    merge_hydrated_plants(futures_unordered)
+        .await
+        .or_else(|| {
+            // If there was nothing to merge (ratings were already populated)
+            // then make a HydratedPlant which wraps the original plant so the
+            // highlights can be generated
+            Some(HydratedPlant {
+                updated: false,
+                plant: plant.clone(),
+            })
+        })
+        .map(|mut merged| {
+            merged.plant.highlights = highlights::generate(&merged.plant);
+            println!("{:?}", merged.plant.highlights);
+            merged
+        })
 }
 
 async fn hydrate_citations(plant: &Plant) -> Option<HydratedPlant> {
@@ -265,6 +286,44 @@ async fn hydrate_animal_rating(plant: Plant) -> Option<HydratedPlant> {
         updated: true,
         plant: Plant {
             animal_rating: Some(rating),
+            ..plant
+        },
+    })
+}
+
+async fn hydrate_spread_rating(plant: Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let rating = match ai::fetch_spread_rating(&api_key, &plant.common).await {
+        Ok(rating) => rating,
+        Err(e) => {
+            warn!("Failed to fetch spread rating: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        plant: Plant {
+            spread_rating: Some(rating),
+            ..plant
+        },
+    })
+}
+
+async fn hydrate_deer_resistance_rating(plant: Plant) -> Option<HydratedPlant> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+    let rating = match ai::fetch_deer_resistance_rating(&api_key, &plant.common).await {
+        Ok(rating) => rating,
+        Err(e) => {
+            warn!("Failed to fetch spread rating: {e}");
+            return None;
+        }
+    };
+
+    Some(HydratedPlant {
+        updated: true,
+        plant: Plant {
+            deer_resistance_rating: Some(rating),
             ..plant
         },
     })

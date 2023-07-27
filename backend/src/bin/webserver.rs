@@ -73,32 +73,42 @@ async fn hydrate_and_send_plants(
     actix_web::rt::spawn(async move {
         hydrator::hydrate_plants(plant_stream, &mut plant_sender).await;
     });
-    let mut plants_to_save = vec![];
+    //let mut plants_to_save = vec![];
     let mut all_plants = vec![];
+    let mut saved_plants = vec![];
     while let Some(hydrated_plant) = plant_receiver.next().await {
         if hydrated_plant.plant.scientific == hydrator::ALL_PLANTS_HYDRATING_MARKER {
             send_event(frontend_sender, "allPlantsLoaded", "").await;
 
             continue;
         }
+
+        send_plant(frontend_sender, &hydrated_plant.plant).await;
+
         if hydrated_plant.plant.done_loading {
             all_plants.push(hydrated_plant.plant.clone());
 
             if hydrated_plant.updated {
-                plants_to_save.push(hydrated_plant.plant.clone());
+                //plants_to_save.push(hydrated_plant.plant.clone());
+                match db.save_plant(&hydrated_plant.plant).await {
+                    Ok(plant) => saved_plants.push(plant.clone()),
+                    Err(e) => warn!(
+                        "Failed to save {} due to {e}",
+                        hydrated_plant.plant.scientific
+                    ),
+                }
             }
         }
-
-        send_plant(frontend_sender, &hydrated_plant.plant).await;
     }
 
+    /*
     let saved_plants = match db.save_plants(&plants_to_save.iter().collect()).await {
         Ok(saved_plants) => saved_plants,
         Err(e) => {
             warn!("failed to save at least one plant, not caching: {e}");
             return;
         }
-    };
+    };*/
 
     // We only need to cache the query results if these results aren't from the database
     // When they are from the database, we know its already there.

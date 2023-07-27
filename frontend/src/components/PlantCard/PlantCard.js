@@ -1,6 +1,6 @@
 // attribution popover component
 import AttributionPopover from "../AttributionPopover/AttributionPopover";
-import RatingPopover from "../RatingPopover/RatingPopover";
+import Highlight from "../Highlight/Highlight";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -16,7 +16,7 @@ import "./PlantCard.css"
 
 function PlantCard({ plant }) {
   return (
-    <Card raised={true} sx={{ width: 350, maxWidth: "90vw", minHeight: 585, maxHeight: 585 }}>
+    <Card raised={true} sx={{ width: 350, maxWidth: "90vw", minHeight: 570, maxHeight: 570 }}>
       <CardHeader title={plant.common} subheader={plant.scientific} />
 
       <CardMedia
@@ -38,41 +38,17 @@ function PlantCard({ plant }) {
       ) : null}
 
       <Grid container spacing={0}>
-        <Grid item xs={6}>
+        <Grid item xs={6.25}>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              {plant.pollinatorRating ? 
-                  <span>
-                    Pollinators: {plant.pollinatorRating.rating} / 10
-                    <RatingPopover id="pollinator-rating" 
-                                   header="Explanation of Pollinator Rating" 
-                                   text={plant.pollinatorRating.reason} />
-                  </span>
-                  : null
-              }
-              <br/> 
-
-              {plant.birdRating ? 
-                  <span>
-                    Birds: {plant.birdRating.rating} / 10
-                    <RatingPopover id="bird-rating" 
-                                   header="Explanation of Bird Rating" 
-                                   text={plant.birdRating.reason} />
-                  </span>
-                  : null
-              }
-              <br/> 
-
-              {plant.animalRating ? 
-                  <span>
-                    Animals: {plant.animalRating.rating} / 10
-                    <RatingPopover id="animal-rating" 
-                                   header="Explanation of Animal Rating" 
-                                   text={plant.animalRating.reason} />
-                  </span>
-                  : null
-              }
-              <br /><br />
+              <div class="highlight-container">
+              {plant.highlights.map((highlight) => (
+                <>
+                  <Highlight label={highlight.label} category={highlight.category}/>
+                  <br />
+                </>
+              ))}
+              </div>
               {plant.wikiSource ? 
                   <a href={plant.wikiSource} target="_blank" rel="noreferrer">Wikipedia</a> 
                   : null}
@@ -83,7 +59,7 @@ function PlantCard({ plant }) {
             </Typography>
           </CardContent>
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={5.75}>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
               {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}<br/>

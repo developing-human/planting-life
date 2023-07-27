@@ -37,6 +37,8 @@ impl FromRow for Plant {
         let bird_reason = row.take_opt("bird_reason").unwrap().ok();
         let animal_rating = row.take_opt("animal_rating").unwrap().ok();
         let animal_reason = row.take_opt("animal_reason").unwrap().ok();
+        let spread_rating = row.take_opt("spread_rating").unwrap().ok();
+        let deer_resistance_rating = row.take_opt("deer_resistance_rating").unwrap().ok();
         let img_id = row.take_opt("image_id").unwrap().ok();
         let title = row.take_opt("title").unwrap().ok();
         let card_url = row.take_opt("card_url").unwrap().ok();
@@ -84,6 +86,8 @@ impl FromRow for Plant {
                 rating,
                 reason: animal_reason.unwrap(),
             }),
+            spread_rating,
+            deer_resistance_rating,
             usda_source,
             wiki_source,
             image: img_id.map(|_| {
@@ -103,6 +107,7 @@ impl FromRow for Plant {
                     license,
                 }
             }),
+            highlights: vec![],
             done_loading: false,
         })
     }
