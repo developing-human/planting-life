@@ -9,6 +9,7 @@ import Nursery from "../../components/Nursery/Nursery";
 
 // material ui & styling
 import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
 import "./Home.css";
 
 const Home = () => {
@@ -18,6 +19,24 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState('welcome');
+  const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
+
+  const onMoreClick = () => {
+    setMaxPlantsToDisplay((oldMax) => {
+      const newMax = oldMax + 12;
+
+      // This is a little non-obvious, but since we hide cards which lack
+      // images, it was possible that increasing the max by 12 wouldn't
+      // show 12 more.  This counts how many of the new plants are missing
+      // images, and adjusts the count a bit higher to ensure we always
+      // show multiples of 12.
+      const newPlants = plants.slice(oldMax, newMax);
+      const plantsWithoutImages = newPlants.filter(plant => !plant.image);
+      const numPlantsWithoutImages = plantsWithoutImages.length;
+
+      return newMax + numPlantsWithoutImages;
+    });
+  };
 
   return (
     <>
@@ -27,7 +46,8 @@ const Home = () => {
                       setError={setError} 
                       setInfoMessage={setInfoMessage} 
                       setExpanded={setExpanded}
-                      plants={plants} />
+                      setMaxPlantsToDisplay={setMaxPlantsToDisplay}
+                      plants={plants}/>
 
       <div className="accordion-container"><IntroAccordion expanded={expanded} setExpanded={setExpanded}/></div>
 
@@ -37,13 +57,20 @@ const Home = () => {
       </div>
 
       <section className="card-container">
-        {plants.map((plant, index) => (
+        {plants.slice(0, maxPlantsToDisplay).map((plant, index) => (
           plant.image ? <PlantCard plant={plant} key={index} /> 
             : null
         ))}
 
-        {loading ? <Spinner /> : null}
+        
+        {loading && plants.length < maxPlantsToDisplay ? <Spinner /> : null}
+        
       </section>
+      
+      <div className="more-container">
+        {plants.length >= maxPlantsToDisplay ?
+           <Button type="submit" onClick={onMoreClick}>Load More</Button> : null}
+      </div>
 
       {nurseries && nurseries.length > 0 ?
         <section className="card-container">

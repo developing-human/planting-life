@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants }) {
+function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants, setMaxPlantsToDisplay }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -45,6 +45,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     event.preventDefault();
     setExpanded(false);
     setPlants([]);
+    setMaxPlantsToDisplay(12);
     setNurseries([]);
     setLoading(true);
     setError(null);
@@ -62,10 +63,6 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     }
 
     sendRequest(formData, setPlants, setLoading, setError, setInfoMessage, setEventSource, () => {
-      console.log(plantsRef.current);
-      console.log(plantsRef.current.length);
-      //TODO: Sometimes plants.length is 0 despite plants being on screen??
-      //      when the previous search had zero.
       if (plantsRef.current.length === 0) {
         setInfoMessage(`Can't find anything near ${zip} which thrives in ${shade} and ${moisture} moisture`);
       }

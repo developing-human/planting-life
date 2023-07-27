@@ -14,6 +14,14 @@
   padding-inline: 10px;
 }
 
+.more-container {
+  width: 95vw;
+  max-width: 725px;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+}
+
 .card-container {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(auto, 350px));
