@@ -210,7 +210,6 @@ pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Resul
     let prompt = build_pollinator_prompt(name);
     let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key, 20000).await?;
-    println!("{response}");
 
     parse_rating(&response)
 }
@@ -399,18 +398,19 @@ pub async fn fetch_conditions(api_key: &str, name: &str) -> anyhow::Result<Condi
 }
 
 fn build_conditions_prompt(name: &str) -> String {
-    format!("Your goal is to answer yes/no questions about the ideal shade and moisture conditions for {}.  First, describe the ideal growing conditions in 40-50 words.  Then answer the following questions:
+    format!("Your goal is to answer six yes/no questions about shade and moisture conditions where {} will thrive.  First, describe growing conditions where it will thrive in 40-50 words.  
 
-low moisture? yes/no
-medium moisture? yes/no
-high moisture? yes/no
-full shade? yes/no
-partial sun? yes/no
-full sun? yes/no", name)
+Then, use this format to answer the six questions:
+- low moisture? yes/no
+- medium moisture? yes/no
+- high moisture? yes/no
+- full shade? yes/no
+- partial sun? yes/no
+- full sun? yes/no
+", name)
 }
 
 fn parse_conditions(input: &str) -> anyhow::Result<Conditions> {
-    println!("{input}");
     let input = input.to_lowercase();
     let lines: Vec<&str> = input.split('\n').collect();
 
@@ -431,13 +431,15 @@ fn parse_conditions(input: &str) -> anyhow::Result<Conditions> {
         ("full sun", Shade::None),
     ];
 
+    // Matches on leading hyphens or numbered lists
+    // Ex: "- ", " - ", "1. "
+    let prefix_regex = Regex::new(r"[ ]*-[ ]*|\d\. *").unwrap();
+
     let mut answer_count = 0;
     for line in lines {
-        //TODO: Need to also handle numbered lists
-        //      maybe regex replace [1-6]\. with ""
+        // Sometimes GPT includes a prefix we need to remove
+        let line = prefix_regex.replace(line, "");
 
-        // Sometimes GPT responds with leading hyphens
-        let line = line.replace("- ", "");
         // I assume the response could produce "dry soil? yes" or "dry soil: yes"
         for (question, moisture) in question_moisture.iter() {
             if line.starts_with(question) {

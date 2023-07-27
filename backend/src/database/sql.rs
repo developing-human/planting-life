@@ -236,12 +236,11 @@ INNER JOIN regions_plants rp on rp.plant_id = p.id
 INNER JOIN zipcodes z ON z.region_id = rp.region_id
 LEFT JOIN images i ON i.id = p.image_id
 WHERE z.zipcode = :zipcode
-  AND FIND_IN_SET(:moisture, p.moistures)
-  AND FIND_IN_SET(:shade, p.shades)
+  AND (p.moistures is NULL OR FIND_IN_SET(:moisture, p.moistures))
+  AND (p.shades is NULL OR FIND_IN_SET(:shade, p.shades))
 ORDER BY
-  POW(p.pollinator_rating, 3) +
-  POW(p.bird_rating, 3) +
-  POW(p.animal_rating, 3) desc
+  p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
+  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) + POW(p.animal_rating, 3) desc
   
 "
     .with(params! {
