@@ -49,18 +49,23 @@ const Home = () => {
                       setMaxPlantsToDisplay={setMaxPlantsToDisplay}
                       plants={plants}/>
 
-      <div className="accordion-container"><IntroAccordion expanded={expanded} setExpanded={setExpanded}/></div>
+      {
+        plants.length === 0 && !loading ?
+          <div className="accordion-container">
+            <IntroAccordion expanded={expanded} setExpanded={setExpanded}/>
+          </div>
+          : null
 
-      <div className="alert-container">
-        {error ? <Alert severity="error">{error}</Alert> : null}
-        {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
+      }
 
-        {
-          loading || plants.length > 0 ?
-        <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank">sharing your thoughts</a>.</Alert>
-            : null
-        }
-      </div>
+      {
+        error || infoMessage ?
+          <div className="alert-container">
+            {error ? <Alert severity="error">{error}</Alert> : null}
+            {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
+          </div>
+          : null
+      }
 
       <section className="card-container">
         {plants.slice(0, maxPlantsToDisplay).map((plant, index) => (
@@ -77,6 +82,14 @@ const Home = () => {
         {plants.length >= maxPlantsToDisplay ?
            <Button type="submit" onClick={onMoreClick}>Load More</Button> : null}
       </div>
+
+        {
+          loading || plants.length > 0 ?
+        <div className="alert-container">
+          <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank">sharing your thoughts</a>.</Alert>
+        </div>
+          : null
+        }
 
       {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
         <section className="card-container">
