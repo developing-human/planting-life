@@ -13,4 +13,5 @@ figcaption {
 
 .highlight-container {
     min-height: 75px;
+    min-width: 150px;
 }
