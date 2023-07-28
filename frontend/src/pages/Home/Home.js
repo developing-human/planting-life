@@ -72,7 +72,7 @@ const Home = () => {
            <Button type="submit" onClick={onMoreClick}>Load More</Button> : null}
       </div>
 
-      {nurseries && nurseries.length > 0 ?
+      {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
         <section className="card-container">
           <h1>Native Nurseries Near You</h1>
           {nurseries.map((nursery, index) => (

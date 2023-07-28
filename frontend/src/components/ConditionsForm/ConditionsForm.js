@@ -66,15 +66,15 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
       if (plantsRef.current.length === 0) {
         setInfoMessage(`Can't find anything near ${zip} which thrives in ${shade} and ${moisture} moisture`);
       }
-
-      // This is a callback to make the nurseries not load until after
-      // plants are loaded.  Loading it first made it distracting and
-      // impossible to read as the cards were loading.
-      fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${formData.zip}`)
-        .then(response => response.json())
-        .then(nurseries => setNurseries(nurseries))
-        .catch(error => console.error('Error: ', error));
     });
+
+    // This loads at the same time as plants, but logic elsewhere hides the 
+    // nurseries until plants load enough for the screen to stop bouncing
+    // around.
+    fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${formData.zip}`)
+      .then(response => response.json())
+      .then(nurseries => setNurseries(nurseries))
+      .catch(error => console.error('Error: ', error));
   };
 
   return (
