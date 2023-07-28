@@ -54,6 +54,12 @@ const Home = () => {
       <div className="alert-container">
         {error ? <Alert severity="error">{error}</Alert> : null}
         {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
+
+        {
+          loading || plants.length > 0 ?
+        <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank">sharing your thoughts</a>.</Alert>
+            : null
+        }
       </div>
 
       <section className="card-container">

@@ -42,3 +42,7 @@ a {
   color: blue;
   text-decoration: none;
 }
+
+.alert-container a {
+    text-decoration: underline;
+}
