@@ -195,7 +195,6 @@ async fn hydrate_ratings(plant: &Plant) -> Option<HydratedPlant> {
         })
         .map(|mut merged| {
             merged.plant.highlights = highlights::generate(&merged.plant);
-            println!("{:?}", merged.plant.highlights);
             merged
         })
 }

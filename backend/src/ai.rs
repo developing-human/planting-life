@@ -307,8 +307,6 @@ pub async fn fetch_deer_resistance_rating(api_key: &str, name: &str) -> anyhow::
     let payload = build_plant_detail_request(prompt);
     let response = openai::call_model(payload, api_key, 20000).await?;
 
-    println!("deer resistance rating response: {response}");
-
     parse_rating_u8(&response.split('\n').collect())
 }
 
