@@ -11,7 +11,6 @@ function Highlight({label, category}) {
     worse: <Warning className="highlight-icon highlight-worse"/>,
   };
 
-  console.log(category);
   return (
     <span>{categoryIcons[category]}{label}</span>
   );

@@ -41,7 +41,7 @@ function PlantCard({ plant }) {
         <Grid item xs={6.25}>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              <div class="highlight-container">
+              <div className="highlight-container">
               {plant.highlights.map((highlight) => (
                 <>
                   <Highlight label={highlight.label} category={highlight.category}/>

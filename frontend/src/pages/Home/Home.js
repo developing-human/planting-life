@@ -86,7 +86,7 @@ const Home = () => {
         {
           loading || plants.length > 0 ?
         <div className="alert-container">
-          <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank">sharing your thoughts</a>.</Alert>
+          <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank" rel="noreferrer">sharing your thoughts</a>.</Alert>
         </div>
           : null
         }
