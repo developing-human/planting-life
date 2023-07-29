@@ -49,14 +49,9 @@ const Home = () => {
                       setMaxPlantsToDisplay={setMaxPlantsToDisplay}
                       plants={plants}/>
 
-      {
-        plants.length === 0 && !loading ?
-          <div className="accordion-container">
-            <IntroAccordion expanded={expanded} setExpanded={setExpanded}/>
-          </div>
-          : null
-
-      }
+      <div className="accordion-container">
+        <IntroAccordion expanded={expanded} setExpanded={setExpanded}/>
+      </div>
 
       {
         error || infoMessage ?
@@ -66,6 +61,15 @@ const Home = () => {
           </div>
           : null
       }
+
+      <div className="alert-container" id="top-survey-alert">
+      {
+        loading || plants.length > 0 ?
+        <Alert severity="info">Help decide how Planting Life grows by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank" rel="noreferrer">sharing your thoughts</a>.</Alert>
+        : null
+      }
+      </div>
+
 
       <section className="card-container">
         {plants.slice(0, maxPlantsToDisplay).map((plant, index) => (
@@ -82,14 +86,6 @@ const Home = () => {
         {plants.length >= maxPlantsToDisplay ?
            <Button type="submit" onClick={onMoreClick}>Load More</Button> : null}
       </div>
-
-        {
-          loading || plants.length > 0 ?
-        <div className="alert-container">
-          <Alert severity="info">Help decide how Planting Life grows next by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank" rel="noreferrer">sharing your thoughts</a>.</Alert>
-        </div>
-          : null
-        }
 
       {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
         <section className="card-container">

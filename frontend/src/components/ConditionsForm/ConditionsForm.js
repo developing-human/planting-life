@@ -50,6 +50,13 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     setLoading(true);
     setError(null);
     setInfoMessage(null);
+
+    // A brief delay on this helps it scroll nicely, since the accordion will
+    // have collapsed.
+    setTimeout(() => {
+      document.getElementById("top-survey-alert").scrollIntoView({behavior: 'smooth'});
+    }, 100);
+
     let formData = {
       zip: zip,
       shade: shade,
