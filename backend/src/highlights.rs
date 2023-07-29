@@ -25,25 +25,10 @@ lazy_static! {
         priority: 502,
         category: HighlightCategory::Good
     };
-    static ref ANIMAL_GREAT: Highlight = Highlight {
-        label: "Great for animals".to_string(),
-        priority: 1001,
-        category: HighlightCategory::Great
-    };
-    static ref ANIMAL_GOOD: Highlight = Highlight {
-        label: "Good for animals".to_string(),
-        priority: 501,
-        category: HighlightCategory::Good
-    };
     static ref VERY_DEER_RESISTANT: Highlight = Highlight {
         label: "Deer resistant".to_string(),
         priority: 2000,
         category: HighlightCategory::Great
-    };
-    static ref DEER_RESISTANT: Highlight = Highlight {
-        label: "Mildly deer resistant".to_string(),
-        priority: 900,
-        category: HighlightCategory::Good
     };
     static ref AGGRESSIVE_SPREAD: Highlight = Highlight {
         label: "Spreads aggressively".to_string(),
@@ -61,7 +46,7 @@ lazy_static! {
         category: HighlightCategory::Good
     };
     static ref GROWS_IN_PART_SHADE: Highlight = Highlight {
-        label: "Grows in partial shade".to_string(),
+        label: "Grows in part shade".to_string(),
         priority: 2,
         category: HighlightCategory::Good
     };
@@ -142,7 +127,6 @@ fn list_highlights(plant: &Plant) -> Vec<Highlight> {
     }
     match plant.deer_resistance_rating {
         Some(rating) if rating >= 8 => highlights.push(VERY_DEER_RESISTANT.clone()),
-        Some(rating) if rating >= 6 => highlights.push(DEER_RESISTANT.clone()),
         _ => (),
     }
 
