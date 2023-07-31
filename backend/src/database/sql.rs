@@ -30,7 +30,7 @@ pub async fn upsert_query(
     }
 }
 
-pub async fn zip_exists(db: &Database, zip: &str) -> anyhow::Result<bool> {
+pub async fn check_zip_exists(db: &Database, zip: &str) -> anyhow::Result<bool> {
     let mut conn = db.get_connection().await?;
     let query_result: Result<Option<u8>, mysql_async::Error> =
         r"SELECT 1 from zipcodes where zipcode = :zip"
@@ -47,19 +47,25 @@ pub async fn zip_exists(db: &Database, zip: &str) -> anyhow::Result<bool> {
     }
 }
 
+// Looks for the closest neighboring zip code to the one provided on both sides,
+// then selects the one that is closest.
+const SELECT_CLOSEST_ZIP_QUERY: &str = r"
+SELECT
+  CASE WHEN prev IS NULL THEN nxt
+       WHEN nxt IS NULL THEN prev
+       WHEN ABS(:zip - IFNULL(prev, nxt)) < ABS(:zip - IFNULL(nxt, prev)) THEN prev
+       ELSE nxt
+  END AS closest_key 
+  FROM (
+    SELECT :zip as zipcode,
+       (SELECT MAX(zipcode) FROM zipcodes AS prev WHERE prev.zipcode < :zip) AS prev,
+       (SELECT MIN(zipcode) FROM zipcodes AS nxt WHERE nxt.zipcode > :zip) AS nxt 
+  ) AS subquery";
+
 pub async fn select_closest_zip(db: &Database, zip: &str) -> anyhow::Result<String> {
     let mut conn = db.get_connection().await?;
-    let query_result: Result<Option<usize>, mysql_async::Error> = r"SELECT
-      CASE WHEN prev IS NULL THEN nxt
-           WHEN nxt IS NULL THEN prev
-           WHEN ABS(:zip - IFNULL(prev, nxt)) < ABS(:zip - IFNULL(nxt, prev)) THEN prev
-           ELSE nxt
-      END AS closest_key 
-      FROM (
-        SELECT :zip as zipcode,
-               (SELECT MAX(zipcode) FROM zipcodes AS prev WHERE prev.zipcode < :zip) AS prev,
-               (SELECT MIN(zipcode) FROM zipcodes AS nxt WHERE nxt.zipcode > :zip) AS nxt 
-      ) AS subquery"
+
+    let query_result: Result<Option<usize>, mysql_async::Error> = SELECT_CLOSEST_ZIP_QUERY
         .with(params! {
             "zip" => zip,
         })

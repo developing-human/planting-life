@@ -21,13 +21,10 @@ struct PlantsRequest {
 }
 
 async fn get_closest_valid_zip(db: &Database, zip: &str) -> Result<String, actix_web::Error> {
-    let valid_zip = match db.lookup_closest_valid_zip(zip).await {
-        Ok(valid_zip) => valid_zip,
-        Err(e) => {
-            warn!("Cannot find valid zipcode: {e}");
-            return Err(actix_web::error::ErrorBadRequest("invalid zipcode"));
-        }
-    };
+    let valid_zip = db.lookup_closest_valid_zip(zip).await.map_err(|e| {
+        warn!("Cannot find valid zipcode: {e}");
+        actix_web::error::ErrorBadRequest("invalid zipcode")
+    })?;
 
     if valid_zip != zip {
         info!("Adjusted unknown zip {} to {valid_zip}", zip);

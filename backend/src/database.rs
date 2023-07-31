@@ -46,7 +46,7 @@ impl Database {
             return Err(anyhow!("invalid zipcode format: {zip}"));
         }
 
-        if sql::zip_exists(self, zip).await? {
+        if sql::check_zip_exists(self, zip).await? {
             Ok(zip.to_string())
         } else {
             Ok(sql::select_closest_zip(self, zip).await?)
