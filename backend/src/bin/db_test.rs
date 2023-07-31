@@ -10,6 +10,17 @@ async fn main() {
     //let fetched = db.get_plant_by_scientific_name("Asclepias incarnata").await;
     //println!("fetched: {fetched:#?}");
 
+    for input_zip in [
+        "43081", "43083", "", "00123", "4308", "90210", "asdf", "asdfg",
+    ] {
+        println!("checking {input_zip}");
+        match db.lookup_closest_valid_zip(input_zip).await {
+            Ok(zip) => println!("closest valid zip: {zip}"),
+            Err(e) => println!("error: {e}"),
+        }
+        println!();
+    }
+
     let args: Vec<String> = env::args().collect();
     if args.len() != 4 {
         eprintln!("Expected exactly two arguments, had: {args:?}");

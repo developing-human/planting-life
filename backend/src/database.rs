@@ -40,6 +40,19 @@ impl Database {
             })
     }
 
+    /// Finds the closest valid zipcode, returns Err if it can't.
+    pub async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String> {
+        if zip.len() != 5 || !zip.chars().all(char::is_numeric) {
+            return Err(anyhow!("invalid zipcode format: {zip}"));
+        }
+
+        if sql::zip_exists(self, zip).await? {
+            Ok(zip.to_string())
+        } else {
+            Ok(sql::select_closest_zip(self, zip).await?)
+        }
+    }
+
     /// Finds all Plants which match the given parameters.
     pub async fn lookup_query_results(
         &self,
@@ -94,7 +107,7 @@ impl Database {
         let mut plant_ids = HashSet::new();
         plant_ids.insert(plant.id.unwrap());
 
-        if let Err(e) = sql::insert_region_plants(self, &zip, plant_ids).await {
+        if let Err(e) = sql::insert_region_plants(self, zip, plant_ids).await {
             warn!("save_query_results failed to insert region plants: {}", e);
         }
     }

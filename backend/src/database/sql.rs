@@ -30,6 +30,50 @@ pub async fn upsert_query(
     }
 }
 
+pub async fn zip_exists(db: &Database, zip: &str) -> anyhow::Result<bool> {
+    let mut conn = db.get_connection().await?;
+    let query_result: Result<Option<u8>, mysql_async::Error> =
+        r"SELECT 1 from zipcodes where zipcode = :zip"
+            .with(params! {
+                "zip" => zip,
+            })
+            .first(&mut conn)
+            .await;
+
+    match query_result {
+        Ok(Some(_)) => Ok(true),
+        Ok(None) => Ok(false),
+        Err(e) => Err(anyhow!("select from zipcodes failed: {e}")),
+    }
+}
+
+pub async fn select_closest_zip(db: &Database, zip: &str) -> anyhow::Result<String> {
+    let mut conn = db.get_connection().await?;
+    let query_result: Result<Option<usize>, mysql_async::Error> = r"SELECT
+      CASE WHEN prev IS NULL THEN nxt
+           WHEN nxt IS NULL THEN prev
+           WHEN ABS(:zip - IFNULL(prev, nxt)) < ABS(:zip - IFNULL(nxt, prev)) THEN prev
+           ELSE nxt
+      END AS closest_key 
+      FROM (
+        SELECT :zip as zipcode,
+               (SELECT MAX(zipcode) FROM zipcodes AS prev WHERE prev.zipcode < :zip) AS prev,
+               (SELECT MIN(zipcode) FROM zipcodes AS nxt WHERE nxt.zipcode > :zip) AS nxt 
+      ) AS subquery"
+        .with(params! {
+            "zip" => zip,
+        })
+        .first(&mut conn)
+        .await;
+
+    match query_result {
+        // db has this as integer, so format to 5 chars w/ leading zeros
+        Ok(Some(closest_zip)) => Ok(format!("{closest_zip:05}")),
+        Ok(None) => Err(anyhow!("select_closest_zip closest zip not found")),
+        Err(e) => Err(anyhow!("select_closest_zip error finding closest zip: {e}")),
+    }
+}
+
 /// Selects one plant by scientific name.  
 /// Returns Err if it fails, Ok(None) if not found.
 pub async fn select_query_count(
