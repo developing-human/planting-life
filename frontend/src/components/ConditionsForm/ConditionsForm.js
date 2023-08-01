@@ -97,12 +97,19 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
               label="Zip Code"
               variant="outlined"
               onChange={handleZipChange}
+              required
               sx={{ width: "100%" }}
               inputProps={{
                 inputMode: "numeric",
                 pattern: "[0-9]{5}",
                 maxLength: 5,
                 title: "US Zip Code",
+              }}
+              onKeyPress={(event) => {
+                if (!/[0-9]/.test(event.key)) {
+                  // Only allow numbers to be typed
+                  event.preventDefault();
+                }
               }}
             />
           </Grid>

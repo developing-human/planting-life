@@ -20,26 +20,51 @@ struct PlantsRequest {
     moisture: Moisture,
 }
 
+async fn get_closest_valid_zip(db: &Database, zip: &str) -> Result<String, actix_web::Error> {
+    let valid_zip = db.lookup_closest_valid_zip(zip).await.map_err(|e| {
+        warn!("Cannot find valid zipcode: {e}");
+        actix_web::error::ErrorBadRequest("invalid zipcode")
+    })?;
+
+    if valid_zip != zip {
+        info!("Adjusted unknown zip {} to {valid_zip}", zip);
+    }
+
+    Ok(valid_zip)
+}
+
 #[get("/plants")]
 async fn fetch_plants_handler(
     web::Query(payload): web::Query<PlantsRequest>,
     db: web::Data<Database>,
-) -> impl Responder {
+) -> Result<impl Responder, actix_web::Error> {
     info!("{payload:?}");
+
+    let valid_zip = get_closest_valid_zip(&db, &payload.zip).await?;
+    let valid_payload = PlantsRequest {
+        zip: valid_zip,
+        ..payload
+    };
+    drop(payload); // Don't use the unvalidated payload by mistake
 
     let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
     let db = db.get_ref().clone();
 
     // The real work is done in a new thread so the connection to the front end can stay open.
     actix_web::rt::spawn(async move {
-        let plant_stream =
-            selector::stream_plants(&db, &payload.zip, &payload.moisture, &payload.shade).await;
+        let plant_stream = selector::stream_plants(
+            &db,
+            &valid_payload.zip,
+            &valid_payload.moisture,
+            &valid_payload.shade,
+        )
+        .await;
 
         match plant_stream {
             Ok(plant_stream) => {
                 hydrate_and_send_plants(
                     &db,
-                    &payload,
+                    &valid_payload,
                     plant_stream.stream,
                     &frontend_sender,
                     plant_stream.from_db,
@@ -55,10 +80,10 @@ async fn fetch_plants_handler(
         send_event(&frontend_sender, "close", "").await;
     });
 
-    stream
+    Ok(stream
         .with_keep_alive(time::Duration::from_secs(1))
         .customize()
-        .insert_header(("X-Accel-Buffering", "no"))
+        .insert_header(("X-Accel-Buffering", "no")))
 }
 
 async fn hydrate_and_send_plants(
@@ -150,6 +175,10 @@ async fn fetch_nurseries_handler(
     db: web::Data<Database>,
 ) -> impl Responder {
     info!("{payload:?}");
+
+    // Purposefully NOT adjusting zipcode for nursery search.
+    // This degrades nicely and all the distances would be incorrect
+    // if the zipcode isn't known.
 
     let mut nurseries = db.find_nurseries(&payload.zip).await;
 
