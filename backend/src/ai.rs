@@ -1,13 +1,7 @@
-use regex::Regex;
-use serde::Deserialize;
-use std::collections::HashMap;
-
+use crate::domain::{Moisture, Plant, Rating, Shade};
 use anyhow::anyhow;
 use futures::{Stream, StreamExt};
-
-use crate::domain::{Moisture, Plant, Rating, Shade};
-
-use self::openai::ChatCompletionFunction;
+use regex::Regex;
 
 mod openai;
 
@@ -22,17 +16,14 @@ pub async fn stream_plants(
 
     let payload = openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
-        functions: vec![],
         messages: vec![
             openai::ChatCompletionMessage {
                 role: Some(String::from("system")),
                 content: Some(String::from("You are a helpful assistant")),
-                function_call: None,
             },
             openai::ChatCompletionMessage {
                 role: Some(String::from("user")),
                 content: Some(prompt),
-                function_call: None,
             },
         ],
         max_tokens: 500,
@@ -100,24 +91,6 @@ pub async fn stream_plants(
 
     // plant_stream will have None's in it from lines that did not emit an entry, remove them.
     Ok(plant_stream.filter_map(|plant| async { plant }))
-}
-
-pub fn build_pollinator_function_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the pollinators of an ecosystem.  Consider its contributions as a food source, shelter, and larval host. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
-
-Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
-}
-
-pub fn build_bird_function_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the birds of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
-
-Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
-}
-
-pub fn build_animal_function_prompt(name: &str) -> String {
-    format!("Explain how well {} supports the small ground animals of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable. 
-
-Then call save_results with your explanation, a comparison to other plants, your rating, and your 30-40 word summary.", name)
 }
 
 fn build_rating_formatting_instructions() -> String {
@@ -313,19 +286,16 @@ pub async fn fetch_deer_resistance_rating(api_key: &str, name: &str) -> anyhow::
 fn build_plant_detail_request(prompt: String) -> openai::ChatCompletionRequest {
     openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),
-        functions: vec![],
         messages: vec![
             openai::ChatCompletionMessage {
                 role: Some(String::from("system")),
                 content: Some(String::from(
                     "You are a discerning gardener who carefully follows formatting instructions.",
                 )),
-                function_call: None,
             },
             openai::ChatCompletionMessage {
                 role: Some(String::from("user")),
                 content: Some(prompt),
-                function_call: None,
             },
         ],
         max_tokens: 750,
@@ -571,120 +541,5 @@ impl PlantBuilder {
             &self.scientific.clone().unwrap(),
             &self.common.clone().unwrap(),
         )
-    }
-}
-
-pub async fn _fetch_pollinator_rating_fn(
-    api_key: &str,
-    scientific_name: &str,
-) -> anyhow::Result<Rating> {
-    let prompt = build_pollinator_function_prompt(scientific_name);
-    let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
-
-    _parse_rating_fn(&response)
-}
-
-pub async fn _fetch_bird_rating_fn(api_key: &str, scientific_name: &str) -> anyhow::Result<Rating> {
-    let prompt = build_bird_function_prompt(scientific_name);
-    let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
-
-    _parse_rating_fn(&response)
-}
-
-pub async fn _fetch_animal_rating_fn(
-    api_key: &str,
-    scientific_name: &str,
-) -> anyhow::Result<Rating> {
-    let prompt = build_animal_function_prompt(scientific_name);
-    let payload = _build_rating_request_fn(prompt);
-    let response = openai::call_model_function(payload, api_key, 20000, "save_rating").await?;
-
-    _parse_rating_fn(&response)
-}
-
-#[derive(Deserialize)]
-struct AiRating {
-    summary: String,
-    rating: u8,
-}
-
-fn _parse_rating_fn(input: &str) -> anyhow::Result<Rating> {
-    let parsed: AiRating = serde_json::from_str(input).map_err(|e| anyhow!(e))?;
-
-    Ok(Rating {
-        reason: parsed.summary,
-        rating: parsed.rating,
-    })
-}
-
-fn _build_rating_function() -> ChatCompletionFunction {
-    let mut properties = HashMap::new();
-    properties.insert(
-        "explanation".to_string(),
-        openai::ChatCompletionProperty {
-            r#type: "string".to_string(),
-            description: "3-4 sentence explanation of the plant's strengths and weaknesses"
-                .to_string(),
-        },
-    );
-    properties.insert(
-        "comparison".to_string(),
-        openai::ChatCompletionProperty {
-            r#type: "string".to_string(),
-            description: "3-4 sentence comparison of the plant's contribution to other plants"
-                .to_string(),
-        },
-    );
-    properties.insert(
-        "rating".to_string(),
-        openai::ChatCompletionProperty {
-            r#type: "integer".to_string(),
-            description: "REQUIRED: an integer rating from 1-10. 1-3 is suboptimal, 4-7 is for solid contributors, 8-10 is for the very best".to_string(),
-        },
-    );
-    properties.insert(
-        "summary".to_string(),
-        openai::ChatCompletionProperty {
-            r#type: "string".to_string(),
-            description: "30-40 word summary of the explanation and comparison".to_string(),
-        },
-    );
-
-    openai::ChatCompletionFunction {
-        name: "save_rating".to_string(),
-        parameters: openai::ChatCompletionParameters {
-            r#type: "object".to_string(),
-            properties,
-        },
-        required: vec![
-            "explanation".to_string(),
-            "comparison".to_string(),
-            "rating".to_string(),
-            "summary".to_string(),
-        ],
-    }
-}
-
-fn _build_rating_request_fn(prompt: String) -> openai::ChatCompletionRequest {
-    openai::ChatCompletionRequest {
-        model: String::from("gpt-3.5-turbo"),
-        functions: vec![_build_rating_function()],
-        messages: vec![
-            openai::ChatCompletionMessage {
-                role: Some(String::from("system")),
-                content: Some(String::from("You are a discerning gardener")),
-                function_call: None,
-            },
-            openai::ChatCompletionMessage {
-                role: Some(String::from("user")),
-                content: Some(prompt),
-                function_call: None,
-            },
-        ],
-        max_tokens: 750,
-        stream: false,
-        temperature: 0.3,
     }
 }
