@@ -106,8 +106,8 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
                 title: "US Zip Code",
               }}
               onKeyPress={(event) => {
-                if (!/[0-9]/.test(event.key)) {
-                  // Only allow numbers to be typed
+                // Only allow numbers & Enter to be typed
+                if (!/[0-9]/.test(event.key) && event.key !== 'Enter') {
                   event.preventDefault();
                 }
               }}
