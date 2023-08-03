@@ -139,6 +139,7 @@ async fn call_model_with_retries(
 
 /// Calls the model, gets a String back.
 /// Currently unused, but this is too likely to be used again for me to delete.
+#[tracing::instrument]
 pub async fn call_model(
     payload: ChatCompletionRequest,
     api_key: &str,

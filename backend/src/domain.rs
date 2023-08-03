@@ -225,6 +225,11 @@ impl FromStr for Moisture {
     }
 }
 
+pub struct Conditions {
+    pub shade: Vec<Shade>,
+    pub moisture: Vec<Moisture>,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Highlight {
     pub label: String,

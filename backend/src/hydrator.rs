@@ -1,4 +1,4 @@
-use crate::domain::Plant;
+use crate::domain::{Plant, Rating};
 use crate::{ai, citations};
 use crate::{flickr, highlights};
 use futures::channel::mpsc::UnboundedSender;
@@ -25,7 +25,7 @@ pub async fn hydrate_plants(
 ) {
     // This semaphore only allows X plants to hydrate at once.  This provides
     // rate limiting so we don't crush the services we populate data from.
-    let semaphore = Arc::new(Semaphore::new(6));
+    let semaphore = Arc::new(Semaphore::new(3));
 
     // References to tasks which are running
     let mut handles = vec![];
@@ -247,7 +247,10 @@ async fn hydrate_pollinator_rating(plant: Plant) -> Option<HydratedPlant> {
     Some(HydratedPlant {
         updated: true,
         plant: Plant {
-            pollinator_rating: Some(rating),
+            pollinator_rating: Some(Rating {
+                rating,
+                reason: "delete me".to_string(),
+            }),
             ..plant
         },
     })
@@ -266,7 +269,10 @@ async fn hydrate_bird_rating(plant: Plant) -> Option<HydratedPlant> {
     Some(HydratedPlant {
         updated: true,
         plant: Plant {
-            bird_rating: Some(rating),
+            bird_rating: Some(Rating {
+                rating,
+                reason: "delete me".to_string(),
+            }),
             ..plant
         },
     })
@@ -284,7 +290,10 @@ async fn hydrate_animal_rating(plant: Plant) -> Option<HydratedPlant> {
     Some(HydratedPlant {
         updated: true,
         plant: Plant {
-            animal_rating: Some(rating),
+            animal_rating: Some(Rating {
+                rating,
+                reason: "delete me".to_string(),
+            }),
             ..plant
         },
     })

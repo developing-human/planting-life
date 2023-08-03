@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use planting_life::{ai, domain::Rating};
+use planting_life::ai;
 use std::{
     env,
     fs::File,
@@ -43,7 +43,7 @@ async fn main() {
     }
 
     let all_results = join_all(futures).await;
-    let mut passing_results: Vec<(String, Rating)> = all_results
+    let mut passing_results: Vec<(String, u8)> = all_results
         .into_iter()
         .filter_map(|result| {
             if let Err(e) = result {
@@ -60,29 +60,16 @@ async fn main() {
     writeln!(out_file, r#""name","rating","reason""#).unwrap();
     for (name, rating) in passing_results {
         println!("{} {:?}", name, rating);
-        writeln!(
-            out_file,
-            r#""{}","{}","{}""#,
-            name, rating.rating, rating.reason
-        )
-        .unwrap();
+        writeln!(out_file, r#""{}","{}""#, name, rating,).unwrap();
     }
 
     // Write prompt at end to tie results to prompt
     writeln!(out_file).unwrap();
     writeln!(out_file).unwrap();
     writeln!(out_file).unwrap();
-    let prompt = ai::build_pollinator_prompt("<name>");
-    for line in prompt.split('\n') {
-        // move it over a few cells to not mess up formatting
-        writeln!(out_file, r#""","","{line}""#).unwrap();
-    }
 }
 
-async fn fetch_pollinator_rating(
-    api_key: &str,
-    plant_name: &str,
-) -> anyhow::Result<(String, Rating)> {
+async fn fetch_pollinator_rating(api_key: &str, plant_name: &str) -> anyhow::Result<(String, u8)> {
     ai::fetch_pollinator_rating(api_key, plant_name)
         .await
         .map(|rating| (plant_name.to_string(), rating))

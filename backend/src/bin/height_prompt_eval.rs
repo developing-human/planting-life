@@ -67,11 +67,6 @@ async fn main() {
     writeln!(out_file).unwrap();
     writeln!(out_file).unwrap();
     writeln!(out_file).unwrap();
-    let prompt = ai::build_bloom_prompt("<name>");
-    for line in prompt.split('\n') {
-        // move it over a few cells to not mess up formatting
-        writeln!(out_file, r#""","","{line}""#).unwrap();
-    }
 }
 
 async fn fetch_bloom(api_key: &str, plant_name: &str) -> anyhow::Result<(String, String)> {

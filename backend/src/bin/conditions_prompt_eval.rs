@@ -1,5 +1,8 @@
 use futures::future::join_all;
-use planting_life::ai::{self, Conditions};
+use planting_life::{
+    ai::{self},
+    domain::Conditions,
+};
 use std::{
     env,
     fs::File,
