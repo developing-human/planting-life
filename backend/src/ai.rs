@@ -1,7 +1,7 @@
 use self::prompts::{
     conditions::ConditionsPrompt,
     details::{DetailPrompt, DetailType},
-    list::{self},
+    list::ListPlantsPrompt,
     ratings::{RatingPrompt, RatingType},
 };
 use crate::domain::{Conditions, Plant};
@@ -17,9 +17,8 @@ pub async fn stream_plants(
     shade: &str,
     moisture: &str,
 ) -> anyhow::Result<impl Stream<Item = Plant> + Send> {
-    let payload = list::build_payload(region_name, shade, moisture);
-    let response = openai::call_model_stream(payload, api_key, 20000, true).await?;
-    list::parse_plant_stream(response).await
+    let prompt = ListPlantsPrompt::new(region_name, shade, moisture);
+    prompt.execute(api_key).await
 }
 
 pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
