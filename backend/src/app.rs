@@ -17,8 +17,8 @@ impl PlantingLifeApp {
     pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        let db = MariaDB::new(db_url);
-        let db = Box::leak(Box::new(db));
+        let db = live_forever(MariaDB::new(db_url));
+
         let plant_controller = PlantController::new(db);
         let nursery_controller = NurseriesController::new(db);
 
@@ -45,4 +45,11 @@ impl PlantingLifeApp {
         .run()
         .await
     }
+}
+
+// When building the app its often necessary for Rust to know
+// components will live for the duration of the application.
+// The "leaks" them to get a static reference.
+fn live_forever<T>(to_leak: T) -> &'static T {
+    Box::leak(Box::new(to_leak))
 }
