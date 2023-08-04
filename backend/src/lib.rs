@@ -1,5 +1,7 @@
 pub mod ai;
+pub mod app;
 pub mod citations;
+pub mod controllers;
 pub mod database;
 pub mod domain;
 pub mod flickr;
