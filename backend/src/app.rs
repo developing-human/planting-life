@@ -3,7 +3,7 @@ use crate::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
-    database::Database,
+    database::MariaDB,
 };
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
@@ -17,11 +17,10 @@ impl PlantingLifeApp {
     pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        //TODO: Convert more to this structure.
-        //      Use traits, since most of the rest needs to be mockable.
-        let db = Database::new(db_url);
-        let plant_controller = PlantController::new(&db);
-        let nursery_controller = NurseriesController::new(&db);
+        let db = MariaDB::new(db_url);
+        let db = Box::leak(Box::new(db));
+        let plant_controller = PlantController::new(db);
+        let nursery_controller = NurseriesController::new(db);
 
         Self {
             plant_controller,

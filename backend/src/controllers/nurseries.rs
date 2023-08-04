@@ -11,12 +11,12 @@ struct NurseriesRequest {
 }
 
 pub struct NurseriesController {
-    pub db: Database,
+    pub db: &'static dyn Database,
 }
 
 impl NurseriesController {
-    pub fn new(db: &Database) -> Self {
-        Self { db: db.clone() }
+    pub fn new(db: &'static dyn Database) -> Self {
+        Self { db }
     }
 
     async fn list(&self, payload: NurseriesRequest) -> impl Responder {

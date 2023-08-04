@@ -16,12 +16,12 @@ struct PlantsRequest {
 }
 
 pub struct PlantController {
-    pub db: Database,
+    pub db: &'static dyn Database,
 }
 
 impl PlantController {
-    pub fn new(db: &Database) -> Self {
-        Self { db: db.clone() }
+    pub fn new(db: &'static dyn Database) -> Self {
+        Self { db }
     }
 
     async fn stream(
@@ -38,12 +38,11 @@ impl PlantController {
         drop(payload); // Don't use the unvalidated payload by mistake
 
         let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
-        let db = self.db.clone();
 
         // The real work is done in a new thread so the connection to the front end can stay open.
         actix_web::rt::spawn(async move {
             let plant_stream = selector::stream_plants(
-                &db,
+                self.db,
                 &valid_payload.zip,
                 &valid_payload.moisture,
                 &valid_payload.shade,

@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use crate::domain::*;
 use anyhow::anyhow;
+use async_trait::async_trait;
 use futures::future;
 use mysql_async::Conn;
 use mysql_async::Opts;
@@ -11,12 +12,68 @@ use tracing::log::warn;
 mod conversions;
 mod sql;
 
+#[async_trait]
+pub trait Database: Send + Sync {
+    /// Finds all Nurseries near the given zipcode.
+    async fn find_nurseries(&self, zip: &str) -> Vec<Nursery>;
+
+    /// Finds the closest valid zipcode, returns Err if it can't.
+    async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String>;
+
+    /// Finds all Plants which match the given parameters.
+    async fn lookup_query_results(
+        &self,
+        zip: &str,
+        moisture: &Moisture,
+        shade: &Shade,
+    ) -> Vec<Plant>;
+
+    ///Saves a new Query and maps it to the plants referenced by plant_ids.
+    ///
+    ///Failures are logged, but are otherwise ignored.
+    async fn save_query_results(
+        &self,
+        zip: &str,
+        moisture: &Moisture,
+        shade: &Shade,
+        all_plants: Vec<Plant>,
+        saved_plants: Vec<Plant>,
+    );
+
+    async fn save_plant_region(&self, plant: &Plant, zip: &str);
+
+    /// Returns how many times the query for these parameters has been executed
+    ///
+    /// Failures are logged, but are otherwise ignored.
+    async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize;
+
+    /// Saves a list of Plants, returning a list of new Plants which
+    /// have their ids populated.  Returns Err if any fail to save.
+    async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>>;
+
+    /// Inserts or updates a single Plant, returning a new Plant with its
+    /// id populated. Returns Err if it fails to save.
+    async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant>;
+
+    /// Saves an Image, returning a new Image with the database id populated.
+    /// Returns Err if it fails to save.
+    async fn save_image(&self, image: &Image) -> anyhow::Result<Image>;
+
+    /// Fetches one Plant by scientific name.  Returns None if it is not
+    /// found or if there is a database error.
+    async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant>;
+
+    /// Fetches the region name for a zipcodes.
+    /// Returns None if not found or if there is a database error.
+    async fn get_region_name_by_zip(&self, zip: &str) -> Option<String>;
+}
+
 #[derive(Clone)]
-pub struct Database {
+pub struct MariaDB {
     pool: Option<Pool>,
 }
 
-impl Database {
+impl MariaDB {
     /// Creates a Database.  If the url is None, it creates one without a pool.
     /// When the pool is None, it degrades gracefully.
     pub fn new(url: &str) -> Self {
@@ -30,8 +87,25 @@ impl Database {
         }
     }
 
-    /// Finds all Nurseries near the given zipcode.
-    pub async fn find_nurseries(&self, zip: &str) -> Vec<Nursery> {
+    async fn get_connection(&self) -> anyhow::Result<Conn> {
+        if let Some(pool) = &self.pool {
+            match pool.get_conn().await {
+                Ok(conn) => Ok(conn),
+                Err(e) => {
+                    warn!("can't get db connection: {}", e);
+                    Err(anyhow!("{e}"))
+                }
+            }
+        } else {
+            warn!("tried to get db connection, but db is not connected");
+            Err(anyhow!("db is not connected"))
+        }
+    }
+}
+
+#[async_trait]
+impl Database for MariaDB {
+    async fn find_nurseries(&self, zip: &str) -> Vec<Nursery> {
         sql::select_nurseries_by_zip(self, zip)
             .await
             .unwrap_or_else(|e| {
@@ -40,8 +114,7 @@ impl Database {
             })
     }
 
-    /// Finds the closest valid zipcode, returns Err if it can't.
-    pub async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String> {
+    async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String> {
         if zip.len() != 5 || !zip.chars().all(char::is_numeric) {
             return Err(anyhow!("invalid zipcode format: {zip}"));
         }
@@ -53,8 +126,7 @@ impl Database {
         }
     }
 
-    /// Finds all Plants which match the given parameters.
-    pub async fn lookup_query_results(
+    async fn lookup_query_results(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -68,10 +140,7 @@ impl Database {
             })
     }
 
-    ///Saves a new Query and maps it to the plants referenced by plant_ids.
-    ///
-    ///Failures are logged, but are otherwise ignored.
-    pub async fn save_query_results(
+    async fn save_query_results(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -97,7 +166,7 @@ impl Database {
         }
     }
 
-    pub async fn save_plant_region(&self, plant: &Plant, zip: &str) {
+    async fn save_plant_region(&self, plant: &Plant, zip: &str) {
         if plant.id.is_none() {
             warn!("save_plant_region requires plant.id");
             return;
@@ -112,10 +181,7 @@ impl Database {
         }
     }
 
-    /// Returns how many times the query for these parameters has been executed
-    ///
-    /// Failures are logged, but are otherwise ignored.
-    pub async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
+    async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
         match sql::select_query_count(self, zip, moisture, shade).await {
             Ok(count) => count,
             Err(e) => {
@@ -125,9 +191,7 @@ impl Database {
         }
     }
 
-    /// Saves a list of Plants, returning a list of new Plants which
-    /// have their ids populated.  Returns Err if any fail to save.
-    pub async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>> {
+    async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>> {
         let mut futures = vec![];
         for plant in plants_in {
             futures.push(self.save_plant(plant));
@@ -138,9 +202,7 @@ impl Database {
         future::join_all(futures).await.into_iter().collect()
     }
 
-    /// Inserts or updates a single Plant, returning a new Plant with its
-    /// id populated. Returns Err if it fails to save.
-    pub async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
+    async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
         let mut img_id = None;
         if let Some(image) = &plant.image {
             img_id = image.id;
@@ -164,8 +226,6 @@ impl Database {
         })
     }
 
-    /// Saves an Image, returning a new Image with the database id populated.
-    /// Returns Err if it fails to save.
     async fn save_image(&self, image: &Image) -> anyhow::Result<Image> {
         let id = sql::insert_image(self, image).await;
 
@@ -175,9 +235,7 @@ impl Database {
         })
     }
 
-    /// Fetches one Plant by scientific name.  Returns None if it is not
-    /// found or if there is a database error.
-    pub async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {
+    async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {
         match sql::select_plant_by_scientific_name(self, scientific_name).await {
             Ok(Some(plant)) => Some(plant),
             Ok(None) => None,
@@ -188,9 +246,7 @@ impl Database {
         }
     }
 
-    /// Fetches the region name for a zipcodes.
-    /// Returns None if not found or if there is a database error.
-    pub async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
+    async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
         match sql::select_region_name_by_zip(self, zip).await {
             Ok(Some(name)) => Some(name),
             Ok(None) => {
@@ -201,21 +257,6 @@ impl Database {
                 warn!("get_region_name_by_zip failed to select: {e}");
                 None
             }
-        }
-    }
-
-    async fn get_connection(&self) -> anyhow::Result<Conn> {
-        if let Some(pool) = &self.pool {
-            match pool.get_conn().await {
-                Ok(conn) => Ok(conn),
-                Err(e) => {
-                    warn!("can't get db connection: {}", e);
-                    Err(anyhow!("{e}"))
-                }
-            }
-        } else {
-            warn!("tried to get db connection, but db is not connected");
-            Err(anyhow!("db is not connected"))
         }
     }
 }

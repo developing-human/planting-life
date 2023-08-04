@@ -1,15 +1,13 @@
-use std::{collections::HashSet, fmt::Display};
-
+use super::MariaDB;
 use crate::domain::*;
 use anyhow::anyhow;
 use mysql_async::prelude::*;
-
-use super::Database;
+use std::{collections::HashSet, fmt::Display};
 
 /// Inserts a new Query into the database.  
 /// Returns Err if it fails.
 pub async fn upsert_query(
-    db: &Database,
+    db: &MariaDB,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
@@ -30,7 +28,7 @@ pub async fn upsert_query(
     }
 }
 
-pub async fn check_zip_exists(db: &Database, zip: &str) -> anyhow::Result<bool> {
+pub async fn check_zip_exists(db: &MariaDB, zip: &str) -> anyhow::Result<bool> {
     let mut conn = db.get_connection().await?;
     let query_result: Result<Option<u8>, mysql_async::Error> =
         r"SELECT 1 from zipcodes where zipcode = :zip"
@@ -62,7 +60,7 @@ SELECT
        (SELECT MIN(zipcode) FROM zipcodes AS nxt WHERE nxt.zipcode > :zip) AS nxt 
   ) AS subquery";
 
-pub async fn select_closest_zip(db: &Database, zip: &str) -> anyhow::Result<String> {
+pub async fn select_closest_zip(db: &MariaDB, zip: &str) -> anyhow::Result<String> {
     let mut conn = db.get_connection().await?;
 
     let query_result: Result<Option<usize>, mysql_async::Error> = SELECT_CLOSEST_ZIP_QUERY
@@ -83,7 +81,7 @@ pub async fn select_closest_zip(db: &Database, zip: &str) -> anyhow::Result<Stri
 /// Selects one plant by scientific name.  
 /// Returns Err if it fails, Ok(None) if not found.
 pub async fn select_query_count(
-    db: &Database,
+    db: &MariaDB,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
@@ -110,7 +108,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
 /// Inserts into regions_plants.  
 /// Returns Err if it fails.
 pub async fn insert_region_plants(
-    db: &Database,
+    db: &MariaDB,
     zip: &str,
     plant_ids: HashSet<usize>,
 ) -> anyhow::Result<()> {
@@ -135,7 +133,7 @@ pub async fn insert_region_plants(
 /// Updates one plant.  
 /// Returns Err if it fails.
 pub async fn update_plant(
-    db: &Database,
+    db: &MariaDB,
     plant: &Plant,
     img_id: Option<usize>,
 ) -> anyhow::Result<()> {
@@ -212,7 +210,7 @@ fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {
 /// Inserts one plant.  
 /// Returns Err if it fails.
 pub async fn insert_plant(
-    db: &Database,
+    db: &MariaDB,
     plant: &Plant,
     img_id: Option<usize>,
 ) -> anyhow::Result<usize> {
@@ -274,7 +272,7 @@ pub async fn insert_plant(
 /// Selects multiple plants by zip/moisture/shade.  
 /// Returns Err if it fails.
 pub async fn select_plants_by_zip_moisture_shade(
-    db: &Database,
+    db: &MariaDB,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
@@ -318,7 +316,7 @@ ORDER BY
 /// Selects one plant by scientific name.  
 /// Returns Err if it fails, Ok(None) if not found.
 pub async fn select_plant_by_scientific_name(
-    db: &Database,
+    db: &MariaDB,
     scientific_name: &str,
 ) -> anyhow::Result<Option<Plant>> {
     let mut conn = db.get_connection().await?;
@@ -347,7 +345,7 @@ WHERE scientific_name = :scientific_name"
 
 /// Inserts one image.
 /// Returns Err if it fails.
-pub async fn insert_image(db: &Database, image: &Image) -> anyhow::Result<usize> {
+pub async fn insert_image(db: &MariaDB, image: &Image) -> anyhow::Result<usize> {
     let mut conn = db.get_connection().await?;
     r"INSERT INTO images (title, card_url, original_url, author, license)
             VALUES (:title, :card_url, :original_url, :author, :license)
@@ -367,7 +365,7 @@ pub async fn insert_image(db: &Database, image: &Image) -> anyhow::Result<usize>
 
 /// Selects all nurseries which match the given zipcode.
 /// Returns Err if it fails, Ok(empty vec) if none are found.
-pub async fn select_nurseries_by_zip(db: &Database, zip: &str) -> anyhow::Result<Vec<Nursery>> {
+pub async fn select_nurseries_by_zip(db: &MariaDB, zip: &str) -> anyhow::Result<Vec<Nursery>> {
     let mut conn = db.get_connection().await?;
 
     r"
@@ -385,7 +383,7 @@ ORDER BY miles ASC"
 
 /// Selects a region's name for the given zipcode.
 /// Returns Err if it fails, Ok(None) if none are found.
-pub async fn select_region_name_by_zip(db: &Database, zip: &str) -> anyhow::Result<Option<String>> {
+pub async fn select_region_name_by_zip(db: &MariaDB, zip: &str) -> anyhow::Result<Option<String>> {
     let mut conn = db.get_connection().await?;
 
     r"

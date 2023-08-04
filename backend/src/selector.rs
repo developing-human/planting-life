@@ -7,7 +7,7 @@ use std::boxed::Box;
 use std::collections::HashSet;
 use std::env;
 use std::pin::Pin;
-use tracing::log::{info, warn};
+use tracing::log::warn;
 
 pub struct PlantStream {
     pub stream: Pin<Box<dyn Stream<Item = Plant> + Send>>,
@@ -15,7 +15,7 @@ pub struct PlantStream {
 }
 
 pub async fn stream_plants(
-    db: &Database,
+    db: &'static dyn Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
@@ -41,19 +41,12 @@ pub async fn stream_plants(
             let never_seen_before = seen_common_names.insert(sanitized);
             future::ready(never_seen_before)
         })
-        .then(update_plant_from_database(db.clone()))
+        .then(update_plant_from_database(db))
         .map(update_plant_with_conditions)
         .buffer_unordered(12)
-        .then(save_plant(db.clone(), zip.to_string()))
+        .then(save_plant(db, zip.to_string()))
         .filter(move |plant| {
             let should_keep = plant.moistures.contains(&moisture) && plant.shades.contains(&shade);
-
-            if !should_keep {
-                info!(
-                    "Filtered out {} ({}) because it does not thrive in moisture: {} and shade: {}",
-                    plant.common, plant.scientific, moisture, shade
-                );
-            }
             future::ready(should_keep)
         });
 
@@ -64,16 +57,15 @@ pub async fn stream_plants(
 }
 
 fn update_plant_from_database(
-    db: Database,
+    db: &'static dyn Database,
 ) -> impl FnMut(Plant) -> Pin<Box<dyn Future<Output = Plant> + Send>> {
     move |plant: Plant| {
-        let db_clone = db.clone();
         Box::pin(async move {
             if plant.id.is_some() {
                 return plant; // This plant came from the database, don't fetch it again.
             }
 
-            let fetch_future = db_clone.get_plant_by_scientific_name(&plant.scientific);
+            let fetch_future = db.get_plant_by_scientific_name(&plant.scientific);
             if let Some(existing_plant) = fetch_future.await {
                 existing_plant // Plant found in db
             } else {
@@ -84,11 +76,10 @@ fn update_plant_from_database(
 }
 
 fn save_plant(
-    db: Database,
+    db: &'static dyn Database,
     zip: String,
 ) -> impl FnMut(Plant) -> Pin<Box<dyn Future<Output = Plant> + Send>> {
     move |plant: Plant| {
-        let db = db.clone();
         let zip = zip.clone();
 
         Box::pin(async move {
@@ -108,7 +99,7 @@ fn save_plant(
 }
 
 async fn get_unfiltered_plant_stream(
-    db: &Database,
+    db: &dyn Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
@@ -135,8 +126,7 @@ async fn get_unfiltered_plant_stream(
         });
     }
 
-    let db = db.clone();
-    let llm_stream = get_llm_plant_stream(&db, zip, moisture, shade).await?;
+    let llm_stream = get_llm_plant_stream(db, zip, moisture, shade).await?;
 
     // Chain the db & llm streams together.  All the db results be available
     // quickly, then the llm results will trickle in.
@@ -170,7 +160,7 @@ async fn update_plant_with_conditions(plant: Plant) -> Plant {
 }
 
 async fn get_llm_plant_stream(
-    db: &Database,
+    db: &dyn Database,
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,

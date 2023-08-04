@@ -1,11 +1,11 @@
-use planting_life::database::Database;
+use planting_life::database::{Database, MariaDB};
 use planting_life::domain::*;
 use std::env;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
     let db_url = env::var("PLANTING_LIFE_DB_URL").expect("Must define $PLANTING_LIFE_DB_URL");
-    let db = Database::new(&db_url);
+    let db = MariaDB::new(&db_url);
 
     //let fetched = db.get_plant_by_scientific_name("Asclepias incarnata").await;
     //println!("fetched: {fetched:#?}");
