@@ -11,7 +11,7 @@ use crate::{
     database::Database,
     domain::*,
     hydrator::{self, Hydrator},
-    selector,
+    selector::Selector,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -24,11 +24,20 @@ struct PlantsRequest {
 pub struct PlantController {
     pub db: &'static dyn Database,
     pub hydrator: Box<dyn Hydrator + Sync>,
+    pub selector: Box<dyn Selector + Sync>,
 }
 
 impl PlantController {
-    pub fn new(db: &'static dyn Database, hydrator: Box<dyn Hydrator + Sync>) -> Self {
-        Self { db, hydrator }
+    pub fn new(
+        db: &'static dyn Database,
+        hydrator: Box<dyn Hydrator + Sync>,
+        selector: Box<dyn Selector + Sync>,
+    ) -> Self {
+        Self {
+            db,
+            hydrator,
+            selector,
+        }
     }
 
     async fn stream(
@@ -48,13 +57,14 @@ impl PlantController {
 
         // The real work is done in a new thread so the connection to the front end can stay open.
         actix_web::rt::spawn(async move {
-            let plant_stream = selector::stream_plants(
-                self.db,
-                &valid_payload.zip,
-                &valid_payload.moisture,
-                &valid_payload.shade,
-            )
-            .await;
+            let plant_stream = self
+                .selector
+                .stream_plants(
+                    &valid_payload.zip,
+                    &valid_payload.moisture,
+                    &valid_payload.shade,
+                )
+                .await;
 
             match plant_stream {
                 Ok(plant_stream) => {

@@ -8,6 +8,7 @@ use crate::{
     },
     database::MariaDB,
     hydrator::RealHydrator,
+    selector::RealSelector,
 };
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
@@ -21,15 +22,16 @@ impl PlantingLifeApp {
     pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        let db = live_forever(MariaDB::new(db_url));
-
         let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
         let open_ai = OpenAI::new(api_key);
-        let ai = RealAi::new(open_ai);
 
-        let hydrator = RealHydrator::new(Box::new(ai));
+        let ai = live_forever(RealAi::new(open_ai));
+        let db = live_forever(MariaDB::new(db_url));
 
-        let plant_controller = PlantController::new(db, Box::new(hydrator));
+        let hydrator = Box::new(RealHydrator::new(ai));
+        let selector = Box::new(RealSelector::new(db, ai));
+
+        let plant_controller = PlantController::new(db, hydrator, selector);
         let nursery_controller = NurseriesController::new(db);
 
         Self {

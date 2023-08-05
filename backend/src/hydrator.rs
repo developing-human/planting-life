@@ -31,13 +31,13 @@ pub trait Hydrator {
 }
 
 pub struct RealHydrator {
-    ai: Box<dyn Ai + Sync>,
+    ai: &'static (dyn Ai + Sync),
     //TODO: Flickr
     //TODO: Citations
 }
 
 impl RealHydrator {
-    pub fn new(ai: Box<dyn Ai + Sync>) -> Self {
+    pub fn new(ai: &'static (dyn Ai + Sync)) -> Self {
         Self { ai }
     }
 }
