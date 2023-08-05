@@ -7,6 +7,7 @@ use crate::{
         plants::{fetch_plants_handler, PlantController},
     },
     database::MariaDB,
+    flickr::RealFlickr,
     hydrator::RealHydrator,
     selector::RealSelector,
 };
@@ -22,13 +23,16 @@ impl PlantingLifeApp {
     pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-        let open_ai = OpenAI::new(api_key);
+        let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+        let open_ai = OpenAI::new(openai_api_key);
+
+        let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
+        let flickr = Box::new(RealFlickr::new(flickr_api_key));
 
         let ai = live_forever(RealAi::new(open_ai));
         let db = live_forever(MariaDB::new(db_url));
 
-        let hydrator = Box::new(RealHydrator::new(ai));
+        let hydrator = Box::new(RealHydrator::new(ai, flickr));
         let selector = Box::new(RealSelector::new(db, ai));
 
         let plant_controller = PlantController::new(db, hydrator, selector);

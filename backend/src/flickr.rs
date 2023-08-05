@@ -1,4 +1,5 @@
 use crate::domain::Image;
+use async_trait::async_trait;
 use futures::join;
 use reqwest::StatusCode;
 use reqwest_middleware::ClientBuilder;
@@ -51,129 +52,118 @@ impl Image {
     }
 }
 
-fn get_license_name(license_id: &str) -> Option<&str> {
-    match license_id {
-        "1" => Some("CC BY-NC-SA 2.0"),
-        "2" => Some("CC BY-NC 2.0"),
-        "3" => Some("CC BY-NC-ND 2.0"),
-        "4" => Some("CC BY 2.0"),
-        "5" => Some("CC BY-SA 2.0"),
-        "6" => Some("CC BY-ND 2.0"),
-        "7" => Some("No known copyright restrictions"),
-        "8" => Some("US Government Work"),
-        "9" => Some("CC0"),
-        "10" => Some("Public Domain Mark 1.0"),
-        _ => None,
+#[async_trait]
+pub trait Flickr {
+    async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image>;
+}
+
+#[derive(Debug)]
+pub struct RealFlickr {
+    api_key: String,
+}
+
+impl RealFlickr {
+    pub fn new(api_key: String) -> Self {
+        Self { api_key }
     }
 }
 
-fn get_license_url(license_id: &str) -> Option<&str> {
-    match license_id {
-        "1" => Some("https://creativecommons.org/licenses/by-nc-sa/2.0/"),
-        "2" => Some("https://creativecommons.org/licenses/by-nc/2.0/"),
-        "3" => Some("https://creativecommons.org/licenses/by-nc-nd/2.0/"),
-        "4" => Some("https://creativecommons.org/licenses/by/2.0/"),
-        "5" => Some("https://creativecommons.org/licenses/by-sa/2.0/"),
-        "6" => Some("https://creativecommons.org/licenses/by-nd/2.0/"),
-        "7" => Some("https://www.flickr.com/commons/usage/"),
-        "8" => Some("http://www.usa.gov/copyright.shtml"),
-        "9" => Some("https://creativecommons.org/publicdomain/zero/1.0/"),
-        "10" => Some("https://creativecommons.org/publicdomain/mark/1.0/"),
-        _ => None,
-    }
-}
+#[async_trait]
+impl Flickr for RealFlickr {
+    async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image> {
+        // Remove "spp." from the end if it exists, this is an abbreviation for "species".
+        let truncated_scientific_name = &scientific_name.replace(" spp.", "");
 
-pub async fn get_image(scientific_name: &str, common_name: &str, api_key: &str) -> Option<Image> {
-    // Remove "spp." from the end if it exists, this is an abbreviation for "species".
-    let truncated_scientific_name = &scientific_name.replace(" spp.", "");
+        // Run searches for both blooming and non-blooming concurrently.
+        // This is a little aggressive since the latter won't be used if the former finds results
+        let search_term = format!("{} blooming", scientific_name);
+        let blooming_search = self.image_search(&search_term);
+        let non_blooming_search = self.image_search(scientific_name);
+        let (blooming_result, non_blooming_result) = join!(blooming_search, non_blooming_search);
 
-    // Run searches for both blooming and non-blooming concurrently.
-    // This is a little aggressive since the latter won't be used if the former finds results
-    let search_term = format!("{} blooming", scientific_name);
-    let blooming_search = image_search(&search_term, api_key);
-    let non_blooming_search = image_search(scientific_name, api_key);
-    let (blooming_result, non_blooming_result) = join!(blooming_search, non_blooming_search);
-
-    // First, look for this plant in bloom
-    if let Some(response) = blooming_result {
-        if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
-            return Some(image);
+        // First, look for this plant in bloom
+        if let Some(response) = blooming_result {
+            if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
+                return Some(image);
+            }
         }
-    }
 
-    // If it can't be found in bloom, look for any other image of it
-    if let Some(response) = non_blooming_result {
-        if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
-            return Some(image);
+        // If it can't be found in bloom, look for any other image of it
+        if let Some(response) = non_blooming_result {
+            if let Some(image) = find_best_photo(response, truncated_scientific_name, common_name) {
+                return Some(image);
+            }
         }
+
+        //TODO: Consider searching for common name in image_search as last ditch effort.
+
+        None // No image to show :(
     }
-
-    //TODO: Consider searching for common name in image_search as last ditch effort.
-
-    None // No image to show :(
 }
 
-#[tracing::instrument]
-async fn image_search(search_term: &str, api_key: &str) -> Option<ImageSearchResponse> {
-    let retry_policy = ExponentialBackoff::builder()
-        .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
-        .build_with_max_retries(4);
+impl RealFlickr {
+    #[tracing::instrument]
+    async fn image_search(&self, search_term: &str) -> Option<ImageSearchResponse> {
+        let retry_policy = ExponentialBackoff::builder()
+            .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
+            .build_with_max_retries(4);
 
-    let client = ClientBuilder::new(reqwest::Client::new())
-        .with(RetryTransientMiddleware::new_with_policy(retry_policy))
-        .build();
+        let client = ClientBuilder::new(reqwest::Client::new())
+            .with(RetryTransientMiddleware::new_with_policy(retry_policy))
+            .build();
 
-    let response = client
-        .get("https://api.flickr.com/services/rest")
-        .timeout(Duration::from_millis(2_000)) // Typically 350-500ms, sometimes ~1s
-        .query(&[
-            ("method", "flickr.photos.search"),
-            ("api_key", api_key),
-            ("text", search_term),
-            ("media", "photos"),
-            ("format", "json"),
-            ("nojsoncallback", "1"),
-            ("extras", "views,url_q,url_z,license,owner_name,description"),
-            ("min_upload_date", "2015-01-01"),
-            ("sort", "relevance"),
-            // This is everything except "All Rights Reserved"
-            // docs here: https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
-            ("license", "1,2,3,4,5,6,7,8,9,10"),
-        ])
-        .send()
-        .await;
+        let response = client
+            .get("https://api.flickr.com/services/rest")
+            .timeout(Duration::from_millis(2_000)) // Typically 350-500ms, sometimes ~1s
+            .query(&[
+                ("method", "flickr.photos.search"),
+                ("api_key", &self.api_key),
+                ("text", search_term),
+                ("media", "photos"),
+                ("format", "json"),
+                ("nojsoncallback", "1"),
+                ("extras", "views,url_q,url_z,license,owner_name,description"),
+                ("min_upload_date", "2015-01-01"),
+                ("sort", "relevance"),
+                // This is everything except "All Rights Reserved"
+                // docs here: https://www.flickr.com/services/api/flickr.photos.licenses.getInfo.html
+                ("license", "1,2,3,4,5,6,7,8,9,10"),
+            ])
+            .send()
+            .await;
 
-    let response = match response {
-        Ok(r) => r,
-        Err(_) => {
-            warn!("Error fetching response for: {search_term}");
+        let response = match response {
+            Ok(r) => r,
+            Err(_) => {
+                warn!("Error fetching response for: {search_term}");
+                return None;
+            }
+        };
+
+        let status = response.status();
+        let response_body = response.text().await;
+
+        let response_body = match response_body {
+            Ok(rb) => rb,
+            Err(_) => {
+                warn!("Error fetching response body for: {search_term}");
+                return None;
+            }
+        };
+
+        if status != StatusCode::OK {
+            warn!("Error from model endpoint: {response_body}");
             return None;
         }
-    };
 
-    let status = response.status();
-    let response_body = response.text().await;
-
-    let response_body = match response_body {
-        Ok(rb) => rb,
-        Err(_) => {
-            warn!("Error fetching response body for: {search_term}");
-            return None;
-        }
-    };
-
-    if status != StatusCode::OK {
-        warn!("Error from model endpoint: {response_body}");
-        return None;
-    }
-
-    let parsed_response: serde_json::Result<ImageSearchResponse> =
-        serde_json::from_str(&response_body);
-    match parsed_response {
-        Ok(response) => Some(response),
-        Err(e) => {
-            warn!("Cannot parse flickr response: {}", e);
-            None
+        let parsed_response: serde_json::Result<ImageSearchResponse> =
+            serde_json::from_str(&response_body);
+        match parsed_response {
+            Ok(response) => Some(response),
+            Err(e) => {
+                warn!("Cannot parse flickr response: {}", e);
+                None
+            }
         }
     }
 }
@@ -276,4 +266,36 @@ fn find_best_photo(
     });
 
     valid_photos.first().and_then(Image::from_photo)
+}
+
+fn get_license_name(license_id: &str) -> Option<&str> {
+    match license_id {
+        "1" => Some("CC BY-NC-SA 2.0"),
+        "2" => Some("CC BY-NC 2.0"),
+        "3" => Some("CC BY-NC-ND 2.0"),
+        "4" => Some("CC BY 2.0"),
+        "5" => Some("CC BY-SA 2.0"),
+        "6" => Some("CC BY-ND 2.0"),
+        "7" => Some("No known copyright restrictions"),
+        "8" => Some("US Government Work"),
+        "9" => Some("CC0"),
+        "10" => Some("Public Domain Mark 1.0"),
+        _ => None,
+    }
+}
+
+fn get_license_url(license_id: &str) -> Option<&str> {
+    match license_id {
+        "1" => Some("https://creativecommons.org/licenses/by-nc-sa/2.0/"),
+        "2" => Some("https://creativecommons.org/licenses/by-nc/2.0/"),
+        "3" => Some("https://creativecommons.org/licenses/by-nc-nd/2.0/"),
+        "4" => Some("https://creativecommons.org/licenses/by/2.0/"),
+        "5" => Some("https://creativecommons.org/licenses/by-sa/2.0/"),
+        "6" => Some("https://creativecommons.org/licenses/by-nd/2.0/"),
+        "7" => Some("https://www.flickr.com/commons/usage/"),
+        "8" => Some("http://www.usa.gov/copyright.shtml"),
+        "9" => Some("https://creativecommons.org/publicdomain/zero/1.0/"),
+        "10" => Some("https://creativecommons.org/publicdomain/mark/1.0/"),
+        _ => None,
+    }
 }

@@ -1,13 +1,13 @@
 use crate::ai::Ai;
 use crate::citations;
 use crate::domain::{Plant, Rating};
-use crate::{flickr, highlights};
+use crate::flickr::Flickr;
+use crate::highlights;
 use async_trait::async_trait;
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
 use std::boxed::Box;
-use std::env;
 use std::pin::Pin;
 use std::sync::Arc;
 use tokio::sync::Semaphore;
@@ -32,13 +32,13 @@ pub trait Hydrator {
 
 pub struct RealHydrator {
     ai: &'static (dyn Ai + Sync),
-    //TODO: Flickr
-    //TODO: Citations
+    flickr: Box<dyn Flickr + Sync>, //TODO: Flickr
+                                    //TODO: Citations
 }
 
 impl RealHydrator {
-    pub fn new(ai: &'static (dyn Ai + Sync)) -> Self {
-        Self { ai }
+    pub fn new(ai: &'static (dyn Ai + Sync), flickr: Box<dyn Flickr + Sync>) -> Self {
+        Self { ai, flickr }
     }
 }
 
@@ -138,9 +138,8 @@ impl RealHydrator {
     /// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
     /// with the image populated.
     async fn hydrate_image(&self, plant: &Plant) -> Option<HydratedPlant> {
-        let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $FLICKR_API_KEY");
-
-        flickr::get_image(&plant.scientific, &plant.common, &flickr_api_key)
+        self.flickr
+            .get_image(&plant.scientific, &plant.common)
             .await
             .map(|image| HydratedPlant {
                 updated: true,
