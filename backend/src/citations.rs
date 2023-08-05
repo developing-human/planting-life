@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Citations {
+pub trait Citations: Send + Sync {
     async fn find_wikipedia(&self, scientific_name: &str) -> Option<String>;
     fn find_usda(&self, scientific_name: &str) -> Option<String>;
 }

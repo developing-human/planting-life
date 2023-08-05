@@ -46,8 +46,8 @@ impl ListPlantsPrompt {
     // Returns a Stream of Plants after calling openai.
 
     pub async fn parse_plant_stream(
-        raw_response: Pin<Box<dyn Stream<Item = String> + Send + Sync>>,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send + Sync>>> {
+        raw_response: Pin<Box<dyn Stream<Item = String> + Send>>,
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send>>> {
         // Convert chunk stream to line stream
         // Emits Some(Some(line)) if the chunk finished a line
         // Emits Some(None) if the chunk did NOT finish a line

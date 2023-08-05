@@ -23,15 +23,15 @@ struct PlantsRequest {
 
 pub struct PlantController {
     pub db: &'static dyn Database,
-    pub hydrator: Box<dyn Hydrator + Sync>,
-    pub selector: Box<dyn Selector + Sync>,
+    pub hydrator: Box<dyn Hydrator>,
+    pub selector: Box<dyn Selector>,
 }
 
 impl PlantController {
     pub fn new(
         db: &'static dyn Database,
-        hydrator: Box<dyn Hydrator + Sync>,
-        selector: Box<dyn Selector + Sync>,
+        hydrator: Box<dyn Hydrator>,
+        selector: Box<dyn Selector>,
     ) -> Self {
         Self {
             db,

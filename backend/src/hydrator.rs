@@ -22,7 +22,7 @@ pub struct HydratedPlant {
 pub const ALL_PLANTS_HYDRATING_MARKER: &str = "ALL PLANTS HYDRATING";
 
 #[async_trait]
-pub trait Hydrator {
+pub trait Hydrator: Send + Sync {
     async fn hydrate_plants(
         &'static self,
         mut plants: Pin<Box<dyn Stream<Item = Plant> + Send>>,
@@ -31,18 +31,18 @@ pub trait Hydrator {
 }
 
 pub struct RealHydrator {
-    ai: &'static (dyn Ai + Sync),
-    flickr: Box<dyn Flickr + Sync>,
-    citations: Box<dyn Citations + Sync>,
-    highlights: Box<dyn Highlights + Sync>,
+    ai: &'static (dyn Ai),
+    flickr: Box<dyn Flickr>,
+    citations: Box<dyn Citations>,
+    highlights: Box<dyn Highlights>,
 }
 
 impl RealHydrator {
     pub fn new(
-        ai: &'static (dyn Ai + Sync),
-        flickr: Box<dyn Flickr + Sync>,
-        citations: Box<dyn Citations + Sync>,
-        highlights: Box<dyn Highlights + Sync>,
+        ai: &'static (dyn Ai),
+        flickr: Box<dyn Flickr>,
+        citations: Box<dyn Citations>,
+        highlights: Box<dyn Highlights>,
     ) -> Self {
         Self {
             ai,

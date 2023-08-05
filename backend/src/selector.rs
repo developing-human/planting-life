@@ -15,7 +15,7 @@ pub struct PlantStream {
 }
 
 #[async_trait]
-pub trait Selector {
+pub trait Selector: Send + Sync {
     async fn stream_plants(
         &'static self,
         zip: &str,
@@ -26,11 +26,11 @@ pub trait Selector {
 
 pub struct RealSelector {
     db: &'static dyn Database,
-    ai: &'static (dyn Ai + Sync),
+    ai: &'static dyn Ai,
 }
 
 impl RealSelector {
-    pub fn new(db: &'static dyn Database, ai: &'static (dyn Ai + Sync)) -> Self {
+    pub fn new(db: &'static dyn Database, ai: &'static dyn Ai) -> Self {
         Self { db, ai }
     }
 }

@@ -107,7 +107,6 @@ impl OpenAI {
                         Err(_) => None,
                     }
                 })
-                //        .map(|line| line.unwrap())
                 .map(|line| String::from(&line[6..line.len()]))
                 .map(|json| {
                     let parsed: serde_json::Result<ChatCompletionResponse> =
@@ -137,7 +136,7 @@ async fn call_model(
     payload: ChatCompletionRequest,
     timeout_per_attempt_ms: u64,
 ) -> anyhow::Result<String> {
-    let response = call_model_with_retries(payload, &api_key, timeout_per_attempt_ms).await?;
+    let response = call_model_with_retries(payload, api_key, timeout_per_attempt_ms).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
     let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;

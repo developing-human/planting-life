@@ -53,7 +53,7 @@ impl Image {
 }
 
 #[async_trait]
-pub trait Flickr {
+pub trait Flickr: Send + Sync {
     async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image>;
 }
 

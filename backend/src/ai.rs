@@ -17,14 +17,14 @@ pub mod openai;
 mod prompts;
 
 #[async_trait]
-pub trait Ai {
+pub trait Ai: Send + Sync {
     // Returns a Stream of Plants after calling openai.
     async fn stream_plants(
         &self,
         region_name: &str,
         shade: &str,
         moisture: &str,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send + Sync>>>;
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send>>>;
 
     async fn fetch_pollinator_rating(&self, name: &str) -> anyhow::Result<u8>;
     async fn fetch_bird_rating(&self, name: &str) -> anyhow::Result<u8>;
@@ -55,7 +55,7 @@ impl Ai for RealAi {
         region_name: &str,
         shade: &str,
         moisture: &str,
-    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send + Sync>>> {
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send>>> {
         let prompt = ListPlantsPrompt::new(region_name, shade, moisture);
 
         let raw_response_stream = self

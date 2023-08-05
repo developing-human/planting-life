@@ -80,7 +80,7 @@ impl HighlightCategory {
     }
 }
 
-pub trait Highlights {
+pub trait Highlights: Send + Sync {
     fn generate(&self, plant: &Plant) -> Vec<Highlight>;
 }
 
