@@ -1,58 +1,114 @@
-use self::prompts::{
-    conditions::ConditionsPrompt,
-    details::{DetailPrompt, DetailType},
-    list::ListPlantsPrompt,
-    ratings::{RatingPrompt, RatingType},
+use std::pin::Pin;
+
+use self::{
+    openai::OpenAI,
+    prompts::{
+        conditions::ConditionsPrompt,
+        details::{DetailPrompt, DetailType},
+        list::ListPlantsPrompt,
+        ratings::{RatingPrompt, RatingType},
+    },
 };
 use crate::domain::{Conditions, Plant};
+use async_trait::async_trait;
 use futures::Stream;
 
-mod openai;
+pub mod openai;
 mod prompts;
 
-// Returns a Stream of Plants after calling openai.
-pub async fn stream_plants(
-    api_key: &str,
-    region_name: &str,
-    shade: &str,
-    moisture: &str,
-) -> anyhow::Result<impl Stream<Item = Plant> + Send> {
-    let prompt = ListPlantsPrompt::new(region_name, shade, moisture);
-    prompt.execute(api_key).await
+#[async_trait]
+pub trait Ai {
+    // Returns a Stream of Plants after calling openai.
+    async fn stream_plants(
+        &self,
+        region_name: &str,
+        shade: &str,
+        moisture: &str,
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send + Sync>>>;
+
+    async fn fetch_pollinator_rating(&self, name: &str) -> anyhow::Result<u8>;
+    async fn fetch_bird_rating(&self, name: &str) -> anyhow::Result<u8>;
+    async fn fetch_animal_rating(&self, name: &str) -> anyhow::Result<u8>;
+    async fn fetch_height(&self, name: &str) -> anyhow::Result<String>;
+    async fn fetch_spread(&self, name: &str) -> anyhow::Result<String>;
+    async fn fetch_bloom(&self, name: &str) -> anyhow::Result<String>;
+    async fn fetch_spread_rating(&self, name: &str) -> anyhow::Result<u8>;
+    async fn fetch_deer_resistance_rating(&self, name: &str) -> anyhow::Result<u8>;
+    async fn fetch_conditions(&self, name: &str) -> anyhow::Result<Conditions>;
 }
 
-pub async fn fetch_pollinator_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
-    prompts::execute(RatingPrompt::new(name, RatingType::Pollinator), api_key).await
+pub struct RealAi {
+    pub open_ai: OpenAI,
 }
 
-pub async fn fetch_bird_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
-    prompts::execute(RatingPrompt::new(name, RatingType::Bird), api_key).await
-}
+#[async_trait]
+impl Ai for RealAi {
+    // Returns a Stream of Plants after calling openai.
+    async fn stream_plants(
+        &self,
+        region_name: &str,
+        shade: &str,
+        moisture: &str,
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send + Sync>>> {
+        let prompt = ListPlantsPrompt::new(region_name, shade, moisture);
 
-pub async fn fetch_animal_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
-    prompts::execute(RatingPrompt::new(name, RatingType::Animal), api_key).await
-}
+        let raw_response_stream = self
+            .open_ai
+            .call_model_stream(prompt.build_payload(), 20000, true)
+            .await?;
 
-pub async fn fetch_height(api_key: &str, name: &str) -> anyhow::Result<String> {
-    prompts::execute(DetailPrompt::new(name, DetailType::Height), api_key).await
-}
+        ListPlantsPrompt::parse_plant_stream(raw_response_stream).await
+    }
 
-pub async fn fetch_spread(api_key: &str, name: &str) -> anyhow::Result<String> {
-    prompts::execute(DetailPrompt::new(name, DetailType::Spread), api_key).await
-}
+    async fn fetch_pollinator_rating(&self, name: &str) -> anyhow::Result<u8> {
+        self.open_ai
+            .execute(RatingPrompt::new(name, RatingType::Pollinator))
+            .await
+    }
 
-pub async fn fetch_bloom(api_key: &str, name: &str) -> anyhow::Result<String> {
-    prompts::execute(DetailPrompt::new(name, DetailType::Bloom), api_key).await
-}
+    async fn fetch_bird_rating(&self, name: &str) -> anyhow::Result<u8> {
+        self.open_ai
+            .execute(RatingPrompt::new(name, RatingType::Bird))
+            .await
+    }
 
-pub async fn fetch_spread_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
-    prompts::execute(RatingPrompt::new(name, RatingType::Spread), api_key).await
-}
+    async fn fetch_animal_rating(&self, name: &str) -> anyhow::Result<u8> {
+        self.open_ai
+            .execute(RatingPrompt::new(name, RatingType::Animal))
+            .await
+    }
 
-pub async fn fetch_deer_resistance_rating(api_key: &str, name: &str) -> anyhow::Result<u8> {
-    prompts::execute(RatingPrompt::new(name, RatingType::DeerResistance), api_key).await
-}
+    async fn fetch_height(&self, name: &str) -> anyhow::Result<String> {
+        self.open_ai
+            .execute(DetailPrompt::new(name, DetailType::Height))
+            .await
+    }
 
-pub async fn fetch_conditions(api_key: &str, name: &str) -> anyhow::Result<Conditions> {
-    prompts::execute(ConditionsPrompt::new(name), api_key).await
+    async fn fetch_spread(&self, name: &str) -> anyhow::Result<String> {
+        self.open_ai
+            .execute(DetailPrompt::new(name, DetailType::Spread))
+            .await
+    }
+
+    async fn fetch_bloom(&self, name: &str) -> anyhow::Result<String> {
+        self.open_ai
+            .execute(DetailPrompt::new(name, DetailType::Bloom))
+            .await
+    }
+
+    async fn fetch_spread_rating(&self, name: &str) -> anyhow::Result<u8> {
+        self.open_ai
+            .execute(RatingPrompt::new(name, RatingType::Spread))
+            .await
+    }
+
+    async fn fetch_deer_resistance_rating(&self, name: &str) -> anyhow::Result<u8> {
+        self.open_ai
+            .execute(RatingPrompt::new(name, RatingType::DeerResistance))
+            .await
+    }
+
+    async fn fetch_conditions(&self, name: &str) -> anyhow::Result<Conditions> {
+        self.open_ai.execute(ConditionsPrompt::new(name)).await
+    }
 }

@@ -25,12 +25,6 @@ pub trait StreamingPrompt {
     ) -> anyhow::Result<Box<dyn Stream<Item = Self::Response> + Unpin + Send>>;
 }
 
-pub async fn execute<T: Prompt>(prompt: T, api_key: &str) -> anyhow::Result<T::Response> {
-    //TODO: Handle timeout
-    let response = openai::call_model(prompt.build_payload(), api_key, 20000).await?;
-    prompt.parse_response(response)
-}
-
 fn build_plant_detail_request(prompt: String) -> openai::ChatCompletionRequest {
     openai::ChatCompletionRequest {
         model: String::from("gpt-3.5-turbo"),

@@ -1,4 +1,5 @@
-use crate::ai;
+use crate::ai::openai::OpenAI;
+use crate::ai::{Ai, RealAi};
 use crate::database::Database;
 use crate::domain::*;
 use futures::stream::{self, Stream, StreamExt};
@@ -144,9 +145,7 @@ async fn update_plant_with_conditions(plant: Plant) -> Plant {
         return plant;
     }
 
-    let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-
-    match ai::fetch_conditions(&openai_api_key, &plant.scientific).await {
+    match ai().fetch_conditions(&plant.scientific).await {
         Ok(conditions) => Plant {
             moistures: conditions.moisture,
             shades: conditions.shade,
@@ -164,21 +163,24 @@ async fn get_llm_plant_stream(
     zip: &str,
     moisture: &Moisture,
     shade: &Shade,
-) -> anyhow::Result<impl Stream<Item = Plant>> {
-    let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-
+) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send>>> {
     let region_name = db
         .get_region_name_by_zip(zip)
         .await
         .unwrap_or_else(|| format!("US Zip Code {zip}"));
 
-    let plants = ai::stream_plants(
-        &openai_api_key,
-        &region_name,
-        shade.description(),
-        moisture.description(),
-    )
-    .await?;
+    let plants = ai()
+        .stream_plants(&region_name, shade.description(), moisture.description())
+        .await?;
 
     Ok(plants)
+}
+
+//TODO: Get rid of this once selector is a trait itself
+fn ai() -> Box<dyn Ai + Send + Sync> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+
+    Box::new(RealAi {
+        open_ai: OpenAI::new(api_key),
+    })
 }
