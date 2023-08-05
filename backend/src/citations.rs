@@ -1,4 +1,24 @@
-pub mod wikipedia {
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait Citations {
+    async fn find_wikipedia(&self, scientific_name: &str) -> Option<String>;
+    fn find_usda(&self, scientific_name: &str) -> Option<String>;
+}
+
+pub struct RealCitations {}
+
+#[async_trait]
+impl Citations for RealCitations {
+    async fn find_wikipedia(&self, scientific_name: &str) -> Option<String> {
+        wikipedia::find(scientific_name).await
+    }
+    fn find_usda(&self, scientific_name: &str) -> Option<String> {
+        usda::find(scientific_name)
+    }
+}
+
+mod wikipedia {
     use reqwest::StatusCode;
     use std::time::Duration;
     use tracing::warn;
@@ -90,7 +110,7 @@ pub mod wikipedia {
     }
 }
 
-pub mod usda {
+mod usda {
     use std::collections::HashMap;
     use std::fs::File;
     use std::io::BufReader;

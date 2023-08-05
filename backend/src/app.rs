@@ -2,6 +2,7 @@ use std::env;
 
 use crate::{
     ai::{openai::OpenAI, RealAi},
+    citations::RealCitations,
     controllers::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
@@ -29,10 +30,12 @@ impl PlantingLifeApp {
         let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
         let flickr = Box::new(RealFlickr::new(flickr_api_key));
 
+        let citations = Box::new(RealCitations {});
+
         let ai = live_forever(RealAi::new(open_ai));
         let db = live_forever(MariaDB::new(db_url));
 
-        let hydrator = Box::new(RealHydrator::new(ai, flickr));
+        let hydrator = Box::new(RealHydrator::new(ai, flickr, citations));
         let selector = Box::new(RealSelector::new(db, ai));
 
         let plant_controller = PlantController::new(db, hydrator, selector);

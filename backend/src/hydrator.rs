@@ -1,5 +1,5 @@
 use crate::ai::Ai;
-use crate::citations;
+use crate::citations::Citations;
 use crate::domain::{Plant, Rating};
 use crate::flickr::Flickr;
 use crate::highlights;
@@ -32,13 +32,21 @@ pub trait Hydrator {
 
 pub struct RealHydrator {
     ai: &'static (dyn Ai + Sync),
-    flickr: Box<dyn Flickr + Sync>, //TODO: Flickr
-                                    //TODO: Citations
+    flickr: Box<dyn Flickr + Sync>,
+    citations: Box<dyn Citations + Sync>,
 }
 
 impl RealHydrator {
-    pub fn new(ai: &'static (dyn Ai + Sync), flickr: Box<dyn Flickr + Sync>) -> Self {
-        Self { ai, flickr }
+    pub fn new(
+        ai: &'static (dyn Ai + Sync),
+        flickr: Box<dyn Flickr + Sync>,
+        citations: Box<dyn Citations + Sync>,
+    ) -> Self {
+        Self {
+            ai,
+            flickr,
+            citations,
+        }
     }
 }
 
@@ -210,18 +218,16 @@ impl RealHydrator {
             })
     }
 
-    async fn hydrate_citations(&self, plant: &Plant) -> Option<HydratedPlant> {
+    async fn hydrate_citations(&'static self, plant: &Plant) -> Option<HydratedPlant> {
         let futures_unordered: FuturesUnordered<
             Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>,
         > = FuturesUnordered::new();
 
         if plant.usda_source.is_none() {
-            futures_unordered.push(Box::pin(RealHydrator::hydrate_usda_source(plant.clone())));
+            futures_unordered.push(Box::pin(self.hydrate_usda_source(plant.clone())));
         }
         if plant.wiki_source.is_none() {
-            futures_unordered.push(Box::pin(RealHydrator::hydrate_wikipedia_source(
-                plant.clone(),
-            )));
+            futures_unordered.push(Box::pin(self.hydrate_wikipedia_source(plant.clone())));
         }
 
         merge_hydrated_plants(futures_unordered).await
@@ -325,8 +331,8 @@ impl RealHydrator {
         })
     }
 
-    async fn hydrate_usda_source(plant: Plant) -> Option<HydratedPlant> {
-        let usda_source = citations::usda::find(&plant.scientific)?;
+    async fn hydrate_usda_source(&self, plant: Plant) -> Option<HydratedPlant> {
+        let usda_source = self.citations.find_usda(&plant.scientific)?;
 
         Some(HydratedPlant {
             updated: true,
@@ -337,8 +343,8 @@ impl RealHydrator {
         })
     }
 
-    async fn hydrate_wikipedia_source(plant: Plant) -> Option<HydratedPlant> {
-        let wiki_source = citations::wikipedia::find(&plant.scientific).await?;
+    async fn hydrate_wikipedia_source(&self, plant: Plant) -> Option<HydratedPlant> {
+        let wiki_source = self.citations.find_wikipedia(&plant.scientific).await?;
 
         Some(HydratedPlant {
             updated: true,
