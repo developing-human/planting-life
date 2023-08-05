@@ -11,7 +11,6 @@ async fn main() -> std::io::Result<()> {
     });
 
     //TODO: Fetch API keys here too
-
     let app = PlantingLifeApp::new(&db_url);
 
     // Leak it to get a 'static lifetime, by definition it lives for

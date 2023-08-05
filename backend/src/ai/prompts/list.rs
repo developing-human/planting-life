@@ -1,3 +1,5 @@
+use std::pin::Pin;
+
 use crate::{ai::openai, domain::Plant};
 use futures::{Stream, StreamExt};
 
@@ -41,16 +43,11 @@ impl ListPlantsPrompt {
         }
     }
 
-    pub async fn execute(&self, api_key: &str) -> anyhow::Result<impl Stream<Item = Plant>> {
-        let response =
-            openai::call_model_stream(self.build_payload(), api_key, 20000, true).await?;
-        Self::parse_plant_stream(response).await
-    }
-
     // Returns a Stream of Plants after calling openai.
-    async fn parse_plant_stream(
-        raw_response: impl Stream<Item = String>,
-    ) -> anyhow::Result<impl Stream<Item = Plant>> {
+
+    pub async fn parse_plant_stream(
+        raw_response: Pin<Box<dyn Stream<Item = String> + Send>>,
+    ) -> anyhow::Result<Pin<Box<dyn Stream<Item = Plant> + Send>>> {
         // Convert chunk stream to line stream
         // Emits Some(Some(line)) if the chunk finished a line
         // Emits Some(None) if the chunk did NOT finish a line
@@ -108,7 +105,7 @@ impl ListPlantsPrompt {
         });
 
         // plant_stream will have None's in it from lines that did not emit an entry, remove them.
-        Ok(plant_stream.filter_map(|plant| async { plant }))
+        Ok(Box::pin(plant_stream.filter_map(|plant| async { plant })))
     }
 }
 

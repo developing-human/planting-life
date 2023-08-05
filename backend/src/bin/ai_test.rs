@@ -1,4 +1,4 @@
-use planting_life::ai;
+use planting_life::ai::{openai::OpenAI, Ai, RealAi};
 use std::env;
 
 #[tokio::main(flavor = "current_thread")]
@@ -11,8 +11,15 @@ async fn main() {
 
     let scientific_name = &args[1];
 
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let rating = ai::fetch_pollinator_rating(&api_key, scientific_name).await;
+    let rating = ai().fetch_pollinator_rating(scientific_name).await;
 
     println!("{rating:#?}");
+}
+
+fn ai() -> Box<dyn Ai> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+
+    Box::new(RealAi {
+        open_ai: OpenAI::new(api_key),
+    })
 }

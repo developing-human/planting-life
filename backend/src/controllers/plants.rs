@@ -1,12 +1,18 @@
 use actix_web::{get, web, Responder};
-use std::time::Duration;
+use std::{pin::Pin, time::Duration};
 
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use futures::{channel::mpsc, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use tracing::log::{info, warn};
 
-use crate::{app::PlantingLifeApp, database::Database, domain::*, hydrator, selector};
+use crate::{
+    app::PlantingLifeApp,
+    database::Database,
+    domain::*,
+    hydrator::{self, Hydrator},
+    selector::Selector,
+};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PlantsRequest {
@@ -16,12 +22,22 @@ struct PlantsRequest {
 }
 
 pub struct PlantController {
-    pub db: Database,
+    pub db: &'static dyn Database,
+    pub hydrator: Box<dyn Hydrator>,
+    pub selector: Box<dyn Selector>,
 }
 
 impl PlantController {
-    pub fn new(db: &Database) -> Self {
-        Self { db: db.clone() }
+    pub fn new(
+        db: &'static dyn Database,
+        hydrator: Box<dyn Hydrator>,
+        selector: Box<dyn Selector>,
+    ) -> Self {
+        Self {
+            db,
+            hydrator,
+            selector,
+        }
     }
 
     async fn stream(
@@ -38,17 +54,17 @@ impl PlantController {
         drop(payload); // Don't use the unvalidated payload by mistake
 
         let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
-        let db = self.db.clone();
 
         // The real work is done in a new thread so the connection to the front end can stay open.
         actix_web::rt::spawn(async move {
-            let plant_stream = selector::stream_plants(
-                &db,
-                &valid_payload.zip,
-                &valid_payload.moisture,
-                &valid_payload.shade,
-            )
-            .await;
+            let plant_stream = self
+                .selector
+                .stream_plants(
+                    &valid_payload.zip,
+                    &valid_payload.moisture,
+                    &valid_payload.shade,
+                )
+                .await;
 
             match plant_stream {
                 Ok(plant_stream) => {
@@ -89,16 +105,18 @@ impl PlantController {
     }
 
     async fn hydrate_and_send_plants(
-        &self,
+        &'static self,
         payload: &PlantsRequest,
-        plant_stream: impl Stream<Item = Plant> + 'static + Unpin,
+        plant_stream: Pin<Box<dyn Stream<Item = Plant> + Send>>,
         frontend_sender: &Sender,
         plants_from_db: bool,
     ) {
         let (mut plant_sender, mut plant_receiver) = mpsc::unbounded();
 
         actix_web::rt::spawn(async move {
-            hydrator::hydrate_plants(plant_stream, &mut plant_sender).await;
+            self.hydrator
+                .hydrate_plants(plant_stream, &mut plant_sender)
+                .await;
         });
         //let mut plants_to_save = vec![];
         let mut all_plants = vec![];

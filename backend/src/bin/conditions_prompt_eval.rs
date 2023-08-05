@@ -1,6 +1,6 @@
 use futures::future::join_all;
 use planting_life::{
-    ai::{self},
+    ai::{openai::OpenAI, Ai, RealAi},
     domain::Conditions,
 };
 use std::{
@@ -32,7 +32,6 @@ async fn main() {
     //let prompts_per_plant = 5;
     //let plant_names = vec!["Monarda fistulosa"];
 
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -43,7 +42,7 @@ async fn main() {
 
     for _ in 0..prompts_per_plant {
         for plant_name in plant_names.iter() {
-            futures.push(fetch_conditions(&api_key, plant_name));
+            futures.push(fetch_conditions(plant_name));
         }
     }
 
@@ -77,8 +76,16 @@ async fn main() {
     }
 }
 
-async fn fetch_conditions(api_key: &str, plant_name: &str) -> anyhow::Result<(String, Conditions)> {
-    ai::fetch_conditions(api_key, plant_name)
+async fn fetch_conditions(plant_name: &str) -> anyhow::Result<(String, Conditions)> {
+    ai().fetch_conditions(plant_name)
         .await
         .map(|conditions| (plant_name.to_string(), conditions))
+}
+
+fn ai() -> Box<dyn Ai> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+
+    Box::new(RealAi {
+        open_ai: OpenAI::new(api_key),
+    })
 }

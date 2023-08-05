@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use planting_life::ai;
+use planting_life::ai::{openai::OpenAI, Ai, RealAi};
 use std::{
     env,
     fs::File,
@@ -27,7 +27,6 @@ async fn main() {
     //let prompts_per_plant = 1;
     //let plant_names = vec!["Asclepias syriaca"];
 
-    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
@@ -38,7 +37,7 @@ async fn main() {
 
     for _ in 0..prompts_per_plant {
         for plant_name in plant_names.iter() {
-            futures.push(fetch_pollinator_rating(&api_key, plant_name));
+            futures.push(fetch_pollinator_rating(plant_name));
         }
     }
 
@@ -69,8 +68,16 @@ async fn main() {
     writeln!(out_file).unwrap();
 }
 
-async fn fetch_pollinator_rating(api_key: &str, plant_name: &str) -> anyhow::Result<(String, u8)> {
-    ai::fetch_pollinator_rating(api_key, plant_name)
+async fn fetch_pollinator_rating(plant_name: &str) -> anyhow::Result<(String, u8)> {
+    ai().fetch_pollinator_rating(plant_name)
         .await
         .map(|rating| (plant_name.to_string(), rating))
+}
+
+fn ai() -> Box<dyn Ai> {
+    let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+
+    Box::new(RealAi {
+        open_ai: OpenAI::new(api_key),
+    })
 }

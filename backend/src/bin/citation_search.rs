@@ -1,5 +1,6 @@
-use planting_life::citations;
 use std::env;
+
+use planting_life::citations::{Citations, RealCitations};
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() {
@@ -11,8 +12,9 @@ async fn main() {
 
     let scientific_name = &args[1];
 
-    let usda_source = citations::usda::find(scientific_name);
-    let wiki_source = citations::wikipedia::find(scientific_name).await;
+    let citations = RealCitations {};
+    let usda_source = citations.find_usda(scientific_name);
+    let wiki_source = citations.find_wikipedia(scientific_name).await;
 
     println!("{usda_source:?}");
     println!("{wiki_source:?}");
