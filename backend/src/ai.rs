@@ -41,6 +41,12 @@ pub struct RealAi {
     pub open_ai: OpenAI,
 }
 
+impl RealAi {
+    pub fn new(open_ai: OpenAI) -> Self {
+        Self { open_ai }
+    }
+}
+
 #[async_trait]
 impl Ai for RealAi {
     // Returns a Stream of Plants after calling openai.

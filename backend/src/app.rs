@@ -1,9 +1,13 @@
+use std::env;
+
 use crate::{
+    ai::{openai::OpenAI, RealAi},
     controllers::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
     database::MariaDB,
+    hydrator::RealHydrator,
 };
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
@@ -19,7 +23,13 @@ impl PlantingLifeApp {
 
         let db = live_forever(MariaDB::new(db_url));
 
-        let plant_controller = PlantController::new(db);
+        let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
+        let open_ai = OpenAI::new(api_key);
+        let ai = RealAi::new(open_ai);
+
+        let hydrator = RealHydrator::new(Box::new(ai));
+
+        let plant_controller = PlantController::new(db, Box::new(hydrator));
         let nursery_controller = NurseriesController::new(db);
 
         Self {
