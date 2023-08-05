@@ -118,7 +118,7 @@ impl PlantController {
                 .hydrate_plants(plant_stream, &mut plant_sender)
                 .await;
         });
-        //let mut plants_to_save = vec![];
+
         let mut all_plants = vec![];
         let mut saved_plants = vec![];
         while let Some(hydrated_plant) = plant_receiver.next().await {
