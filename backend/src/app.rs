@@ -9,6 +9,7 @@ use crate::{
     },
     database::MariaDB,
     flickr::RealFlickr,
+    highlights::RealHighlights,
     hydrator::RealHydrator,
     selector::RealSelector,
 };
@@ -31,11 +32,12 @@ impl PlantingLifeApp {
         let flickr = Box::new(RealFlickr::new(flickr_api_key));
 
         let citations = Box::new(RealCitations {});
+        let highlights = Box::new(RealHighlights {});
 
         let ai = live_forever(RealAi::new(open_ai));
         let db = live_forever(MariaDB::new(db_url));
 
-        let hydrator = Box::new(RealHydrator::new(ai, flickr, citations));
+        let hydrator = Box::new(RealHydrator::new(ai, flickr, citations, highlights));
         let selector = Box::new(RealSelector::new(db, ai));
 
         let plant_controller = PlantController::new(db, hydrator, selector);

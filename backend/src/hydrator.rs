@@ -2,7 +2,7 @@ use crate::ai::Ai;
 use crate::citations::Citations;
 use crate::domain::{Plant, Rating};
 use crate::flickr::Flickr;
-use crate::highlights;
+use crate::highlights::Highlights;
 use async_trait::async_trait;
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
@@ -34,6 +34,7 @@ pub struct RealHydrator {
     ai: &'static (dyn Ai + Sync),
     flickr: Box<dyn Flickr + Sync>,
     citations: Box<dyn Citations + Sync>,
+    highlights: Box<dyn Highlights + Sync>,
 }
 
 impl RealHydrator {
@@ -41,11 +42,13 @@ impl RealHydrator {
         ai: &'static (dyn Ai + Sync),
         flickr: Box<dyn Flickr + Sync>,
         citations: Box<dyn Citations + Sync>,
+        highlights: Box<dyn Highlights + Sync>,
     ) -> Self {
         Self {
             ai,
             flickr,
             citations,
+            highlights,
         }
     }
 }
@@ -213,7 +216,7 @@ impl RealHydrator {
                 })
             })
             .map(|mut merged| {
-                merged.plant.highlights = highlights::generate(&merged.plant);
+                merged.plant.highlights = self.highlights.generate(&merged.plant);
                 merged
             })
     }

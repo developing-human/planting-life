@@ -80,31 +80,39 @@ impl HighlightCategory {
     }
 }
 
-pub fn generate(plant: &Plant) -> Vec<Highlight> {
-    let mut highlights = list_highlights(plant);
+pub trait Highlights {
+    fn generate(&self, plant: &Plant) -> Vec<Highlight>;
+}
 
-    // If there are no main highlights, try to generate some fillers.
-    if highlights.is_empty() {
-        highlights.extend(list_fillers(plant));
-    }
+pub struct RealHighlights {}
 
-    // Sort the list by priority, with highest priority first.
-    highlights.sort_by(|lhs, rhs| rhs.priority.cmp(&lhs.priority));
+impl Highlights for RealHighlights {
+    fn generate(&self, plant: &Plant) -> Vec<Highlight> {
+        let mut highlights = list_highlights(plant);
 
-    // Keep the top three.
-    highlights.truncate(3);
-
-    // Sort by category (good/bad) then priority to move bad items to the end
-    highlights.sort_by(|lhs, rhs| {
-        let category_order = rhs.category.cmp(&lhs.category);
-        if category_order == Ordering::Equal {
-            rhs.priority.cmp(&lhs.priority)
-        } else {
-            category_order
+        // If there are no main highlights, try to generate some fillers.
+        if highlights.is_empty() {
+            highlights.extend(list_fillers(plant));
         }
-    });
 
-    highlights
+        // Sort the list by priority, with highest priority first.
+        highlights.sort_by(|lhs, rhs| rhs.priority.cmp(&lhs.priority));
+
+        // Keep the top three.
+        highlights.truncate(3);
+
+        // Sort by category (good/bad) then priority to move bad items to the end
+        highlights.sort_by(|lhs, rhs| {
+            let category_order = rhs.category.cmp(&lhs.category);
+            if category_order == Ordering::Equal {
+                rhs.priority.cmp(&lhs.priority)
+            } else {
+                category_order
+            }
+        });
+
+        highlights
+    }
 }
 
 fn list_highlights(plant: &Plant) -> Vec<Highlight> {
