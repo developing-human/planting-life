@@ -77,7 +77,8 @@ impl OpenAI {
         trailing_newline: bool,
     ) -> anyhow::Result<Pin<Box<dyn Stream<Item = String> + Send + Sync>>> {
         let response =
-            call_model_with_retries(payload, &self.api_key, timeout_per_attempt_ms).await?;
+            call_model_with_retries(payload, &self.api_key, timeout_per_attempt_ms, 100, 500)
+                .await?;
 
         let body = response.bytes_stream().map_err(|err| -> std::io::Error {
             std::io::Error::new(std::io::ErrorKind::Other, err)
@@ -136,7 +137,8 @@ async fn call_model(
     payload: ChatCompletionRequest,
     timeout_per_attempt_ms: u64,
 ) -> anyhow::Result<String> {
-    let response = call_model_with_retries(payload, api_key, timeout_per_attempt_ms).await?;
+    let response =
+        call_model_with_retries(payload, api_key, timeout_per_attempt_ms, 2000, 10000).await?;
 
     let bytes = response.bytes().await.map_err(|err| anyhow!(err))?;
     let json = std::str::from_utf8(&bytes).map_err(|e| anyhow!(e))?;
@@ -163,9 +165,14 @@ async fn call_model_with_retries(
     payload: ChatCompletionRequest,
     api_key: &str,
     timeout_per_attempt_ms: u64,
+    min_retry_delay_ms: u64,
+    max_retry_delay_ms: u64,
 ) -> anyhow::Result<Response> {
     let retry_policy = ExponentialBackoff::builder()
-        .retry_bounds(Duration::from_millis(100), Duration::from_millis(500))
+        .retry_bounds(
+            Duration::from_millis(min_retry_delay_ms),
+            Duration::from_millis(max_retry_delay_ms),
+        )
         .build_with_max_retries(4);
     let client = ClientBuilder::new(reqwest::Client::new())
         .with(RetryTransientMiddleware::new_with_policy(retry_policy))
