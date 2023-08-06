@@ -196,9 +196,6 @@ impl RealHydrator {
         if plant.bird_rating.is_none() {
             futures_unordered.push(Box::pin(self.hydrate_bird_rating(plant.clone())));
         }
-        if plant.animal_rating.is_none() {
-            futures_unordered.push(Box::pin(self.hydrate_animal_rating(plant.clone())));
-        }
         if plant.spread_rating.is_none() {
             futures_unordered.push(Box::pin(self.hydrate_spread_rating(plant.clone())));
         }
@@ -272,26 +269,6 @@ impl RealHydrator {
             updated: true,
             plant: Plant {
                 bird_rating: Some(Rating {
-                    rating,
-                    reason: "delete me".to_string(),
-                }),
-                ..plant
-            },
-        })
-    }
-    async fn hydrate_animal_rating(&self, plant: Plant) -> Option<HydratedPlant> {
-        let rating = match self.ai.fetch_animal_rating(&plant.common).await {
-            Ok(stream) => stream,
-            Err(e) => {
-                warn!("Failed to fetch animal rating: {e}");
-                return None;
-            }
-        };
-
-        Some(HydratedPlant {
-            updated: true,
-            plant: Plant {
-                animal_rating: Some(Rating {
                     rating,
                     reason: "delete me".to_string(),
                 }),

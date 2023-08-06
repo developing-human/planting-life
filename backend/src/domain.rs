@@ -32,9 +32,6 @@ pub struct Plant {
     pub bird_rating: Option<Rating>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub animal_rating: Option<Rating>,
-
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub spread_rating: Option<u8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -76,7 +73,6 @@ impl Plant {
             spread: None,
             pollinator_rating: None,
             bird_rating: None,
-            animal_rating: None,
             spread_rating: None,
             deer_resistance_rating: None,
             image: None,
@@ -104,7 +100,6 @@ impl Plant {
             bird_rating: other.bird_rating.clone().or(self.bird_rating.clone()),
             spread_rating: other.spread_rating.or(self.spread_rating),
             deer_resistance_rating: other.deer_resistance_rating.or(self.deer_resistance_rating),
-            animal_rating: other.animal_rating.clone().or(self.animal_rating.clone()),
             usda_source: other.usda_source.clone().or(self.usda_source.clone()),
             wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
             height: other.height.clone().or(self.height.clone()),

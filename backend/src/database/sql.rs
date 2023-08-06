@@ -173,8 +173,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
                   pollinator_reason = :pollinator_reason,
                   bird_rating = :bird_rating,
                   bird_reason = :bird_reason,
-                  animal_rating = :animal_rating,
-                  animal_reason = :animal_reason,
 
                   spread_rating = :spread_rating,
                   deer_resistance_rating = :deer_resistance_rating,
@@ -198,8 +196,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
                 "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| &r.reason),
                 "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
                 "bird_reason" => plant.bird_rating.as_ref().map(|r| &r.reason),
-                "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
-                "animal_reason" => plant.animal_rating.as_ref().map(|r| &r.reason),
 
                 "spread_rating" => plant.spread_rating,
                 "deer_resistance_rating" => plant.deer_resistance_rating,
@@ -236,7 +232,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
          moistures, shades,
          pollinator_rating, pollinator_reason,
          bird_rating, bird_reason,
-         animal_rating, animal_reason,
          spread_rating, deer_resistance_rating,
          usda_source, wiki_source,
          image_id)
@@ -246,7 +241,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
          :moistures, :shades,
          :pollinator_rating, :pollinator_reason,
          :bird_rating, :bird_reason,
-         :animal_rating, :animal_reason,
          :spread_rating, :deer_resistance_rating,
          :usda_source, :wiki_source,
          :image_id)
@@ -263,8 +257,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
                 "pollinator_reason" => plant.pollinator_rating.as_ref().map(|r| r.reason.clone()),
                 "bird_rating" => plant.bird_rating.as_ref().map(|r| r.rating),
                 "bird_reason" => plant.bird_rating.as_ref().map(|r| r.reason.clone()),
-                "animal_rating" => plant.animal_rating.as_ref().map(|r| r.rating),
-                "animal_reason" => plant.animal_rating.as_ref().map(|r| r.reason.clone()),
 
                 "spread_rating" => plant.spread_rating,
                 "deer_resistance_rating" => plant.deer_resistance_rating,
@@ -300,7 +292,6 @@ SELECT
   p.moistures, p.shades,
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
-  p.animal_rating, p.animal_reason,
   p.spread_rating, p.deer_resistance_rating,
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
@@ -314,7 +305,7 @@ WHERE z.zipcode = :zipcode
   AND (p.shades is NULL OR FIND_IN_SET(:shade, p.shades))
 ORDER BY
   p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
-  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) + POW(p.animal_rating, 3) desc
+  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) desc
 
 "
         .with(params! {
@@ -342,7 +333,6 @@ SELECT
   p.moistures, p.shades,
   p.pollinator_rating, p.pollinator_reason,
   p.bird_rating, p.bird_reason,
-  p.animal_rating, p.animal_reason,
   p.spread_rating, p.deer_resistance_rating,
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license

@@ -35,8 +35,6 @@ impl FromRow for Plant {
         let pollinator_reason = row.take_opt("pollinator_reason").unwrap().ok();
         let bird_rating = row.take_opt("bird_rating").unwrap().ok();
         let bird_reason = row.take_opt("bird_reason").unwrap().ok();
-        let animal_rating = row.take_opt("animal_rating").unwrap().ok();
-        let animal_reason = row.take_opt("animal_reason").unwrap().ok();
         let spread_rating = row.take_opt("spread_rating").unwrap().ok();
         let deer_resistance_rating = row.take_opt("deer_resistance_rating").unwrap().ok();
         let img_id = row.take_opt("image_id").unwrap().ok();
@@ -81,10 +79,6 @@ impl FromRow for Plant {
             bird_rating: bird_rating.map(|rating| Rating {
                 rating,
                 reason: bird_reason.unwrap(),
-            }),
-            animal_rating: animal_rating.map(|rating| Rating {
-                rating,
-                reason: animal_reason.unwrap(),
             }),
             spread_rating,
             deer_resistance_rating,

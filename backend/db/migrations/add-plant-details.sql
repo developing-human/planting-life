@@ -34,3 +34,8 @@ ADD COLUMN spread VARCHAR(50);
 ALTER TABLE plants
 ADD COLUMN spread_rating INT,
 ADD COLUMN deer_resistance_rating INT;
+
+--changeset doug:7
+ALTER TABLE plants
+DROP COLUMN animal_rating,
+DROP COLUMN animal_reason;
