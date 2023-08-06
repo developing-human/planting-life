@@ -26,10 +26,10 @@ pub struct Plant {
     pub image: Option<Image>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pollinator_rating: Option<Rating>,
+    pub pollinator_rating: Option<u8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub bird_rating: Option<Rating>,
+    pub bird_rating: Option<u8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spread_rating: Option<u8>,
@@ -52,12 +52,6 @@ pub struct Plant {
     pub highlights: Vec<Highlight>,
 
     pub done_loading: bool,
-}
-
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Rating {
-    pub rating: u8,
-    pub reason: String,
 }
 
 impl Plant {

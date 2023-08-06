@@ -56,7 +56,7 @@ async fn main() {
 
     passing_results.sort_by(|(name1, _), (name2, _)| name1.partial_cmp(name2).unwrap());
 
-    writeln!(out_file, r#""name","rating","reason""#).unwrap();
+    writeln!(out_file, r#""name","rating""#).unwrap();
     for (name, rating) in passing_results {
         println!("{} {:?}", name, rating);
         writeln!(out_file, r#""{}","{}""#, name, rating,).unwrap();

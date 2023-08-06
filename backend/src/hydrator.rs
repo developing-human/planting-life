@@ -1,7 +1,7 @@
 #[double]
 use crate::ai::Ai;
 use crate::citations::Citations;
-use crate::domain::{Plant, Rating};
+use crate::domain::Plant;
 use crate::flickr::Flickr;
 use crate::highlights::Highlights;
 use async_trait::async_trait;
@@ -247,10 +247,7 @@ impl RealHydrator {
         Some(HydratedPlant {
             updated: true,
             plant: Plant {
-                pollinator_rating: Some(Rating {
-                    rating,
-                    reason: "delete me".to_string(),
-                }),
+                pollinator_rating: Some(rating),
                 ..plant
             },
         })
@@ -268,10 +265,7 @@ impl RealHydrator {
         Some(HydratedPlant {
             updated: true,
             plant: Plant {
-                bird_rating: Some(Rating {
-                    rating,
-                    reason: "delete me".to_string(),
-                }),
+                bird_rating: Some(rating),
                 ..plant
             },
         })

@@ -39,3 +39,9 @@ ADD COLUMN deer_resistance_rating INT;
 ALTER TABLE plants
 DROP COLUMN animal_rating,
 DROP COLUMN animal_reason;
+
+--changeset doug:8
+ALTER TABLE plants
+DROP COLUMN pollinator_reason,
+DROP COLUMN bird_reason,
+DROP COLUMN animal_reason;

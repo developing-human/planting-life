@@ -32,9 +32,7 @@ impl FromRow for Plant {
         let common = row.take("common_name").unwrap();
         let bloom = row.take("bloom").unwrap();
         let pollinator_rating = row.take_opt("pollinator_rating").unwrap().ok();
-        let pollinator_reason = row.take_opt("pollinator_reason").unwrap().ok();
         let bird_rating = row.take_opt("bird_rating").unwrap().ok();
-        let bird_reason = row.take_opt("bird_reason").unwrap().ok();
         let spread_rating = row.take_opt("spread_rating").unwrap().ok();
         let deer_resistance_rating = row.take_opt("deer_resistance_rating").unwrap().ok();
         let img_id = row.take_opt("image_id").unwrap().ok();
@@ -72,14 +70,8 @@ impl FromRow for Plant {
             spread,
             moistures,
             shades,
-            pollinator_rating: pollinator_rating.map(|rating| Rating {
-                rating,
-                reason: pollinator_reason.unwrap(),
-            }),
-            bird_rating: bird_rating.map(|rating| Rating {
-                rating,
-                reason: bird_reason.unwrap(),
-            }),
+            pollinator_rating,
+            bird_rating,
             spread_rating,
             deer_resistance_rating,
             usda_source,

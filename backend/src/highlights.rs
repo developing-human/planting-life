@@ -118,14 +118,14 @@ impl Highlights for RealHighlights {
 fn list_highlights(plant: &Plant) -> Vec<Highlight> {
     let mut highlights = vec![];
 
-    match &plant.pollinator_rating {
-        Some(rating) if rating.rating >= 8 => highlights.push(POLLINATOR_GREAT.clone()),
-        Some(rating) if rating.rating >= 6 => highlights.push(POLLINATOR_GOOD.clone()),
+    match plant.pollinator_rating {
+        Some(rating) if rating >= 8 => highlights.push(POLLINATOR_GREAT.clone()),
+        Some(rating) if rating >= 6 => highlights.push(POLLINATOR_GOOD.clone()),
         _ => (),
     }
-    match &plant.bird_rating {
-        Some(rating) if rating.rating >= 8 => highlights.push(BIRD_GREAT.clone()),
-        Some(rating) if rating.rating >= 6 => highlights.push(BIRD_GOOD.clone()),
+    match plant.bird_rating {
+        Some(rating) if rating >= 8 => highlights.push(BIRD_GREAT.clone()),
+        Some(rating) if rating >= 6 => highlights.push(BIRD_GOOD.clone()),
         _ => (),
     }
     match plant.spread_rating {
