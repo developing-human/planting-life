@@ -1,10 +1,12 @@
 use crate::domain::*;
 use anyhow::anyhow;
 use async_trait::async_trait;
+use mockall::automock;
 use mysql_async::{prelude::*, Conn, Opts, Pool};
 use std::{collections::HashSet, fmt::Display};
 use tracing::log::warn;
 
+#[automock]
 #[async_trait]
 pub trait SqlRunner: Send + Sync {
     /// Inserts a new Query into the database.  

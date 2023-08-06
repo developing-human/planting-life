@@ -249,3 +249,81 @@ impl Database for MariaDB {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::database::sql::MockSqlRunner;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_exists() {
+        let db = make_db_with_mocks(|mock| {
+            mock.expect_check_zip_exists().returning(|_| Ok(true));
+        });
+
+        let result = db.lookup_closest_valid_zip("43083").await;
+
+        assert_eq!(result.unwrap(), "43083".to_string());
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_not_exists() {
+        let db = make_db_with_mocks(|mock| {
+            mock.expect_check_zip_exists().returning(|_| Ok(false));
+            mock.expect_select_closest_zip()
+                .returning(|_| Ok("43081".into()));
+        });
+
+        let result = db.lookup_closest_valid_zip("43083").await;
+
+        assert_eq!(result.unwrap(), "43081".to_string());
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_too_short() {
+        let sql_mock = MockSqlRunner::new();
+        let db = MariaDB {
+            sql_runner: Box::new(sql_mock),
+        };
+
+        let result = db.lookup_closest_valid_zip("4308").await;
+
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "invalid zipcode format: 4308".to_string()
+        );
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_non_numeric() {
+        let db = make_db();
+
+        let result = db.lookup_closest_valid_zip("4308z").await;
+
+        assert_eq!(
+            result.unwrap_err().to_string(),
+            "invalid zipcode format: 4308z".to_string()
+        );
+    }
+
+    fn make_db() -> MariaDB {
+        let sql_mock = MockSqlRunner::new();
+
+        MariaDB {
+            sql_runner: Box::new(sql_mock),
+        }
+    }
+
+    fn make_db_with_mocks<F>(create_mocks: F) -> MariaDB
+    where
+        F: FnOnce(&mut MockSqlRunner),
+    {
+        let mut sql_mock = MockSqlRunner::new();
+        create_mocks(&mut sql_mock);
+
+        MariaDB {
+            sql_runner: Box::new(sql_mock),
+        }
+    }
+}
