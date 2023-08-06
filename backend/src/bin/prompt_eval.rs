@@ -1,5 +1,5 @@
 use futures::future::join_all;
-use planting_life::ai::{openai::OpenAI, Ai, RealAi};
+use planting_life::ai::{openai::OpenAI, Ai};
 use std::{
     env,
     fs::File,
@@ -74,10 +74,10 @@ async fn fetch_pollinator_rating(plant_name: &str) -> anyhow::Result<(String, u8
         .map(|rating| (plant_name.to_string(), rating))
 }
 
-fn ai() -> Box<dyn Ai> {
+fn ai() -> Ai {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-    Box::new(RealAi {
+    Ai {
         open_ai: OpenAI::new(api_key),
-    })
+    }
 }

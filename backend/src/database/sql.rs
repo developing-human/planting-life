@@ -1,80 +1,9 @@
 use crate::domain::*;
 use anyhow::anyhow;
-use async_trait::async_trait;
 use mockall::automock;
 use mysql_async::{prelude::*, Conn, Opts, Pool};
 use std::{collections::HashSet, fmt::Display};
 use tracing::log::warn;
-
-#[automock]
-#[async_trait]
-pub trait SqlRunner: Send + Sync {
-    /// Inserts a new Query into the database.  
-    /// Returns Err if it fails.
-    async fn upsert_query(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<()>;
-
-    async fn check_zip_exists(&self, zip: &str) -> anyhow::Result<bool>;
-
-    async fn select_closest_zip(&self, zip: &str) -> anyhow::Result<String>;
-
-    /// Selects one plant by scientific name.
-    /// Returns Err if it fails, Ok(None) if not found.
-    async fn select_query_count(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<usize>;
-
-    /// Inserts into regions_plants.
-    /// Returns Err if it fails.
-    async fn insert_region_plants(
-        &self,
-        zip: &str,
-        plant_ids: HashSet<usize>,
-    ) -> anyhow::Result<()>;
-
-    /// Updates one plant.
-    /// Returns Err if it fails.
-    async fn update_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<()>;
-
-    /// Inserts one plant.
-    /// Returns Err if it fails.
-    async fn insert_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<usize>;
-
-    /// Selects multiple plants by zip/moisture/shade.
-    /// Returns Err if it fails.
-    async fn select_plants_by_zip_moisture_shade(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<Vec<Plant>>;
-
-    /// Selects one plant by scientific name.
-    /// Returns Err if it fails, Ok(None) if not found.
-    async fn select_plant_by_scientific_name(
-        &self,
-        scientific_name: &str,
-    ) -> anyhow::Result<Option<Plant>>;
-
-    /// Inserts one image.
-    /// Returns Err if it fails.
-    async fn insert_image(&self, image: &Image) -> anyhow::Result<usize>;
-
-    /// Selects all nurseries which match the given zipcode.
-    /// Returns Err if it fails, Ok(empty vec) if none are found.
-    async fn select_nurseries_by_zip(&self, zip: &str) -> anyhow::Result<Vec<Nursery>>;
-
-    /// Selects a region's name for the given zipcode.
-    /// Returns Err if it fails, Ok(None) if none are found.
-    async fn select_region_name_by_zip(&self, zip: &str) -> anyhow::Result<Option<String>>;
-}
 
 // Looks for the closest neighboring zip code to the one provided on both sides,
 // then selects the one that is closest.
@@ -91,11 +20,12 @@ SELECT
        (SELECT MIN(zipcode) FROM zipcodes AS nxt WHERE nxt.zipcode > :zip) AS nxt
   ) AS subquery";
 
-pub struct MariaDbSqlRunner {
+pub struct SqlRunner {
     pool: Option<Pool>,
 }
 
-impl MariaDbSqlRunner {
+#[automock]
+impl SqlRunner {
     pub fn new(url: &str) -> Self {
         if Opts::try_from(url).is_err() {
             warn!("Starting server without database!  Caching/nurseries are unavailable.");
@@ -121,11 +51,10 @@ impl MariaDbSqlRunner {
             Err(anyhow!("db is not connected"))
         }
     }
-}
 
-#[async_trait]
-impl SqlRunner for MariaDbSqlRunner {
-    async fn upsert_query(
+    /// Inserts a new Query into the database.
+    /// Returns Err if it fails.
+    pub async fn upsert_query(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -147,7 +76,7 @@ impl SqlRunner for MariaDbSqlRunner {
         }
     }
 
-    async fn check_zip_exists(&self, zip: &str) -> anyhow::Result<bool> {
+    pub async fn check_zip_exists(&self, zip: &str) -> anyhow::Result<bool> {
         let mut conn = self.get_connection().await?;
         let query_result: Result<Option<u8>, mysql_async::Error> =
             r"SELECT 1 from zipcodes where zipcode = :zip"
@@ -164,7 +93,7 @@ impl SqlRunner for MariaDbSqlRunner {
         }
     }
 
-    async fn select_closest_zip(&self, zip: &str) -> anyhow::Result<String> {
+    pub async fn select_closest_zip(&self, zip: &str) -> anyhow::Result<String> {
         let mut conn = self.get_connection().await?;
 
         let query_result: Result<Option<usize>, mysql_async::Error> = SELECT_CLOSEST_ZIP_QUERY
@@ -182,7 +111,9 @@ impl SqlRunner for MariaDbSqlRunner {
         }
     }
 
-    async fn select_query_count(
+    /// Selects one plant by scientific name.
+    /// Returns Err if it fails, Ok(None) if not found.
+    pub async fn select_query_count(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -207,7 +138,9 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
             .map_err(|e| anyhow!("select_query_count failed: {e}"))
     }
 
-    async fn insert_region_plants(
+    /// Inserts into regions_plants.
+    /// Returns Err if it fails.
+    pub async fn insert_region_plants(
         &self,
         zip: &str,
         plant_ids: HashSet<usize>,
@@ -230,7 +163,9 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
             .map_err(|e| anyhow!(e))
     }
 
-    async fn update_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<()> {
+    /// Updates one plant.
+    /// Returns Err if it fails.
+    pub async fn update_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<()> {
         let mut conn = self.get_connection().await?;
 
         r"UPDATE plants
@@ -286,7 +221,13 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
             .map_err(|e| anyhow!("update_plant failed to update: {}", e))
     }
 
-    async fn insert_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<usize> {
+    /// Inserts one plant.
+    /// Returns Err if it fails.
+    pub async fn insert_plant(
+        &self,
+        plant: &Plant,
+        img_id: Option<usize>,
+    ) -> anyhow::Result<usize> {
         let mut conn = self.get_connection().await?;
 
         r"INSERT INTO plants
@@ -342,7 +283,9 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
             .map_err(|e| anyhow!("save_plant failed to insert: {}", e))
     }
 
-    async fn select_plants_by_zip_moisture_shade(
+    /// Selects multiple plants by zip/moisture/shade.
+    /// Returns Err if it fails.
+    pub async fn select_plants_by_zip_moisture_shade(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -384,7 +327,9 @@ ORDER BY
         .map_err(|e| anyhow!(e))
     }
 
-    async fn select_plant_by_scientific_name(
+    /// Selects one plant by scientific name.
+    /// Returns Err if it fails, Ok(None) if not found.
+    pub async fn select_plant_by_scientific_name(
         &self,
         scientific_name: &str,
     ) -> anyhow::Result<Option<Plant>> {
@@ -412,7 +357,9 @@ WHERE scientific_name = :scientific_name"
             .map_err(|e| anyhow!(e))
     }
 
-    async fn insert_image(&self, image: &Image) -> anyhow::Result<usize> {
+    /// Inserts one image.
+    /// Returns Err if it fails.
+    pub async fn insert_image(&self, image: &Image) -> anyhow::Result<usize> {
         let mut conn = self.get_connection().await?;
         r"INSERT INTO images (title, card_url, original_url, author, license)
             VALUES (:title, :card_url, :original_url, :author, :license)
@@ -430,7 +377,9 @@ WHERE scientific_name = :scientific_name"
             .map_err(|e| anyhow!("save_image failed to insert: {}", e))
     }
 
-    async fn select_nurseries_by_zip(&self, zip: &str) -> anyhow::Result<Vec<Nursery>> {
+    /// Selects all nurseries which match the given zipcode.
+    /// Returns Err if it fails, Ok(empty vec) if none are found.
+    pub async fn select_nurseries_by_zip(&self, zip: &str) -> anyhow::Result<Vec<Nursery>> {
         let mut conn = self.get_connection().await?;
 
         r"
@@ -446,7 +395,9 @@ ORDER BY miles ASC"
             .map_err(|e| anyhow!(e))
     }
 
-    async fn select_region_name_by_zip(&self, zip: &str) -> anyhow::Result<Option<String>> {
+    /// Selects a region's name for the given zipcode.
+    /// Returns Err if it fails, Ok(None) if none are found.
+    pub async fn select_region_name_by_zip(&self, zip: &str) -> anyhow::Result<Option<String>> {
         let mut conn = self.get_connection().await?;
 
         r"

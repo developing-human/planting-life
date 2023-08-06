@@ -1,13 +1,18 @@
 use std::env;
 
+#[double]
+use crate::ai::Ai;
+
+#[double]
+use crate::database::Database;
+
 use crate::{
-    ai::{openai::OpenAI, RealAi},
+    ai::openai::OpenAI,
     citations::RealCitations,
     controllers::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
-    database::MariaDB,
     flickr::RealFlickr,
     highlights::RealHighlights,
     hydrator::RealHydrator,
@@ -15,6 +20,7 @@ use crate::{
 };
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
+use mockall_double::double;
 
 pub struct PlantingLifeApp {
     pub plant_controller: PlantController,
@@ -34,8 +40,8 @@ impl PlantingLifeApp {
         let citations = Box::new(RealCitations {});
         let highlights = Box::new(RealHighlights {});
 
-        let ai = live_forever(RealAi::new(open_ai));
-        let db = live_forever(MariaDB::new(db_url));
+        let ai = live_forever(Ai::new(open_ai));
+        let db = live_forever(Database::new(db_url));
 
         let hydrator = Box::new(RealHydrator::new(ai, flickr, citations, highlights));
         let selector = Box::new(RealSelector::new(db, ai));

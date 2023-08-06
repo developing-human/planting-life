@@ -1,4 +1,5 @@
 use actix_web::{get, web, Responder};
+use mockall_double::double;
 use std::{pin::Pin, time::Duration};
 
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
@@ -6,9 +7,10 @@ use futures::{channel::mpsc, Stream, StreamExt};
 use serde::{Deserialize, Serialize};
 use tracing::log::{info, warn};
 
+#[double]
+use crate::database::Database;
 use crate::{
     app::PlantingLifeApp,
-    database::Database,
     domain::*,
     hydrator::{self, Hydrator},
     selector::Selector,
@@ -22,14 +24,14 @@ struct PlantsRequest {
 }
 
 pub struct PlantController {
-    pub db: &'static dyn Database,
+    pub db: &'static Database,
     pub hydrator: Box<dyn Hydrator>,
     pub selector: Box<dyn Selector>,
 }
 
 impl PlantController {
     pub fn new(
-        db: &'static dyn Database,
+        db: &'static Database,
         hydrator: Box<dyn Hydrator>,
         selector: Box<dyn Selector>,
     ) -> Self {

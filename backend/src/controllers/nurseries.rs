@@ -1,8 +1,10 @@
 use actix_web::{get, web, Responder};
+use mockall_double::double;
 use serde::{Deserialize, Serialize};
 use tracing::log::info;
 
 use crate::app::PlantingLifeApp;
+#[double]
 use crate::database::Database;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -11,11 +13,11 @@ struct NurseriesRequest {
 }
 
 pub struct NurseriesController {
-    pub db: &'static dyn Database,
+    pub db: &'static Database,
 }
 
 impl NurseriesController {
-    pub fn new(db: &'static dyn Database) -> Self {
+    pub fn new(db: &'static Database) -> Self {
         Self { db }
     }
 

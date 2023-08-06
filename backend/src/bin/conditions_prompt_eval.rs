@@ -1,6 +1,6 @@
 use futures::future::join_all;
 use planting_life::{
-    ai::{openai::OpenAI, Ai, RealAi},
+    ai::{openai::OpenAI, Ai},
     domain::Conditions,
 };
 use std::{
@@ -82,10 +82,10 @@ async fn fetch_conditions(plant_name: &str) -> anyhow::Result<(String, Condition
         .map(|conditions| (plant_name.to_string(), conditions))
 }
 
-fn ai() -> Box<dyn Ai> {
+fn ai() -> Ai {
     let api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
 
-    Box::new(RealAi {
+    Ai {
         open_ai: OpenAI::new(api_key),
-    })
+    }
 }

@@ -1,3 +1,4 @@
+#[double]
 use crate::ai::Ai;
 use crate::citations::Citations;
 use crate::domain::{Plant, Rating};
@@ -7,6 +8,7 @@ use async_trait::async_trait;
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
+use mockall_double::double;
 use std::boxed::Box;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -31,7 +33,7 @@ pub trait Hydrator: Send + Sync {
 }
 
 pub struct RealHydrator {
-    ai: &'static (dyn Ai),
+    ai: &'static Ai,
     flickr: Box<dyn Flickr>,
     citations: Box<dyn Citations>,
     highlights: Box<dyn Highlights>,
@@ -39,7 +41,7 @@ pub struct RealHydrator {
 
 impl RealHydrator {
     pub fn new(
-        ai: &'static (dyn Ai),
+        ai: &'static Ai,
         flickr: Box<dyn Flickr>,
         citations: Box<dyn Citations>,
         highlights: Box<dyn Highlights>,

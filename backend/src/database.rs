@@ -1,90 +1,32 @@
-use std::collections::HashSet;
-
 use crate::domain::*;
 use anyhow::anyhow;
-use async_trait::async_trait;
-use futures::future;
+use mockall::automock;
+use mockall_double::double;
+use std::collections::HashSet;
 use tracing::log::warn;
 
-use self::sql::{MariaDbSqlRunner, SqlRunner};
+#[double]
+use self::sql::SqlRunner;
 
 mod conversions;
 pub mod sql;
 
-#[async_trait]
-pub trait Database: Send + Sync {
-    /// Finds all Nurseries near the given zipcode.
-    async fn find_nurseries(&self, zip: &str) -> Vec<Nursery>;
-
-    /// Finds the closest valid zipcode, returns Err if it can't.
-    async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String>;
-
-    /// Finds all Plants which match the given parameters.
-    async fn lookup_query_results(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> Vec<Plant>;
-
-    ///Saves a new Query and maps it to the plants referenced by plant_ids.
-    ///
-    ///Failures are logged, but are otherwise ignored.
-    async fn save_query_results(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-        all_plants: Vec<Plant>,
-        saved_plants: Vec<Plant>,
-    );
-
-    async fn save_plant_region(&self, plant: &Plant, zip: &str);
-
-    /// Returns how many times the query for these parameters has been executed
-    ///
-    /// Failures are logged, but are otherwise ignored.
-    async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize;
-
-    /// Saves a list of Plants, returning a list of new Plants which
-    /// have their ids populated.  Returns Err if any fail to save.
-    #[allow(clippy::ptr_arg)]
-    async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>>;
-
-    /// Inserts or updates a single Plant, returning a new Plant with its
-    /// id populated. Returns Err if it fails to save.
-    async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant>;
-
-    /// Saves an Image, returning a new Image with the database id populated.
-    /// Returns Err if it fails to save.
-    async fn save_image(&self, image: &Image) -> anyhow::Result<Image>;
-
-    /// Fetches one Plant by scientific name.  Returns None if it is not
-    /// found or if there is a database error.
-    async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant>;
-
-    /// Fetches the region name for a zipcodes.
-    /// Returns None if not found or if there is a database error.
-    async fn get_region_name_by_zip(&self, zip: &str) -> Option<String>;
+pub struct Database {
+    sql_runner: SqlRunner,
 }
 
-pub struct MariaDB {
-    sql_runner: Box<dyn SqlRunner>,
-}
-
-impl MariaDB {
+#[automock]
+impl Database {
     /// Creates a Database.  If the url is None, it creates one without a pool.
     /// When the pool is None, it degrades gracefully.
     pub fn new(db_url: &str) -> Self {
         Self {
-            sql_runner: Box::new(MariaDbSqlRunner::new(db_url)),
+            sql_runner: SqlRunner::new(db_url),
         }
     }
-}
 
-#[async_trait]
-impl Database for MariaDB {
-    async fn find_nurseries(&self, zip: &str) -> Vec<Nursery> {
+    /// Finds all Nurseries near the given zipcode.
+    pub async fn find_nurseries(&self, zip: &str) -> Vec<Nursery> {
         self.sql_runner
             .select_nurseries_by_zip(zip)
             .await
@@ -94,7 +36,8 @@ impl Database for MariaDB {
             })
     }
 
-    async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String> {
+    /// Finds the closest valid zipcode, returns Err if it can't.
+    pub async fn lookup_closest_valid_zip(&self, zip: &str) -> anyhow::Result<String> {
         if zip.len() != 5 || !zip.chars().all(char::is_numeric) {
             return Err(anyhow!("invalid zipcode format: {zip}"));
         }
@@ -106,7 +49,8 @@ impl Database for MariaDB {
         }
     }
 
-    async fn lookup_query_results(
+    /// Finds all Plants which match the given parameters.
+    pub async fn lookup_query_results(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -121,7 +65,10 @@ impl Database for MariaDB {
             })
     }
 
-    async fn save_query_results(
+    ///Saves a new Query and maps it to the plants referenced by plant_ids.
+    ///
+    ///Failures are logged, but are otherwise ignored.
+    pub async fn save_query_results(
         &self,
         zip: &str,
         moisture: &Moisture,
@@ -147,7 +94,7 @@ impl Database for MariaDB {
         }
     }
 
-    async fn save_plant_region(&self, plant: &Plant, zip: &str) {
+    pub async fn save_plant_region(&self, plant: &Plant, zip: &str) {
         if plant.id.is_none() {
             warn!("save_plant_region requires plant.id");
             return;
@@ -162,7 +109,10 @@ impl Database for MariaDB {
         }
     }
 
-    async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
+    /// Returns how many times the query for these parameters has been executed
+    ///
+    /// Failures are logged, but are otherwise ignored.
+    pub async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
         match self
             .sql_runner
             .select_query_count(zip, moisture, shade)
@@ -176,18 +126,9 @@ impl Database for MariaDB {
         }
     }
 
-    async fn save_plants(&self, plants_in: &Vec<&Plant>) -> anyhow::Result<Vec<Plant>> {
-        let mut futures = vec![];
-        for plant in plants_in {
-            futures.push(self.save_plant(plant));
-        }
-
-        // collect() here is practically magic,
-        // converting Vec<Result<Plant>> into Result<Vec<Plant>>
-        future::join_all(futures).await.into_iter().collect()
-    }
-
-    async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
+    /// Inserts or updates a single Plant, returning a new Plant with its
+    /// id populated. Returns Err if it fails to save.
+    pub async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
         let mut img_id = None;
         if let Some(image) = &plant.image {
             img_id = image.id;
@@ -211,7 +152,9 @@ impl Database for MariaDB {
         })
     }
 
-    async fn save_image(&self, image: &Image) -> anyhow::Result<Image> {
+    /// Saves an Image, returning a new Image with the database id populated.
+    /// Returns Err if it fails to save.
+    pub async fn save_image(&self, image: &Image) -> anyhow::Result<Image> {
         let id = self.sql_runner.insert_image(image).await;
 
         id.map(|id| Image {
@@ -220,7 +163,9 @@ impl Database for MariaDB {
         })
     }
 
-    async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {
+    /// Fetches one Plant by scientific name.  Returns None if it is not
+    /// found or if there is a database error.
+    pub async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {
         match self
             .sql_runner
             .select_plant_by_scientific_name(scientific_name)
@@ -235,7 +180,9 @@ impl Database for MariaDB {
         }
     }
 
-    async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
+    /// Fetches the region name for a zipcodes.
+    /// Returns None if not found or if there is a database error.
+    pub async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
         match self.sql_runner.select_region_name_by_zip(zip).await {
             Ok(Some(name)) => Some(name),
             Ok(None) => {
@@ -252,46 +199,16 @@ impl Database for MariaDB {
 
 #[cfg(test)]
 mod tests {
-    use crate::database::sql::MockSqlRunner;
-
-    use super::*;
-
-    #[tokio::test]
-    async fn test_lookup_closest_valid_zip_exists() {
-        let db = make_db_with_mocks(|mock| {
-            mock.expect_check_zip_exists().returning(|_| Ok(true));
-        });
-
-        let result = db.lookup_closest_valid_zip("43083").await;
-
-        assert_eq!(result.unwrap(), "43083".to_string());
-    }
-
-    #[tokio::test]
-    async fn test_lookup_closest_valid_zip_not_exists() {
-        let db = make_db_with_mocks(|mock| {
-            mock.expect_check_zip_exists().returning(|_| Ok(false));
-            mock.expect_select_closest_zip()
-                .returning(|_| Ok("43081".into()));
-        });
-
-        let result = db.lookup_closest_valid_zip("43083").await;
-
-        assert_eq!(result.unwrap(), "43081".to_string());
-    }
+    use super::{sql::MockSqlRunner, *};
 
     #[tokio::test]
     async fn test_lookup_closest_valid_zip_too_short() {
-        let sql_mock = MockSqlRunner::new();
-        let db = MariaDB {
-            sql_runner: Box::new(sql_mock),
-        };
+        let db = make_db();
 
         let result = db.lookup_closest_valid_zip("4308").await;
-
         assert_eq!(
             result.unwrap_err().to_string(),
-            "invalid zipcode format: 4308".to_string()
+            "invalid zipcode format: 4308"
         );
     }
 
@@ -300,30 +217,75 @@ mod tests {
         let db = make_db();
 
         let result = db.lookup_closest_valid_zip("4308z").await;
-
         assert_eq!(
             result.unwrap_err().to_string(),
-            "invalid zipcode format: 4308z".to_string()
+            "invalid zipcode format: 4308z"
         );
     }
 
-    fn make_db() -> MariaDB {
-        let sql_mock = MockSqlRunner::new();
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_exists() {
+        let db = make_db_with_mock(|mock| {
+            mock.expect_check_zip_exists().returning(|_| Ok(true));
+        });
 
-        MariaDB {
-            sql_runner: Box::new(sql_mock),
+        let result = db.lookup_closest_valid_zip("43083").await;
+
+        assert_eq!(result.unwrap(), "43083");
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_exists_err() {
+        let db = make_db_with_mock(|mock| {
+            mock.expect_check_zip_exists()
+                .returning(|_| Err(anyhow!("oops")));
+        });
+
+        let result = db.lookup_closest_valid_zip("43083").await;
+        assert_eq!(result.unwrap_err().to_string(), "oops")
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_not_exists() {
+        let db = make_db_with_mock(|mock| {
+            mock.expect_check_zip_exists().returning(|_| Ok(false));
+            mock.expect_select_closest_zip()
+                .returning(|_| Ok("43081".into()));
+        });
+
+        let result = db.lookup_closest_valid_zip("43083").await;
+        assert_eq!(result.unwrap(), "43081")
+    }
+
+    #[tokio::test]
+    async fn test_lookup_closest_valid_zip_not_exists_err() {
+        let db = make_db_with_mock(|mock| {
+            mock.expect_check_zip_exists().returning(|_| Ok(false));
+            mock.expect_select_closest_zip()
+                .returning(|_| Err(anyhow!("oops")));
+        });
+
+        let result = db.lookup_closest_valid_zip("43083").await;
+        assert_eq!(result.unwrap_err().to_string(), "oops")
+    }
+
+    fn make_db() -> Database {
+        let sql_mock = SqlRunner::default();
+
+        Database {
+            sql_runner: sql_mock,
         }
     }
 
-    fn make_db_with_mocks<F>(create_mocks: F) -> MariaDB
+    fn make_db_with_mock<F>(create_mocks: F) -> Database
     where
         F: FnOnce(&mut MockSqlRunner),
     {
-        let mut sql_mock = MockSqlRunner::new();
+        let mut sql_mock = SqlRunner::default();
         create_mocks(&mut sql_mock);
 
-        MariaDB {
-            sql_runner: Box::new(sql_mock),
+        Database {
+            sql_runner: sql_mock,
         }
     }
 }
