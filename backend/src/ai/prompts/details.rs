@@ -38,7 +38,7 @@ impl Prompt for DetailPrompt {
         super::build_plant_detail_request(text)
     }
 
-    fn parse_response(&self, raw_response: String) -> anyhow::Result<String> {
+    fn parse_response(&self, raw_response: &str) -> anyhow::Result<String> {
         match &self.detail_type {
             DetailType::Height => parse_measurement(&raw_response),
             DetailType::Spread => parse_measurement(&raw_response),

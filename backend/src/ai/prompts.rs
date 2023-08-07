@@ -12,7 +12,7 @@ pub trait Prompt {
     type Response;
 
     fn build_payload(&self) -> openai::ChatCompletionRequest;
-    fn parse_response(&self, raw_response: String) -> anyhow::Result<Self::Response>;
+    fn parse_response(&self, raw_response: &str) -> anyhow::Result<Self::Response>;
 }
 
 pub trait StreamingPrompt {

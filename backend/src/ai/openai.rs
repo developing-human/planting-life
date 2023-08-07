@@ -65,7 +65,7 @@ impl OpenAI {
     pub async fn execute<T: Prompt>(&self, prompt: T) -> anyhow::Result<T::Response> {
         //TODO: Handle timeout
         let response = call_model(&self.api_key, prompt.build_payload(), 20000).await?;
-        prompt.parse_response(response)
+        prompt.parse_response(&response)
     }
 
     // Returns a stream of short strings from openai

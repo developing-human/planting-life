@@ -28,7 +28,7 @@ impl Prompt for ConditionsPrompt {
         super::build_plant_detail_request(text)
     }
 
-    fn parse_response(&self, raw_response: String) -> anyhow::Result<Conditions> {
+    fn parse_response(&self, raw_response: &str) -> anyhow::Result<Conditions> {
         parse_conditions(&raw_response)
     }
 }

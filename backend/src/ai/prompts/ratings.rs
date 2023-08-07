@@ -1,6 +1,7 @@
 use super::Prompt;
 use crate::ai::openai;
 use anyhow::anyhow;
+use regex::Regex;
 
 pub struct RatingPrompt {
     scientific_name: String,
@@ -42,23 +43,45 @@ impl Prompt for RatingPrompt {
         super::build_plant_detail_request(text)
     }
 
-    fn parse_response(&self, raw_response: String) -> anyhow::Result<u8> {
+    fn parse_response(&self, raw_response: &str) -> anyhow::Result<u8> {
         let lines: Vec<&str> = raw_response.split('\n').collect();
 
-        // Find the line which contains the rating
+        // First, try to find the structured rating, as this is what
+        // is usually returned.
+        // Find the line which contains "rating:"
         let rating_line = lines
             .iter()
-            .find(|line| line.to_lowercase().starts_with("rating: "));
+            .find(|line| line.to_lowercase().contains("rating:"));
 
-        // Remove the label, accounting for both upper and lower case
-        let rating_str = rating_line.map(|s| s.replace("rating: ", ""));
-        let rating_str = rating_str.map(|s| s.replace("Rating: ", ""));
+        // There could be spaces before rating or after the colon.
+        // Split on the colon and trim any whitespace.
+        let rating_split: Option<Vec<&str>> = rating_line.map(|l| l.split(':').collect());
+        let rating_str = rating_split.map(|splt| splt[1].trim());
 
-        match rating_str.map(|line| line.parse::<u8>()) {
-            Some(Ok(rating)) => Ok(rating),
-            Some(Err(_)) => Err(anyhow!("invalid rating: {lines:?}",)),
-            None => Err(anyhow!("rating not in response: {lines:?}")),
+        if let Some(Ok(rating)) = rating_str.map(|line| line.parse::<u8>()) {
+            return Ok(rating);
         }
+
+        // Find any matching regexes which can capture the rating.  Try to parse it.
+        // As the LLM finds more creative ways to not follow instructions, add to
+        // this list.
+        let unstructured_regexes = vec![
+            r"(\d) out of 10",
+            r"(\d) on a scale from 1 to 10",
+            r"(\d)/10",
+        ];
+        for unstructured_regex in unstructured_regexes {
+            let regex = Regex::new(unstructured_regex).unwrap();
+            for (_, [rating_str]) in regex.captures_iter(raw_response).map(|c| c.extract()) {
+                if let Ok(rating) = rating_str.parse::<u8>() {
+                    return Ok(rating);
+                }
+            }
+        }
+
+        Err(anyhow!(
+            "could not parse rating from response: {raw_response:?}"
+        ))
     }
 }
 
@@ -142,4 +165,91 @@ For example: ('rating:' label is REQUIRED):
 
 rating: 3
 ", name)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lowercase_labeled_rating() {
+        let rating = parse_rating(
+            "blah blah blah
+rating: 8
+blah blah blah",
+        );
+
+        assert_eq!(rating.unwrap(), 8)
+    }
+
+    #[test]
+    fn test_lowercase_labeled_rating_with_indent() {
+        let rating = parse_rating(
+            "blah blah blah
+            rating: 8
+            blah blah blah",
+        );
+
+        assert_eq!(rating.unwrap(), 8)
+    }
+
+    #[test]
+    fn test_uppercase_labeled_rating() {
+        let rating = parse_rating(
+            "blah blah blah
+Rating: 8
+blah blah blah",
+        );
+
+        assert_eq!(rating.unwrap(), 8)
+    }
+
+    #[test]
+    fn test_uppercase_labeled_rating_no_space() {
+        let rating = parse_rating(
+            "blah blah blah
+Rating:8
+blah blah blah",
+        );
+
+        assert_eq!(rating.unwrap(), 8)
+    }
+
+    #[test]
+    fn test_unlabeled_rating() {
+        let rating = parse_rating(
+            "Threadleaf coreopsis is a...
+
+In terms of ...can be rated as a 7 on a scale from 1 to 10. While it is not...",
+        );
+
+        assert_eq!(rating.unwrap(), 7)
+    }
+
+    #[test]
+    fn test_unlabeled_rating_2() {
+        let rating = parse_rating(
+            "Threadleaf coreopsis is a...
+
+In terms of ...can be rated 7 out of 10. While it is not...",
+        );
+
+        assert_eq!(rating.unwrap(), 7)
+    }
+
+    #[test]
+    fn test_unlabeled_rating_8() {
+        let rating = parse_rating(
+            "Threadleaf coreopsis is a...
+
+In terms of ...can be rated 7/10. While it is not...",
+        );
+
+        assert_eq!(rating.unwrap(), 7)
+    }
+
+    fn parse_rating(ai_response: &str) -> anyhow::Result<u8> {
+        let prompt = RatingPrompt::new("name", RatingType::Bird);
+        prompt.parse_response(ai_response)
+    }
 }
