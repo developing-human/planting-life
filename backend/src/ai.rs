@@ -55,12 +55,6 @@ impl Ai {
             .await
     }
 
-    pub async fn fetch_animal_rating(&self, name: &str) -> anyhow::Result<u8> {
-        self.open_ai
-            .execute(RatingPrompt::new(name, RatingType::Animal))
-            .await
-    }
-
     pub async fn fetch_height(&self, name: &str) -> anyhow::Result<String> {
         self.open_ai
             .execute(DetailPrompt::new(name, DetailType::Height))

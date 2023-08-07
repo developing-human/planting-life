@@ -10,7 +10,6 @@ pub struct RatingPrompt {
 pub enum RatingType {
     Pollinator,
     Bird,
-    Animal,
     Spread,
     DeerResistance,
 }
@@ -29,7 +28,6 @@ impl RatingType {
         match &self {
             RatingType::Pollinator => build_pollinator_prompt(scientific_name),
             RatingType::Bird => build_bird_prompt(scientific_name),
-            RatingType::Animal => build_animal_prompt(scientific_name),
             RatingType::Spread => build_spread_rating_prompt(scientific_name),
             RatingType::DeerResistance => build_deer_resistance_prompt(scientific_name),
         }
@@ -66,36 +64,32 @@ impl Prompt for RatingPrompt {
 
 const RATING_FORMAT_INSTRUCTIONS: &str = "Next, compare how well it does compared to other plants. 
 
-Next, summarizing your findings.
-
 Finally, rate how well it supports them on a scale from 
 1-10 compared to other plants.
 
 Your entire response will be formatted as follows, the 
-summary & rating labels are REQUIRED:
+'rating:' label is REQUIRED:
 ```
 Your 2-4 sentence explanation.
 
 Your 2-4 sentence comparison.
 
-summary: Your 30-40 word summary, starting with the word 'Supports'.
 rating: Your integer rating from 1-10, compared to other \
 plants. 1-3 is average, 4-8 is for strong contributors, \
 9-10 is for the very best.
 ```
 
-For example (the 'summary:' and 'rating:' labels are REQUIRED):
+For example (the 'rating:' label is REQUIRED):
 ```
 <plant name> are... (2-4 sentences)
 
 Compared to other plants... (2-4 sentences)
 
-summary: Supports... (30-40 words)
 rating: 3
 ```";
 
 pub fn build_pollinator_prompt(name: &str) -> String {
-    format!("Your goal is to rate {} compared to other plants with respect to how well it supports pollinators and justify your score.  To do this, lets think step by step.
+    format!("Your goal is to rate {} compared to other plants with respect to how well it supports pollinators.  To do this, lets think step by step.
 
 First, explain how well it supports the pollinators of an ecosystem.  Consider its contributions as a food source, shelter, and larval host. If it supports specific species, mention them. Also explain how it is deficient, if applicable.
 
@@ -103,17 +97,9 @@ First, explain how well it supports the pollinators of an ecosystem.  Consider i
 }
 
 pub fn build_bird_prompt(name: &str) -> String {
-    format!("Your goal is to rate {} compared to other plants with respect to how well it supports birds and justify your score.  To do this, lets think step by step.
+    format!("Your goal is to rate {} compared to other plants with respect to how well it supports birds.  To do this, lets think step by step.
 
 First, explain how well it supports the birds of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable.
-
-{}", name, RATING_FORMAT_INSTRUCTIONS)
-}
-
-pub fn build_animal_prompt(name: &str) -> String {
-    format!("Your goal is to rate {} compared to other plants with respect to how well it supports small ground animals and justify your score.  To do this, lets think step by step.
-
-First, explain how well it supports the small ground animals of an ecosystem.  Consider its contributions as a food source, shelter, and nesting site. If it supports specific species, mention them. Also explain how it is deficient, if applicable.
 
 {}", name, RATING_FORMAT_INSTRUCTIONS)
 }
@@ -130,7 +116,7 @@ Your 3-5 sentence description.
 rating: Your integer rating from 1-10, compared to other plants. 1-4 is doesn't spread much, 5-7 is for spreading noticably, 8-10 will be very difficult to control.
 ```
 
-For example:' and 'rating:' labels are REQUIRED):
+For example ('rating:' label is REQUIRED):
 ```
 <plant name> spreads... (2-4 sentences)
 
