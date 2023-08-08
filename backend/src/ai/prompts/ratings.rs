@@ -69,6 +69,7 @@ impl Prompt for RatingPrompt {
             r"(\d) out of 10",
             r"(\d) on a scale from 1 to 10",
             r"(\d)/10",
+            r"rate [a-zA-Z ]* as a (\d)",
         ];
         for unstructured_regex in unstructured_regexes {
             let regex = Regex::new(unstructured_regex).unwrap();
@@ -238,7 +239,7 @@ In terms of ...can be rated 7 out of 10. While it is not...",
     }
 
     #[test]
-    fn test_unlabeled_rating_8() {
+    fn test_unlabeled_rating_3() {
         let rating = parse_rating(
             "Threadleaf coreopsis is a...
 
@@ -246,6 +247,17 @@ In terms of ...can be rated 7/10. While it is not...",
         );
 
         assert_eq!(rating.unwrap(), 7)
+    }
+
+    #[test]
+    fn test_unlabeled_rating_4() {
+        let rating = parse_rating(
+            "Threadleaf coreopsis is a...
+
+I would rate blah blah as a 6. While it is not...",
+        );
+
+        assert_eq!(rating.unwrap(), 6)
     }
 
     fn parse_rating(ai_response: &str) -> anyhow::Result<u8> {
