@@ -15,3 +15,10 @@ figcaption {
     min-height: 75px;
     min-width: 150px;
 }
+
+.plant-card .MuiCardHeader-title {
+    max-width: 325px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
