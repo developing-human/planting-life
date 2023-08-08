@@ -1,19 +1,10 @@
-use async_trait::async_trait;
+pub struct Citations {}
 
-#[async_trait]
-pub trait Citations: Send + Sync {
-    async fn find_wikipedia(&self, scientific_name: &str) -> Option<String>;
-    fn find_usda(&self, scientific_name: &str) -> Option<String>;
-}
-
-pub struct RealCitations {}
-
-#[async_trait]
-impl Citations for RealCitations {
-    async fn find_wikipedia(&self, scientific_name: &str) -> Option<String> {
+impl Citations {
+    pub async fn find_wikipedia(&self, scientific_name: &str) -> Option<String> {
         wikipedia::find(scientific_name).await
     }
-    fn find_usda(&self, scientific_name: &str) -> Option<String> {
+    pub fn find_usda(&self, scientific_name: &str) -> Option<String> {
         usda::find(scientific_name)
     }
 }

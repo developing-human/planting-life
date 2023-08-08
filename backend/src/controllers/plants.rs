@@ -25,16 +25,12 @@ struct PlantsRequest {
 
 pub struct PlantController {
     pub db: &'static Database,
-    pub hydrator: Box<dyn Hydrator>,
-    pub selector: Box<dyn Selector>,
+    pub hydrator: Hydrator,
+    pub selector: Selector,
 }
 
 impl PlantController {
-    pub fn new(
-        db: &'static Database,
-        hydrator: Box<dyn Hydrator>,
-        selector: Box<dyn Selector>,
-    ) -> Self {
+    pub fn new(db: &'static Database, hydrator: Hydrator, selector: Selector) -> Self {
         Self {
             db,
             hydrator,

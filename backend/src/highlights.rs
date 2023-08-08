@@ -80,14 +80,10 @@ impl HighlightCategory {
     }
 }
 
-pub trait Highlights: Send + Sync {
-    fn generate(&self, plant: &Plant) -> Vec<Highlight>;
-}
+pub struct Highlights {}
 
-pub struct RealHighlights {}
-
-impl Highlights for RealHighlights {
-    fn generate(&self, plant: &Plant) -> Vec<Highlight> {
+impl Highlights {
+    pub fn generate(&self, plant: &Plant) -> Vec<Highlight> {
         let mut highlights = list_highlights(plant);
 
         // If there are no main highlights, try to generate some fillers.

@@ -1,5 +1,4 @@
 use crate::domain::Image;
-use async_trait::async_trait;
 use futures::join;
 use reqwest::StatusCode;
 use reqwest_middleware::ClientBuilder;
@@ -52,25 +51,17 @@ impl Image {
     }
 }
 
-#[async_trait]
-pub trait Flickr: Send + Sync {
-    async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image>;
-}
-
 #[derive(Debug)]
-pub struct RealFlickr {
+pub struct Flickr {
     api_key: String,
 }
 
-impl RealFlickr {
+impl Flickr {
     pub fn new(api_key: String) -> Self {
         Self { api_key }
     }
-}
 
-#[async_trait]
-impl Flickr for RealFlickr {
-    async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image> {
+    pub async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image> {
         // Remove "spp." from the end if it exists, this is an abbreviation for "species".
         let truncated_scientific_name = &scientific_name.replace(" spp.", "");
 
@@ -99,9 +90,7 @@ impl Flickr for RealFlickr {
 
         None // No image to show :(
     }
-}
 
-impl RealFlickr {
     #[tracing::instrument]
     async fn image_search(&self, search_term: &str) -> Option<ImageSearchResponse> {
         let retry_policy = ExponentialBackoff::builder()

@@ -4,7 +4,6 @@ use crate::citations::Citations;
 use crate::domain::Plant;
 use crate::flickr::Flickr;
 use crate::highlights::Highlights;
-use async_trait::async_trait;
 use futures::channel::mpsc::UnboundedSender;
 use futures::stream::{FuturesUnordered, Stream, StreamExt};
 use futures::Future;
@@ -23,28 +22,19 @@ pub struct HydratedPlant {
 
 pub const ALL_PLANTS_HYDRATING_MARKER: &str = "ALL PLANTS HYDRATING";
 
-#[async_trait]
-pub trait Hydrator: Send + Sync {
-    async fn hydrate_plants(
-        &'static self,
-        mut plants: Pin<Box<dyn Stream<Item = Plant> + Send>>,
-        sender: &mut UnboundedSender<HydratedPlant>,
-    );
-}
-
-pub struct RealHydrator {
+pub struct Hydrator {
     ai: &'static Ai,
-    flickr: Box<dyn Flickr>,
-    citations: Box<dyn Citations>,
-    highlights: Box<dyn Highlights>,
+    flickr: Flickr,
+    citations: Citations,
+    highlights: Highlights,
 }
 
-impl RealHydrator {
+impl Hydrator {
     pub fn new(
         ai: &'static Ai,
-        flickr: Box<dyn Flickr>,
-        citations: Box<dyn Citations>,
-        highlights: Box<dyn Highlights>,
+        flickr: Flickr,
+        citations: Citations,
+        highlights: Highlights,
     ) -> Self {
         Self {
             ai,
@@ -53,11 +43,8 @@ impl RealHydrator {
             highlights,
         }
     }
-}
 
-#[async_trait]
-impl Hydrator for RealHydrator {
-    async fn hydrate_plants(
+    pub async fn hydrate_plants(
         &'static self,
         mut plants: Pin<Box<dyn Stream<Item = Plant> + Send>>,
         sender: &mut UnboundedSender<HydratedPlant>,
@@ -102,9 +89,7 @@ impl Hydrator for RealHydrator {
 
         sender.close_channel();
     }
-}
 
-impl RealHydrator {
     /// Given a partially populated plant, populates it as best it can from
     /// the database and LLM.  If a sender is provided, emits updates as
     /// they become available.  The last plant emitted will be marked as done

@@ -1,4 +1,4 @@
-use planting_life::flickr::{Flickr, RealFlickr};
+use planting_life::flickr::Flickr;
 use std::env;
 
 #[tokio::main(flavor = "current_thread")]
@@ -13,7 +13,7 @@ async fn main() {
     let scientific_name = &args[1];
     let common_name = &args[2];
 
-    let flickr = RealFlickr::new(flickr_api_key);
+    let flickr = Flickr::new(flickr_api_key);
     let image = flickr.get_image(scientific_name, common_name).await;
 
     println!("{image:#?}");

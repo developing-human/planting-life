@@ -3,7 +3,6 @@ use crate::ai::Ai;
 #[double]
 use crate::database::Database;
 use crate::domain::*;
-use async_trait::async_trait;
 use futures::stream::{self, Stream, StreamExt};
 use futures::{future, Future};
 use mockall_double::double;
@@ -17,30 +16,17 @@ pub struct PlantStream {
     pub from_db: bool,
 }
 
-#[async_trait]
-pub trait Selector: Send + Sync {
-    async fn stream_plants(
-        &'static self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<PlantStream>;
-}
-
-pub struct RealSelector {
+pub struct Selector {
     db: &'static Database,
     ai: &'static Ai,
 }
 
-impl RealSelector {
+impl Selector {
     pub fn new(db: &'static Database, ai: &'static Ai) -> Self {
         Self { db, ai }
     }
-}
 
-#[async_trait]
-impl Selector for RealSelector {
-    async fn stream_plants(
+    pub async fn stream_plants(
         &'static self,
         zip: &str,
         moisture: &Moisture,
@@ -84,9 +70,7 @@ impl Selector for RealSelector {
             from_db: unfiltered_stream.from_db,
         })
     }
-}
 
-impl RealSelector {
     async fn get_llm_plant_stream(
         &self,
         zip: &str,
@@ -312,7 +296,7 @@ mod tests {
         );
     }
 
-    fn make_selector_with_mock<F>(create_mocks: F) -> RealSelector
+    fn make_selector_with_mock<F>(create_mocks: F) -> Selector
     where
         F: FnOnce(&mut Database, &mut Ai),
     {
@@ -322,7 +306,7 @@ mod tests {
         let ai_mock = Box::leak(Box::<Ai>::default());
         create_mocks(db_mock, ai_mock);
 
-        RealSelector {
+        Selector {
             db: db_mock,
             ai: ai_mock,
         }

@@ -54,7 +54,7 @@ struct ChatCompletionResponseChoice {
 
 #[derive(Debug)]
 pub struct OpenAI {
-    api_key: String,
+    pub api_key: String,
 }
 
 impl OpenAI {

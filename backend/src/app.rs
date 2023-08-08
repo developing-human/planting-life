@@ -1,5 +1,3 @@
-use std::env;
-
 #[double]
 use crate::ai::Ai;
 
@@ -8,15 +6,15 @@ use crate::database::Database;
 
 use crate::{
     ai::openai::OpenAI,
-    citations::RealCitations,
+    citations::Citations,
     controllers::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
-    flickr::RealFlickr,
-    highlights::RealHighlights,
-    hydrator::RealHydrator,
-    selector::RealSelector,
+    flickr::Flickr,
+    highlights::Highlights,
+    hydrator::Hydrator,
+    selector::Selector,
 };
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
@@ -28,30 +26,28 @@ pub struct PlantingLifeApp {
 }
 
 impl PlantingLifeApp {
-    pub fn new(db_url: &str) -> Self {
+    pub fn new(db_url: &str, openai_api_key: &str, flickr_api_key: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-        let open_ai = OpenAI::new(openai_api_key);
-
-        let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
-        let flickr = Box::new(RealFlickr::new(flickr_api_key));
-
-        let citations = Box::new(RealCitations {});
-        let highlights = Box::new(RealHighlights {});
+        let db = live_forever(Database::new(db_url));
+        let open_ai = OpenAI::new(openai_api_key.into());
+        let flickr = Flickr::new(flickr_api_key.into());
 
         let ai = live_forever(Ai::new(open_ai));
-        let db = live_forever(Database::new(db_url));
 
-        let hydrator = Box::new(RealHydrator::new(ai, flickr, citations, highlights));
-        let selector = Box::new(RealSelector::new(db, ai));
+        let citations = Citations {};
+        let highlights = Highlights {};
 
-        let plant_controller = PlantController::new(db, hydrator, selector);
-        let nursery_controller = NurseriesController::new(db);
+        let hydrator = Hydrator::new(ai, flickr, citations, highlights);
+        let selector = Selector::new(db, ai);
 
         Self {
-            plant_controller,
-            nursery_controller,
+            plant_controller: PlantController {
+                db,
+                hydrator,
+                selector,
+            },
+            nursery_controller: NurseriesController { db },
         }
     }
 
