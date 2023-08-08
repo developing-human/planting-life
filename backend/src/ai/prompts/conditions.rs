@@ -29,7 +29,7 @@ impl Prompt for ConditionsPrompt {
     }
 
     fn parse_response(&self, raw_response: &str) -> anyhow::Result<Conditions> {
-        parse_conditions(&raw_response)
+        parse_conditions(raw_response)
     }
 }
 
@@ -38,14 +38,26 @@ fn build_conditions_prompt(name: &str) -> String {
         "Your goal is to answer six yes/no questions about shade \
          and moisture conditions where {} will thrive.  First, describe \
          growing conditions where it will thrive in 40-50 words.
-
+         \n\
          Then, use this format to answer the six questions: \n\
          - low moisture? yes/no \n\
          - medium moisture? yes/no \n\
          - high moisture? yes/no \n\
          - full shade? yes/no \n\
          - partial sun? yes/no \n\
-         - full sun? yes/no",
+         - full sun? yes/no \n\
+         \n\
+         For example: \n\
+         ```\n\
+         40-50 words about conditions where it thrives.
+         \n\
+         - low moisture? no \n\
+         - medium moisture? yes \n\
+         - high moisture? yes \n\
+         - full shade? yes \n\
+         - partial sun? no \n\
+         - full sun? no\n\
+         ```",
         name
     )
 }
