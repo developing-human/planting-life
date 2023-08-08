@@ -18,8 +18,7 @@ function PlantCard({ plant }) {
   return (
     <Card className="plant-card"
           raised={true}
-          sx={{ width: 350, maxWidth: "90vw", minHeight: 570, maxHeight: 570 }}>
-      <CardHeader title={plant.common} subheader={plant.scientific} />
+          sx={{ width: 350, maxWidth: "90vw", minHeight: 530, maxHeight: 530 }}>
 
       <CardMedia
         component="img"
@@ -39,6 +38,7 @@ function PlantCard({ plant }) {
         </figcaption>
       ) : null}
 
+      <CardHeader title={plant.common} subheader={plant.scientific} />
       <Grid container spacing={0}>
         <Grid item xs={6.25}>
           <CardContent>
