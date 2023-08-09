@@ -9,12 +9,13 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
     sse.addEventListener("plant", (event) => {
       let newPlant = JSON.parse(event.data);
       setPlants((prevPlants) => {
-        const index = prevPlants.findIndex(p => p.scientific === newPlant.scientific);
-        const newPlants = prevPlants.slice();
-        if (index === -1) {
-          newPlants.push(newPlant);
+      
+        const existing = prevPlants.get(newPlant.scientific);
+        const newPlants = new Map(prevPlants);
+        if (existing === undefined) {
+          newPlants.set(newPlant.scientific, newPlant);
         } else {
-          newPlants[index] = {...prevPlants[index], ...newPlant };
+          newPlants.set(newPlant.scientific, {...existing, ...newPlant });
         }
 
         return newPlants;

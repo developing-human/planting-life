@@ -22,7 +22,7 @@
 
 .more-container {
   width: 95vw;
-  max-width: 825px;
+  max-width: 725px;
   margin: auto;
   display: flex;
   justify-content: center;
@@ -53,20 +53,3 @@ a {
     text-decoration: underline;
 }
 
-button.more-button {
-  width: 337px;
-  background-color: #2a55d7;
-
-  margin-bottom: 25px;
-}
-
-button.garden-button {
-  width: 337px;
-  background-color: #4caf50;
-
-  margin-bottom: 25px;
-}
-
-button:hover.more-button {
-  background-color: #0040ff;
-}

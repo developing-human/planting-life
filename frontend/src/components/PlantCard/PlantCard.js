@@ -1,3 +1,5 @@
+import { useState, memo } from "react";
+
 // attribution popover component
 import AttributionPopover from "../AttributionPopover/AttributionPopover";
 import Highlight from "../Highlight/Highlight";
@@ -10,47 +12,82 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
 import CircularProgress from "@mui/material/CircularProgress"
+import IconButton from "@mui/material/IconButton"
+import Add from "@mui/icons-material/Add"
+import Remove from "@mui/icons-material/Remove"
 
 // styling
 import "./PlantCard.css"
 
-function PlantCard({ plant }) {
-  return (
-    <Card className="plant-card"
-          raised={true}
-          sx={{ width: 350, maxWidth: "90vw", minHeight: 530, maxHeight: 530 }}>
+const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddButton }) {
+  
+  const [selected, setSelected] = useState(false);
+  const selectPlant = () => {
+    setSelected(true);
+    console.log("selected " + plant.scientific);
+    setSelectedPlants((prevPlants) => prevPlants.concat(plant));
+  };
 
-      <CardMedia
-        component="img"
-        height="350"
-        image={plant.image ? plant.image.cardUrl : null}
-        alt={plant.image ? plant.common : null}
-      />
-      {plant.image ? (
-        <figcaption>
-          <AttributionPopover
-            caption={`© Photo by ${plant.image.author}`}
-            title={plant.image.title}
-            author={plant.image.author}
-            license={plant.image.license}
-            link={plant.image.licenseUrl}
-          />
-        </figcaption>
-      ) : null}
+  const unselectPlant = () => {
+    setSelected(false);
+    console.log("unselected " + plant.scientific);
+    setSelectedPlants((prevPlants) => {
+      return prevPlants.filter((existing) => existing.scientific !== plant.scientific)
+    });
+  };
+
+  return (
+    <Card className={"plant-card" + (selected ? " selected" : "")}
+          raised={true}
+          sx={{ width: 350, maxWidth: "90vw", minHeight: 540, maxHeight: 540, borderRadius: "12px" }}>
 
       <CardHeader title={plant.common} subheader={plant.scientific} />
+
+      <div className="plant-image-container">
+        { showAddButton !== false && (
+           selected ?
+            <IconButton size="small" className="add-plant-button" onClick={unselectPlant}>
+              <Remove />
+            </IconButton>
+            :
+            <IconButton size="small" className="add-plant-button" onClick={selectPlant}>
+              <Add />
+            </IconButton>
+        )}
+        
+        <CardMedia
+          component="img"
+          height="350"
+          image={plant.image ? plant.image.cardUrl : null}
+          alt={plant.image ? plant.common : null}
+        />
+        {plant.image ? (
+          <figcaption>
+            <AttributionPopover
+              caption={`© Photo by ${plant.image.author}`}
+              title={plant.image.title}
+              author={plant.image.author}
+              license={plant.image.license}
+              link={plant.image.licenseUrl}
+            />
+          </figcaption>
+        ) : null}
+      </div>
+
       <Grid container spacing={0}>
         <Grid item xs={6.25}>
           <CardContent>
+            <div className="highlight-container">
+              <Typography variant="body2" color="text.secondary">
+                {plant.highlights.map((highlight) => (
+                  <>
+                    <Highlight label={highlight.label} category={highlight.category}/>
+                    <br />
+                  </>
+                ))}
+              </Typography>
+            </div>
             <Typography variant="body2" color="text.secondary">
-              <div className="highlight-container">
-              {plant.highlights.map((highlight) => (
-                <>
-                  <Highlight label={highlight.label} category={highlight.category}/>
-                  <br />
-                </>
-              ))}
-              </div>
               {plant.wikiSource ? 
                   <a href={plant.wikiSource} target="_blank" rel="noreferrer">Wikipedia</a> 
                   : null}
@@ -81,6 +118,6 @@ function PlantCard({ plant }) {
       </Grid>
     </Card>
   );
-}
+})
 
 export default PlantCard;

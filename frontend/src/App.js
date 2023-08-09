@@ -2,6 +2,7 @@ import { Routes, Route } from "react-router-dom";
 
 // pages
 import Home from "./pages/Home/Home";
+import Garden from "./pages/Garden/Garden";
 import NavBar from "./components/NavBar/NavBar";
 import Footer from "./components/Footer/Footer";
 
@@ -16,6 +17,7 @@ function App() {
       <main>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/garden" element={<Garden />} />
         </Routes>
       </main>
 

@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
 import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
@@ -10,32 +9,30 @@ import Nursery from "../../components/Nursery/Nursery";
 // material ui & styling
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
+import Grid from "@mui/material/Grid";
 import "./Home.css";
 
+import { Link } from "react-router-dom";
+
 const Home = () => {
-  const [plants, setPlants] = useState([]);
+  const [plants, setPlants] = useState(new Map());
   const [nurseries, setNurseries] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState('welcome');
   const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
+  const [selectedPlants, setSelectedPlants] = useState([]);
+
+  const showMoreButton = plants.size >= maxPlantsToDisplay;
+  const showGardenButton = selectedPlants.length > 0;
+  const showSpinner = loading && plants.size < maxPlantsToDisplay;
+  const showSurvey = loading || plants.size > 0;
+
+  const plantsWithImages = Array.from(plants.values()).filter((plant) => plant.image);
 
   const onMoreClick = () => {
-    setMaxPlantsToDisplay((oldMax) => {
-      const newMax = oldMax + 12;
-
-      // This is a little non-obvious, but since we hide cards which lack
-      // images, it was possible that increasing the max by 12 wouldn't
-      // show 12 more.  This counts how many of the new plants are missing
-      // images, and adjusts the count a bit higher to ensure we always
-      // show multiples of 12.
-      const newPlants = plants.slice(oldMax, newMax);
-      const plantsWithoutImages = newPlants.filter(plant => !plant.image);
-      const numPlantsWithoutImages = plantsWithoutImages.length;
-
-      return newMax + numPlantsWithoutImages;
-    });
+    setMaxPlantsToDisplay((oldMax) => oldMax + 12);
   };
 
   return (
@@ -64,7 +61,7 @@ const Home = () => {
 
       <div className="alert-container" id="top-survey-alert">
       {
-        loading || plants.length > 0 ?
+        showSurvey ?
         <Alert severity="info">Help decide how Planting Life grows by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank" rel="noreferrer">sharing your thoughts</a>.</Alert>
         : null
       }
@@ -72,20 +69,33 @@ const Home = () => {
 
 
       <section className="card-container">
-        {plants.slice(0, maxPlantsToDisplay).map((plant, index) => (
-          plant.image ? <PlantCard plant={plant} key={index} /> 
-            : null
-        ))}
-
-        
-        {loading && plants.length < maxPlantsToDisplay ? <Spinner /> : null}
+        {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
+          <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants}/>
+       ))}
+        {showSpinner ? <Spinner /> : null}
         
       </section>
       
       <div className="more-container">
-        {plants.length >= maxPlantsToDisplay ?
-           <Button type="submit" onClick={onMoreClick}>Load More</Button> : null}
+        <Grid container justifyContent="center" spacing={2}>
+          {showMoreButton &&
+            <Grid item xs={12} sm={6}>
+              <Button className="more-button" 
+                      type="submit" 
+                      onClick={onMoreClick}>Load More</Button>
+            </Grid>
+          }
+          {showGardenButton &&
+            <Grid item xs={12} sm={6}>
+              <Link to="/garden" state={{plants: selectedPlants}}>
+                <Button className="garden-button" type="submit" >View My Garden</Button>
+              </Link>
+            </Grid>
+          }
+        </Grid>
+
       </div>
+
 
       {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
         <section className="card-container">
