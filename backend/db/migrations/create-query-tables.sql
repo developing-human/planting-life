@@ -21,9 +21,5 @@ CREATE TABLE IF NOT EXISTS queries_plants (
   CONSTRAINT QueryPlantsPlant FOREIGN KEY(plant_id) REFERENCES plants(id)
 );
 
---changeset doug:3
-ALTER TABLE queries
-ADD COLUMN count INT;
-
 --changeset doug:4
 UPDATE queries SET count = 0;

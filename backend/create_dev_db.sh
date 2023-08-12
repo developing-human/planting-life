@@ -6,11 +6,6 @@ then
     echo "docker is not installed, but is required"
     missing_prereq=1
 fi
-if ! command -v mysql &> /dev/null
-then
-    echo "mysql-client is not installed, but is required"
-    missing_prereq=1
-fi
 if ! command -v liquibase &> /dev/null
 then
     echo "liquibase is not installed, but is required"
@@ -63,9 +58,14 @@ done
 #                     at 'reading initial communication packet
 sleep 10 
 
+database_ip=`docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' planting_life_db`
+echo "planting_life_db's ip: $database_ip"
+
 echo ""
 echo "Setup db/users..."
-mysql -h 127.0.0.1 -u root --password=dev_password1235 -e "
+
+docker run -it --rm joseluisq/alpine-mysql-client \
+mysql -h $database_ip -u root --password=dev_password1235 -e "
    
   -- Create the planting_life database
   CREATE DATABASE planting_life;
