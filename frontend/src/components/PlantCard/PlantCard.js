@@ -19,15 +19,34 @@ import Remove from "@mui/icons-material/Remove"
 // styling
 import "./PlantCard.css"
 
-const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddButton }) {
+const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddButton, setPlants }) {
   
-  const [selected, setSelected] = useState(false);
+  const [selected, setSelected] = useState(plant.selected || false);
   const selectPlant = () => {
     setSelected(true);
     console.log("selected " + plant.scientific);
     setSelectedPlants((prevPlants) => prevPlants.concat(plant));
+
+    setPlants((prevPlants) => {
+      console.log("prevPlants: " + JSON.stringify(prevPlants));
+      //console.log("prevPlants.size(): " + prevPlants.size());
+      const found = prevPlants.get(plant.scientific);
+      if (found) {
+        console.log("found: " + JSON.stringify(found));
+        const newPlants = new Map(prevPlants);
+        newPlants[plant.scientific] = { ...found, selected: true};
+
+        console.log("updated plants: " + JSON.stringify(newPlants));
+
+        //console.log("newPlants.size(): " + newPlants.size());
+        return newPlants;
+      } else {
+        return prevPlants;
+      }
+    });
   };
 
+  //TODO: Similar for unselect... but maybe combine into a toggle function?
   const unselectPlant = () => {
     setSelected(false);
     console.log("unselected " + plant.scientific);

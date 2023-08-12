@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
 import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
@@ -11,17 +11,30 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import "./Home.css";
 
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const Home = () => {
-  const [plants, setPlants] = useState(new Map());
-  const [nurseries, setNurseries] = useState([]);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const state = window.history.state;
+  //console.log("state: " + JSON.stringify(window.history.state));
+  const [plants, setPlants] = useState(state?.plants || new Map());
+  const [nurseries, setNurseries] = useState(state?.nurseries || []);
+  const [selectedPlants, setSelectedPlants] = useState(state?.selectedPlants || []);
+  const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(state?.maxPlantsToDisplay || 12);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState('welcome');
-  const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
-  const [selectedPlants, setSelectedPlants] = useState([]);
+
+  const [isInitialized, setIsInitialized] = useState(false);
+  if (!isInitialized) {
+    console.log("Initializing");
+    setIsInitialized(true);
+  }
+
 
   const showMoreButton = plants.size >= maxPlantsToDisplay;
   const showGardenButton = selectedPlants.length > 0;
@@ -33,6 +46,22 @@ const Home = () => {
   const onMoreClick = () => {
     setMaxPlantsToDisplay((oldMax) => oldMax + 12);
   };
+
+
+  /*
+  useEffect(() => {
+    return () => {
+      console.log("replacing state with " + JSON.stringify(plants));
+      window.history.replaceState({ ...window.history.state, plants, nurseries, selectedPlants, maxPlantsToDisplay }, '');
+    }
+  }, [plants, nurseries, selectedPlants, maxPlantsToDisplay]);
+  */
+
+  const handleNavigateAway = () => {
+    window.history.replaceState({ ...window.history.state, plants, nurseries, selectedPlants, maxPlantsToDisplay }, '');
+    console.log("window.history.state: " + JSON.stringify(window.history.state));
+    navigate('/garden', { state: { selectedPlants} });
+  }
 
   return (
     <>
@@ -69,7 +98,7 @@ const Home = () => {
 
       <section className="card-container">
         {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
-          <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants}/>
+          <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
        ))}
         {showSpinner ? <Spinner /> : null}
         
@@ -84,12 +113,11 @@ const Home = () => {
       </div>
       <div className="button-container">
           {showGardenButton &&
-              <Link to="/garden" state={{plants: selectedPlants}}>
                 <Button className="garden-button" 
+                        onClick={handleNavigateAway}
                         type="submit">
                   View Selected ({selectedPlants.length})
                 </Button>
-              </Link>
           }
       </div>
 

@@ -9,10 +9,12 @@ import { useLocation } from 'react-router-dom';
 const Garden = () => {
   let { state } = useLocation();
 
+  console.log(JSON.stringify(state));
+
   return (
     <>
       <section className="card-container">
-        {state.plants.map((plant, index) => (
+        {state.selectedPlants.map((plant, index) => (
           plant.image ? <PlantCard plant={plant} key={index} showAddButton={false}/> 
             : null
         ))}
