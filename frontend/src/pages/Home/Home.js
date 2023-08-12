@@ -9,7 +9,6 @@ import Nursery from "../../components/Nursery/Nursery";
 // material ui & styling
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
-import Grid from "@mui/material/Grid";
 import "./Home.css";
 
 import { Link } from "react-router-dom";
@@ -76,24 +75,22 @@ const Home = () => {
         
       </section>
       
-      <div className="more-container">
-        <Grid container justifyContent="center" spacing={2}>
+      <div className="button-container">
           {showMoreButton &&
-            <Grid item xs={12} sm={6}>
               <Button className="more-button" 
                       type="submit" 
                       onClick={onMoreClick}>Load More</Button>
-            </Grid>
           }
+      </div>
+      <div className="button-container">
           {showGardenButton &&
-            <Grid item xs={12} sm={6}>
               <Link to="/garden" state={{plants: selectedPlants}}>
-                <Button className="garden-button" type="submit" >View My Garden</Button>
+                <Button className="garden-button" 
+                        type="submit">
+                  View Selected ({selectedPlants.length})
+                </Button>
               </Link>
-            </Grid>
           }
-        </Grid>
-
       </div>
 
 
