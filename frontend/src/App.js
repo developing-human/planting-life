@@ -21,8 +21,6 @@ function App() {
 
   //TODO: To restore search criteria, those need to be elevated too
 
-  //TODO: I need to make selected plants show as selected on returning
-
   //TODO: Selected plants should clear when searching again.
 
   return (

@@ -22,40 +22,34 @@ import "./PlantCard.css"
 const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddButton, setPlants }) {
   
   const [selected, setSelected] = useState(plant.selected || false);
-  const selectPlant = () => {
-    setSelected(true);
-    console.log("selected " + plant.scientific);
-    setSelectedPlants((prevPlants) => prevPlants.concat(plant));
+  const togglePlant = () => {
+    const newSelected = !selected;
+    // Set the state on the PlantCard, used for rendering
+    setSelected(newSelected);
 
-    /* TODO: Bring this back, I think... but use a list not a map.
-    setPlants((prevPlants) => {
-      console.log("prevPlants: " + JSON.stringify(prevPlants));
-      //console.log("prevPlants.size(): " + prevPlants.size());
-      const found = prevPlants.get(plant.scientific);
-      if (found) {
-        console.log("found: " + JSON.stringify(found));
-        const newPlants = new Map(prevPlants);
-        newPlants[plant.scientific] = { ...found, selected: true};
-
-        console.log("updated plants: " + JSON.stringify(newPlants));
-
-        //console.log("newPlants.size(): " + newPlants.size());
-        return newPlants;
+    // Add or remove from the list of selected plants
+    setSelectedPlants((prevPlants) => {
+      if (newSelected) {
+        return prevPlants.concat(plant)
       } else {
-        return prevPlants;
+        return prevPlants.filter((existing) => existing.scientific !== plant.scientific)
       }
     });
-    */
-  };
 
-  //TODO: Similar for unselect... but maybe combine into a toggle function?
-  const unselectPlant = () => {
-    setSelected(false);
-    console.log("unselected " + plant.scientific);
-    setSelectedPlants((prevPlants) => {
-      return prevPlants.filter((existing) => existing.scientific !== plant.scientific)
+    // Update plants state with the flag, this will be remembered when navigating
+    // back to Home from the Garden page.
+    setPlants((prevPlants) => {
+        const index = prevPlants.findIndex(p => p.scientific === plant.scientific);
+        if (index === -1) {
+          return prevPlants;
+        }
+
+        const newPlants = prevPlants.slice();
+        newPlants[index] = {...prevPlants[index], selected: newSelected };
+        return newPlants;
     });
   };
+
 
   return (
     <Card className={"plant-card" + (selected ? " selected" : "")}
@@ -67,11 +61,11 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
       <div className="plant-image-container">
         { showAddButton !== false && (
            selected ?
-            <IconButton size="small" className="add-plant-button" onClick={unselectPlant}>
+            <IconButton size="small" className="add-plant-button" onClick={togglePlant}>
               <Remove />
             </IconButton>
             :
-            <IconButton size="small" className="add-plant-button" onClick={selectPlant}>
+            <IconButton size="small" className="add-plant-button" onClick={togglePlant}>
               <Add />
             </IconButton>
         )}
