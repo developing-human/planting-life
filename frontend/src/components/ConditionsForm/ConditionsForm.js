@@ -14,7 +14,7 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants, setMaxPlantsToDisplay }) {
+function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants, setMaxPlantsToDisplay, setSelectedPlants }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -47,6 +47,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     setPlants([]);
     setMaxPlantsToDisplay(12);
     setNurseries([]);
+    setSelectedPlants([]);
     setLoading(true);
     setError(null);
     setInfoMessage(null);

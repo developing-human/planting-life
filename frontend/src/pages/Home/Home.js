@@ -39,6 +39,7 @@ const Home = ({plants, setPlants, nurseries, setNurseries, selectedPlants, setSe
                       setInfoMessage={setInfoMessage} 
                       setExpanded={setExpanded}
                       setMaxPlantsToDisplay={setMaxPlantsToDisplay}
+                      setSelectedPlants={setSelectedPlants}
                       plants={plants}/>
 
       <div className="accordion-container">

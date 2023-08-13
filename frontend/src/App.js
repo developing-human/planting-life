@@ -21,8 +21,6 @@ function App() {
 
   //TODO: To restore search criteria, those need to be elevated too
 
-  //TODO: Selected plants should clear when searching again.
-
   return (
     <div className="App">
       <NavBar />
