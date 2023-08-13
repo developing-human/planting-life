@@ -44,7 +44,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
   const handleSubmit = async (event) => {
     event.preventDefault();
     setExpanded(false);
-    setPlants(new Map());
+    setPlants([]);
     setMaxPlantsToDisplay(12);
     setNurseries([]);
     setLoading(true);

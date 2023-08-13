@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState } from "react";
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
 import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
@@ -11,99 +11,27 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import "./Home.css";
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-const Home = () => {
-  console.log("In Home");
-  const location = useLocation();
-  const navigate = useNavigate();
-  const containerRef = useRef();
-
-  const state = window.history.state;
-  const [plants, setPlants] = useState([]);
-  const [nurseries, setNurseries] = useState([]);
-  const [selectedPlants, setSelectedPlants] = useState([]);
-  const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
-
+const Home = ({plants, setPlants, nurseries, setNurseries, selectedPlants, setSelectedPlants, maxPlantsToDisplay, setMaxPlantsToDisplay}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState('welcome');
   
-  const handlePopState = useCallback(() => {
-    console.log("In handlePopState");
-    const state = window.history.state;
-    console.log("state: " + JSON.stringify(state));
-    if (state) {
-      console.log("Initializing from history");
-
-      console.log("Initializing plants: " + JSON.stringify(state.plants));
-      setPlants(new Map(state.plants));
-
-      console.log("Initializing nurseries: " + JSON.stringify(state.nurseries));
-      setNurseries(state.nurseries || []);
-
-      console.log("Initializing selectedPlants: " + JSON.stringify(state.selectedPlants));
-      setSelectedPlants(state.selectedPlants || []);
-
-      console.log("Initializing maxPlantsToDisplay: " + JSON.stringify(state.maxPlantsToDisplay));
-      setMaxPlantsToDisplay(state.maxPlantsToDisplay);
-
-      if (containerRef.current) {
-        console.log("Trying to set scroll position: " + state.scrollPosition);
-        containerRef.current.scrollTop = state.scrollPosition || 0;
-      }
-    }
-
-  }, [setPlants, setNurseries, setSelectedPlants, setMaxPlantsToDisplay]);
-
-  useEffect(() => {
-    console.log("In useEffect");
-
-    handlePopState();
-
-    window.addEventListener('popstate', handlePopState);
-
-    // Clean up the event listener when the component unmounts
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [handlePopState]);
-    
-
-
-  const showMoreButton = plants.size >= maxPlantsToDisplay;
+  const showMoreButton = plants.length >= maxPlantsToDisplay;
   const showGardenButton = selectedPlants.length > 0;
-  const showSpinner = loading && plants.size < maxPlantsToDisplay;
-  const showSurvey = loading || plants.size > 0;
+  const showSpinner = loading && plants.length < maxPlantsToDisplay;
+  const showSurvey = loading || plants.length > 0;
 
-  const plantsWithImages = Array.from(plants.values()).filter((plant) => plant.image);
+  const plantsWithImages = plants.filter((plant) => plant.image);
 
   const onMoreClick = () => {
     setMaxPlantsToDisplay((oldMax) => oldMax + 12);
   };
 
-  const handleNavigateAway = () => {
-    console.log("Navigating away... plants: " + JSON.stringify(plants.size));
-    console.log("Navigating away... plants: " + JSON.stringify(plants));
-    console.log("Navigating away... containerRef: " + (containerRef.current));
-    const plantArray = Array.from(plants.entries());
-    const stateToWrite = { 
-      plants: plantArray, 
-      nurseries: nurseries, 
-      selectedPlants: selectedPlants, 
-      maxPlantsToDisplay: maxPlantsToDisplay,
-      scrollPosition: containerRef.current?.scrollTop || 0
-    };
-    console.log("Navigating away... state to write: " + JSON.stringify(stateToWrite));
-    window.history.replaceState(stateToWrite, '');
-    //window.history.replaceState({ ...window.history.state, ...{ plants: plants, nurseries: nurseries, selectedPlants: selectedPlants, maxPlantsToDisplay: maxPlantsToDisplay }}, '');
-    console.log("window.history.state: " + JSON.stringify(window.history.state));
-    navigate('/garden', { state: { selectedPlants} });
-  }
-
   return (
-    <div ref={containerRef} id="hi">
+    <>
       <ConditionsForm setPlants={setPlants} 
                       setNurseries={setNurseries} 
                       setLoading={setLoading} 
@@ -152,11 +80,12 @@ const Home = () => {
       </div>
       <div className="button-container">
           {showGardenButton &&
+            <Link to="/garden" state={{plants: selectedPlants}}>
                 <Button className="garden-button" 
-                        onClick={handleNavigateAway}
                         type="submit">
                   View Selected ({selectedPlants.length})
                 </Button>
+            </Link>
           }
       </div>
 
@@ -169,7 +98,7 @@ const Home = () => {
           ))}
         </section>
       : null}
-    </div>
+    </>
   );
 };
 

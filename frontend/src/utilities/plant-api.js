@@ -10,12 +10,12 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
       let newPlant = JSON.parse(event.data);
       setPlants((prevPlants) => {
       
-        const existing = prevPlants.get(newPlant.scientific);
-        const newPlants = new Map(prevPlants);
-        if (existing === undefined) {
-          newPlants.set(newPlant.scientific, newPlant);
+        const index = prevPlants.findIndex(p => p.scientific === newPlant.scientific);
+        const newPlants = prevPlants.slice();
+        if (index === -1) {
+          newPlants.push(newPlant);
         } else {
-          newPlants.set(newPlant.scientific, {...existing, ...newPlant });
+          newPlants[index] = {...prevPlants[index], ...newPlant };
         }
 
         return newPlants;

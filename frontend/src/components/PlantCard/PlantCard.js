@@ -27,6 +27,7 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
     console.log("selected " + plant.scientific);
     setSelectedPlants((prevPlants) => prevPlants.concat(plant));
 
+    /* TODO: Bring this back, I think... but use a list not a map.
     setPlants((prevPlants) => {
       console.log("prevPlants: " + JSON.stringify(prevPlants));
       //console.log("prevPlants.size(): " + prevPlants.size());
@@ -44,6 +45,7 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
         return prevPlants;
       }
     });
+    */
   };
 
   //TODO: Similar for unselect... but maybe combine into a toggle function?
