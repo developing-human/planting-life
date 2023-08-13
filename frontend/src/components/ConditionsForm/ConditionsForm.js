@@ -14,32 +14,38 @@ import Button from "@mui/material/Button";
 // styling
 import "./ConditionsForm.css"
 
-function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfoMessage, setExpanded, plants, setMaxPlantsToDisplay, setSelectedPlants }) {
+function ConditionsForm({ 
+  searchCriteria, setSearchCriteria,
+  plants, setPlants, 
+  setNurseries, 
+  setLoading, 
+  setError, 
+  setInfoMessage, 
+  setExpanded, 
+  setMaxPlantsToDisplay, 
+  setSelectedPlants }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
   const defaultShade = shadeOptions[1];
   const defaultMoisture = moistureOptions[1];
 
-  const [zip, setZip] = useState("");
-  const [shade, setShade] = useState(defaultShade);
-  const [moisture, setMoisture] = useState(defaultMoisture);
   const [eventSource, setEventSource] = useState(null);
 
   const plantsRef = useRef(plants);
   plantsRef.current = plants;
 
-  const handleZipChange = (event) => {
-    setZip(event.target.value);
-  };
+  const handleZipChange = (event) => setSearchCriteria((prev) => {
+    return {...prev, zip: event.target.value};
+  });
 
-  const handleShadeChange = (newValue) => {
-    setShade(newValue);
-  };
+  const handleShadeChange = (newValue) => setSearchCriteria((prev) => {
+    return {...prev, shade: newValue};
+  });
 
-  const handleMoistureChange = (newValue) => {
-    setMoisture(newValue);
-  };
+  const handleMoistureChange = (newValue) => setSearchCriteria((prev) => {
+    return {...prev, moisture: newValue};
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -52,6 +58,8 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     setError(null);
     setInfoMessage(null);
 
+    console.log("Search criteria: " + JSON.stringify(searchCriteria));
+
     // A brief delay on this helps it scroll nicely, since the accordion will
     // have collapsed.
     setTimeout(() => {
@@ -59,9 +67,9 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
     }, 100);
 
     let formData = {
-      zip: zip,
-      shade: shade,
-      moisture: moisture,
+      zip: searchCriteria.zip,
+      shade: searchCriteria.shade || defaultShade,
+      moisture: searchCriteria.moisture || defaultMoisture,
     };
 
     // Try to close an existing eventSource, loading behaves weird if
@@ -72,14 +80,14 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
 
     sendRequest(formData, setPlants, setLoading, setError, setInfoMessage, setEventSource, () => {
       if (plantsRef.current.length === 0) {
-        setInfoMessage(`Can't find anything near ${zip} which thrives in ${shade} and ${moisture} moisture`);
+        setInfoMessage(`Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`);
       }
     });
 
     // This loads at the same time as plants, but logic elsewhere hides the 
     // nurseries until plants load enough for the screen to stop bouncing
     // around.
-    fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${formData.zip}`)
+    fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`)
       .then(response => response.json())
       .then(nurseries => setNurseries(nurseries))
       .catch(error => console.error('Error: ', error));
@@ -96,6 +104,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
             <TextField
               id="zip"
               label="Zip Code"
+              value={searchCriteria.zip}
               variant="outlined"
               onChange={handleZipChange}
               required
@@ -120,7 +129,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
               label="Shade"
               options={shadeOptions}
               onChange={handleShadeChange}
-              value={shade}
+              value={searchCriteria.shade || defaultShade}
             />
           </Grid>
           <Grid item xs={12} sm={4}>
@@ -129,7 +138,7 @@ function ConditionsForm({ setPlants, setNurseries, setLoading, setError, setInfo
               label="Moisture"
               options={moistureOptions}
               onChange={handleMoistureChange}
-              value={moisture}
+              value={searchCriteria.moisture || defaultMoisture}
             />
           </Grid>
           <Grid item>

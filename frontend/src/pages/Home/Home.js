@@ -13,7 +13,13 @@ import "./Home.css";
 
 import { Link } from "react-router-dom";
 
-const Home = ({plants, setPlants, nurseries, setNurseries, selectedPlants, setSelectedPlants, maxPlantsToDisplay, setMaxPlantsToDisplay}) => {
+const Home = ({
+  plants, setPlants, 
+  nurseries, setNurseries, 
+  selectedPlants, setSelectedPlants, 
+  maxPlantsToDisplay, setMaxPlantsToDisplay,
+  searchCriteria, setSearchCriteria
+}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
@@ -32,7 +38,9 @@ const Home = ({plants, setPlants, nurseries, setNurseries, selectedPlants, setSe
 
   return (
     <>
-      <ConditionsForm setPlants={setPlants} 
+      <ConditionsForm searchCriteria={searchCriteria}
+                      setSearchCriteria={setSearchCriteria} 
+                      setPlants={setPlants} 
                       setNurseries={setNurseries} 
                       setLoading={setLoading} 
                       setError={setError} 

@@ -18,8 +18,11 @@ function App() {
   const [nurseries, setNurseries] = useState([]);
   const [selectedPlants, setSelectedPlants] = useState([]);
   const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
+  const [searchCriteria, setSearchCriteria] = useState({});
 
-  //TODO: To restore search criteria, those need to be elevated too
+  //TODO: Not a common scenario... but it could be worth differentiating
+  //      between "search criteria" (what is currently in the box) and
+  //      "searched criteria" (what was in the box for the last search)
 
   return (
     <div className="App">
@@ -29,12 +32,15 @@ function App() {
         <Routes>
           <Route path="/" element={<Home plants={plants} 
                                          setPlants={setPlants} 
+                                         searchCriteria={searchCriteria} 
+                                         setSearchCriteria={setSearchCriteria} 
                                          nurseries={nurseries} 
                                          setNurseries={setNurseries} 
                                          selectedPlants={selectedPlants} 
                                          setSelectedPlants={setSelectedPlants} 
                                          maxPlantsToDisplay={maxPlantsToDisplay} 
                                          setMaxPlantsToDisplay={setMaxPlantsToDisplay} />
+
           } />
           <Route path="/garden" element={<Garden />} />
         </Routes>
