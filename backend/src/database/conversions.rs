@@ -1,5 +1,6 @@
 use crate::domain::*;
 use mysql_async::{prelude::FromRow, FromRowError};
+use std::str::FromStr;
 
 impl FromRow for Nursery {
     fn from_row_opt(row: mysql_async::Row) -> Result<Self, FromRowError>
@@ -95,6 +96,33 @@ impl FromRow for Plant {
             }),
             highlights: vec![],
             done_loading: false,
+        })
+    }
+}
+
+impl FromRow for Garden {
+    fn from_row_opt(row: mysql_async::Row) -> Result<Self, FromRowError>
+    where
+        Self: Sized,
+    {
+        let (name, description, zipcode, region_name, shade, moisture, read_only) =
+            mysql_async::from_row_opt(row)?;
+
+        let moisture: String = moisture;
+        let moisture =
+            Moisture::from_str(&moisture).expect("gardens.moisture should have valid values");
+
+        let shade: String = shade;
+        let shade = Shade::from_str(&shade).expect("gardens.shade should have valid values");
+        Ok(Garden {
+            name,
+            description,
+            zipcode,
+            region_name,
+            shade,
+            moisture,
+            read_only,
+            plants: vec![],
         })
     }
 }

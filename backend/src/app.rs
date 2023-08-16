@@ -8,6 +8,7 @@ use crate::{
     ai::openai::OpenAI,
     citations::Citations,
     controllers::{
+        gardens::{create_garden_handler, read_garden_handler, GardensController},
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
@@ -21,6 +22,7 @@ use actix_web::{web, App, HttpServer};
 use mockall_double::double;
 
 pub struct PlantingLifeApp {
+    pub gardens_controller: GardensController,
     pub plant_controller: PlantController,
     pub nursery_controller: NurseriesController,
 }
@@ -42,6 +44,7 @@ impl PlantingLifeApp {
         let selector = Selector::new(db, ai);
 
         Self {
+            gardens_controller: GardensController { db },
             plant_controller: PlantController {
                 db,
                 hydrator,
@@ -63,6 +66,8 @@ impl PlantingLifeApp {
                 .app_data(web::Data::new(self))
                 .service(fetch_plants_handler)
                 .service(fetch_nurseries_handler)
+                .service(read_garden_handler)
+                .service(create_garden_handler)
         })
         .bind("0.0.0.0:8080")?
         .run()

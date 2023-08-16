@@ -395,6 +395,104 @@ WHERE z.zipcode = ?"
             .await
             .map_err(|e| anyhow!(e))
     }
+
+    pub async fn select_garden_by_id(
+        &self,
+        id: &str,
+        read_only: bool,
+    ) -> anyhow::Result<Option<Garden>> {
+        let mut conn = self.get_connection().await?;
+
+        let id_field_name = if read_only { "read_id" } else { "write_id" };
+
+        format!(
+            "
+SELECT name, description, zipcode, r.name, shades, moistures, {read_only}
+FROM gardens g
+INNER JOIN zipcodes z ON z.zipcode = g.zipcode
+INNER JOIN regions r ON r.id = z.region_id
+WHERE {id_field_name} = ?"
+        )
+        .with((id,))
+        .first(&mut conn)
+        .await
+        .map_err(|e| anyhow!(e))
+    }
+
+    pub async fn select_plants_by_garden_id(
+        &self,
+        garden_id: &str,
+        read_only: bool,
+    ) -> anyhow::Result<Vec<Plant>> {
+        let mut conn = self.get_connection().await?;
+
+        let id_field_name = if read_only { "read_id" } else { "write_id" };
+
+        format!(
+            r"
+SELECT
+  p.id, p.scientific_name, p.common_name,
+  p.bloom, p.height, p.spread,
+  p.moistures, p.shades,
+  p.pollinator_rating,
+  p.bird_rating,
+  p.spread_rating, p.deer_resistance_rating,
+  p.usda_source, p.wiki_source,
+  i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
+FROM plants p
+INNER JOIN gardens_plants gp on gp.plant_id = p.id
+INNER JOIN gardens g on g.id = gp.garden_id
+LEFT JOIN images i ON i.id = p.image_id
+WHERE g.{id_field_name} = :garden_id
+ORDER BY gp.order
+"
+        )
+        .with(params! {
+            "garden_id" => garden_id,
+        })
+        .map(&mut conn, |plant: Plant| plant)
+        .await
+        .map_err(|e| anyhow!(e))
+    }
+
+    /// Inserts a Garden (but not the plants!), returning its id.
+    pub async fn insert_garden(
+        &self,
+        garden: &Garden,
+        read_id: &str,
+        write_id: &str,
+    ) -> anyhow::Result<usize> {
+        todo!("")
+    }
+
+    /// Updates an existing Garden (but not the plants!).
+    pub async fn update_garden(
+        &self,
+        write_id: &str,
+        name: &str,
+        description: &str,
+    ) -> anyhow::Result<usize> {
+        todo!("")
+    }
+
+    /// Checks if a read_id or write_id already exists.
+    /// Note: Currently untested/unused.
+    pub async fn _check_garden_id_exists(&self, id: &str, field: &str) -> anyhow::Result<bool> {
+        let mut conn = self.get_connection().await?;
+        let query_result: Result<Option<u8>, mysql_async::Error> =
+            format!("SELECT 1 from gardens where {field} = :id")
+                .with(params! {
+                    "id" => id,
+                })
+                .first(&mut conn)
+                .await;
+
+        match query_result {
+            Ok(Some(_)) => Ok(true),
+            Ok(None) => Ok(false),
+            Err(e) => Err(anyhow!("select from gardens failed: {e}")),
+        }
+    }
 }
 
 fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {

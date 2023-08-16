@@ -42,7 +42,8 @@ function App() {
                                          setMaxPlantsToDisplay={setMaxPlantsToDisplay} />
 
           } />
-          <Route path="/garden" element={<Garden />} />
+          <Route path="/gardens" element={<Garden />} />
+          <Route path="/gardens/:id" element={<Garden />} />
         </Routes>
       </main>
 

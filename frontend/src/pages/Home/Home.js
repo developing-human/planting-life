@@ -89,7 +89,7 @@ const Home = ({
       </div>
       <div className="button-container">
           {showGardenButton &&
-            <Link to="/garden" state={{plants: selectedPlants}}>
+            <Link to="/gardens" state={{plants: selectedPlants}}>
                 <Button className="garden-button" 
                         type="submit">
                   View Selected ({selectedPlants.length})
