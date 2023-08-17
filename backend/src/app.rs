@@ -8,7 +8,9 @@ use crate::{
     ai::openai::OpenAI,
     citations::Citations,
     controllers::{
-        gardens::{create_garden_handler, read_garden_handler, GardensController},
+        gardens::{
+            create_garden_handler, read_garden_handler, update_garden_handler, GardensController,
+        },
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{fetch_plants_handler, PlantController},
     },
@@ -70,6 +72,7 @@ impl PlantingLifeApp {
                 .service(fetch_nurseries_handler)
                 .service(read_garden_handler)
                 .service(create_garden_handler)
+                .service(update_garden_handler)
         })
         .bind("0.0.0.0:8080")?
         .run()

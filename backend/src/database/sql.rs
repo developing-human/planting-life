@@ -492,7 +492,7 @@ ORDER BY gp.ordering
 
         r"UPDATE gardens
               SET name = :name,
-                  description = :description,
+                  description = :description
               WHERE write_id = :write_id"
             .with(params! {
                 "write_id" => write_id,
