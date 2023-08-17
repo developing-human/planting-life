@@ -25,16 +25,16 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub pollinator_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub bird_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub spread_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub deer_resistance_rating: Option<u8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -49,6 +49,7 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spread: Option<String>,
 
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub highlights: Vec<Highlight>,
 
     pub done_loading: bool,
@@ -239,6 +240,7 @@ pub enum HighlightCategory {
 
 /// A named collection of plants, which knows where it is native and the conditions
 /// it will thrive in.
+#[derive(Serialize)]
 pub struct Garden {
     /// The plants in this garden
     pub plants: Vec<Plant>,

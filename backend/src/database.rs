@@ -230,13 +230,16 @@ impl Database {
         let read_id = self.get_unique_garden_read_id().await?;
         let write_id = self.get_unique_garden_write_id().await?;
 
-        let garden_id = self
-            .sql_runner
+        self.sql_runner
             .insert_garden(garden, &read_id, &write_id)
             .await
             .map_err(|e| anyhow!("save_new_garden failed: {e}"))?;
 
-        match self.replace_garden_plants(garden_id, plant_ids).await {
+        match self
+            .sql_runner
+            .replace_garden_plants(&write_id, plant_ids)
+            .await
+        {
             Ok(()) => Ok((read_id, write_id)),
             Err(e) => Err(anyhow!("save_new_garden failed to replace plants: {e}")),
         }
@@ -250,23 +253,15 @@ impl Database {
         description: &str,
         plant_ids: Vec<usize>,
     ) -> anyhow::Result<()> {
-        let garden_id = self
-            .sql_runner
+        self.sql_runner
             .update_garden(write_id, name, description)
             .await
             .map_err(|e| anyhow!("save_existing_garden failed: {e}"))?;
 
-        self.replace_garden_plants(garden_id, plant_ids)
+        self.sql_runner
+            .replace_garden_plants(write_id, plant_ids)
             .await
             .map_err(|e| anyhow!("save_new_garden failed to replace plants: {e}"))
-    }
-
-    async fn replace_garden_plants(
-        &self,
-        garden_id: usize,
-        plant_ids: Vec<usize>,
-    ) -> anyhow::Result<()> {
-        todo!()
     }
 
     /// Generates a unique read id, ensuring it is not already used as the read_id

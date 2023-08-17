@@ -43,8 +43,10 @@ impl PlantingLifeApp {
         let hydrator = Hydrator::new(ai, flickr, citations, highlights);
         let selector = Selector::new(db, ai);
 
+        let highlights = Highlights {};
+
         Self {
-            gardens_controller: GardensController { db },
+            gardens_controller: GardensController { db, highlights },
             plant_controller: PlantController {
                 db,
                 hydrator,

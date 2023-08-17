@@ -407,7 +407,7 @@ WHERE z.zipcode = ?"
 
         format!(
             "
-SELECT name, description, zipcode, r.name, shades, moistures, {read_only}
+SELECT g.name, description, g.zipcode, r.name, shade, moisture, {read_only}
 FROM gardens g
 INNER JOIN zipcodes z ON z.zipcode = g.zipcode
 INNER JOIN regions r ON r.id = z.region_id
@@ -444,7 +444,7 @@ INNER JOIN gardens_plants gp on gp.plant_id = p.id
 INNER JOIN gardens g on g.id = gp.garden_id
 LEFT JOIN images i ON i.id = p.image_id
 WHERE g.{id_field_name} = :garden_id
-ORDER BY gp.order
+ORDER BY gp.ordering
 "
         )
         .with(params! {
@@ -462,7 +462,23 @@ ORDER BY gp.order
         read_id: &str,
         write_id: &str,
     ) -> anyhow::Result<usize> {
-        todo!("")
+        let mut conn = self.get_connection().await?;
+        r"INSERT INTO gardens (read_id, write_id, name, description, shade, moisture, zipcode)
+            VALUES (:read_id, :write_id, :name, :description, :shade, :moisture, :zipcode)
+            RETURNING id"
+            .with(params! {
+                "read_id" => read_id,
+                "write_id" => write_id,
+                "name" => &garden.name,
+                "description" => &garden.description,
+                "shade" => garden.shade.to_string(),
+                "moisture" => garden.moisture.to_string(),
+                "zipcode" => &garden.zipcode,
+            })
+            .fetch(&mut conn)
+            .await
+            .map(|ids| ids[0])
+            .map_err(|e| anyhow!("insert_garden failed: {}", e))
     }
 
     /// Updates an existing Garden (but not the plants!).
@@ -471,10 +487,65 @@ ORDER BY gp.order
         write_id: &str,
         name: &str,
         description: &str,
-    ) -> anyhow::Result<usize> {
-        todo!("")
+    ) -> anyhow::Result<()> {
+        let mut conn = self.get_connection().await?;
+
+        r"UPDATE gardens
+              SET name = :name,
+                  description = :description,
+              WHERE write_id = :write_id"
+            .with(params! {
+                "write_id" => write_id,
+
+                "name" => name,
+                "description" => description,
+
+            })
+            .ignore(&mut conn)
+            .await
+            .map_err(|e| anyhow!("update_garden failed: {}", e))
     }
 
+    pub async fn replace_garden_plants(
+        &self,
+        write_id: &str,
+        plant_ids: Vec<usize>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.get_connection().await?;
+        let mut transaction = conn
+            .start_transaction(mysql_async::TxOpts::default())
+            .await?;
+
+        "DELETE gp FROM gardens_plants gp
+            INNER JOIN gardens g on g.id = gp.garden_id
+            WHERE write_id = :write_id"
+            .with(params! {
+                "write_id" => write_id
+            })
+            .ignore(&mut transaction)
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants delete failed: {e}"))?;
+
+        "INSERT INTO gardens_plants (garden_id, plant_id, ordering)
+           VALUES ((SELECT id from gardens where write_id = :write_id), :plant_id, :ordering)"
+            .with(plant_ids.iter().enumerate().map(|(ordering, id)| {
+                params! {
+                    "write_id" => write_id,
+                    "plant_id" => id,
+                    "ordering" => ordering
+                }
+            }))
+            .batch(&mut transaction)
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants insert failed: {e}"))?;
+
+        transaction
+            .commit()
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants commit failed: {e}"))
+    }
+
+    /*
     /// Checks if a read_id or write_id already exists.
     /// Note: Currently untested/unused.
     pub async fn _check_garden_id_exists(&self, id: &str, field: &str) -> anyhow::Result<bool> {
@@ -493,6 +564,7 @@ ORDER BY gp.order
             Err(e) => Err(anyhow!("select from gardens failed: {e}")),
         }
     }
+    */
 }
 
 fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {

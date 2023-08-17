@@ -108,6 +108,9 @@ impl FromRow for Garden {
         let (name, description, zipcode, region_name, shade, moisture, read_only) =
             mysql_async::from_row_opt(row)?;
 
+        let zipcode: usize = zipcode;
+        let zipcode = format!("{zipcode:05}");
+
         let moisture: String = moisture;
         let moisture =
             Moisture::from_str(&moisture).expect("gardens.moisture should have valid values");
