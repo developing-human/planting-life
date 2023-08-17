@@ -15,7 +15,6 @@ use crate::{
 struct GardensPostRequest {
     plant_ids: Vec<usize>,
     name: String,
-    description: String,
     zipcode: String,
     moisture: Moisture,
     shade: Shade,
@@ -25,7 +24,6 @@ struct GardensPostRequest {
 struct GardensPutRequest {
     plant_ids: Vec<usize>,
     name: String,
-    description: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -49,7 +47,6 @@ impl GardensController {
 
         let garden = Garden::empty(
             payload.name,
-            payload.description,
             payload.zipcode,
             payload.shade,
             payload.moisture,
@@ -72,12 +69,7 @@ impl GardensController {
 
         match self
             .db
-            .save_existing_garden(
-                write_id,
-                &payload.name,
-                &payload.description,
-                payload.plant_ids,
-            )
+            .save_existing_garden(write_id, &payload.name, payload.plant_ids)
             .await
         {
             Ok(()) => actix_web::HttpResponse::Ok().body(""),

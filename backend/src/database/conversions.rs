@@ -105,7 +105,7 @@ impl FromRow for Garden {
     where
         Self: Sized,
     {
-        let (name, description, zipcode, region_name, shade, moisture, read_only) =
+        let (name, zipcode, region_name, shade, moisture, read_only) =
             mysql_async::from_row_opt(row)?;
 
         let zipcode: usize = zipcode;
@@ -119,7 +119,6 @@ impl FromRow for Garden {
         let shade = Shade::from_str(&shade).expect("gardens.shade should have valid values");
         Ok(Garden {
             name,
-            description,
             zipcode,
             region_name,
             shade,

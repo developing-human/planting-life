@@ -248,9 +248,6 @@ pub struct Garden {
     /// A short name for this garden, defaulted to something reasonable but changable
     pub name: String,
 
-    /// A description for this garden, provided by a user
-    pub description: String,
-
     /// The zipcode this garden was created in
     pub zipcode: String,
 
@@ -269,16 +266,9 @@ pub struct Garden {
 
 impl Garden {
     /// Creates a Garden without plants or region_name
-    pub fn empty(
-        name: String,
-        description: String,
-        zipcode: String,
-        shade: Shade,
-        moisture: Moisture,
-    ) -> Self {
+    pub fn empty(name: String, zipcode: String, shade: Shade, moisture: Moisture) -> Self {
         Self {
             name,
-            description,
             zipcode,
             shade,
             moisture,

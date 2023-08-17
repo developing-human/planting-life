@@ -407,7 +407,7 @@ WHERE z.zipcode = ?"
 
         format!(
             "
-SELECT g.name, description, g.zipcode, r.name, shade, moisture, {read_only}
+SELECT g.name, g.zipcode, r.name, shade, moisture, {read_only}
 FROM gardens g
 INNER JOIN zipcodes z ON z.zipcode = g.zipcode
 INNER JOIN regions r ON r.id = z.region_id
@@ -463,14 +463,13 @@ ORDER BY gp.ordering
         write_id: &str,
     ) -> anyhow::Result<usize> {
         let mut conn = self.get_connection().await?;
-        r"INSERT INTO gardens (read_id, write_id, name, description, shade, moisture, zipcode)
-            VALUES (:read_id, :write_id, :name, :description, :shade, :moisture, :zipcode)
+        r"INSERT INTO gardens (read_id, write_id, name, shade, moisture, zipcode)
+            VALUES (:read_id, :write_id, :name, :shade, :moisture, :zipcode)
             RETURNING id"
             .with(params! {
                 "read_id" => read_id,
                 "write_id" => write_id,
                 "name" => &garden.name,
-                "description" => &garden.description,
                 "shade" => garden.shade.to_string(),
                 "moisture" => garden.moisture.to_string(),
                 "zipcode" => &garden.zipcode,
@@ -482,23 +481,16 @@ ORDER BY gp.ordering
     }
 
     /// Updates an existing Garden (but not the plants!).
-    pub async fn update_garden(
-        &self,
-        write_id: &str,
-        name: &str,
-        description: &str,
-    ) -> anyhow::Result<()> {
+    pub async fn update_garden(&self, write_id: &str, name: &str) -> anyhow::Result<()> {
         let mut conn = self.get_connection().await?;
 
         r"UPDATE gardens
-              SET name = :name,
-                  description = :description
+              SET name = :name
               WHERE write_id = :write_id"
             .with(params! {
                 "write_id" => write_id,
 
-                "name" => name,
-                "description" => description,
+                "name" => name
 
             })
             .ignore(&mut conn)

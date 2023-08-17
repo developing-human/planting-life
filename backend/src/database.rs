@@ -250,11 +250,10 @@ impl Database {
         &self,
         write_id: &str,
         name: &str,
-        description: &str,
         plant_ids: Vec<usize>,
     ) -> anyhow::Result<()> {
         self.sql_runner
-            .update_garden(write_id, name, description)
+            .update_garden(write_id, name)
             .await
             .map_err(|e| anyhow!("save_existing_garden failed: {e}"))?;
 
