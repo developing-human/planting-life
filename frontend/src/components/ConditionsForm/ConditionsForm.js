@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 // components
 import DropdownSelect from "../DropdownSelect/DropdownSelect";
@@ -47,6 +47,17 @@ function ConditionsForm({
     return {...prev, moisture: newValue};
   });
 
+  // On page load, set the default values in the search criteria
+  useEffect(() => {
+    setSearchCriteria((prev) => {
+      return {
+        zip: prev.zip || "", 
+        shade: prev.shade || defaultShade, 
+        moisture: prev.moisture || defaultMoisture
+      }
+    })
+  }, [setSearchCriteria, defaultShade, defaultMoisture]);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     setExpanded(false);
@@ -57,8 +68,6 @@ function ConditionsForm({
     setLoading(true);
     setError(null);
     setInfoMessage(null);
-
-    console.log("Search criteria: " + JSON.stringify(searchCriteria));
 
     // A brief delay on this helps it scroll nicely, since the accordion will
     // have collapsed.

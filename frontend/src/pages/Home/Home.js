@@ -11,7 +11,7 @@ import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import "./Home.css";
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Home = ({
   plants, setPlants, 
@@ -34,6 +34,30 @@ const Home = ({
 
   const onMoreClick = () => {
     setMaxPlantsToDisplay((oldMax) => oldMax + 12);
+  };
+
+  const navigate = useNavigate();
+  const onViewGardenClick = () => {
+    console.log("hi mom", JSON.stringify(searchCriteria));
+    fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        zipcode: searchCriteria.zip,
+        shade: searchCriteria.shade,
+        moisture: searchCriteria.moisture,
+        plant_ids: selectedPlants.map((p) => p.id)
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      //TODO: Pass nurseries, search criteria, region_name, zipcode, read_id
+      navigate(`gardens/${data.write_id}`, {state: {plants: selectedPlants}});
+    })
+    //TODO: Better error handling?
+    .catch(error => console.error("Error:", error));
   };
 
   return (
@@ -88,13 +112,19 @@ const Home = ({
           }
       </div>
       <div className="button-container">
-          {showGardenButton &&
             <Link to="/gardens" state={{plants: selectedPlants}}>
                 <Button className="garden-button" 
                         type="submit">
-                  View Selected ({selectedPlants.length})
+                  View Garden ({selectedPlants.length})
                 </Button>
             </Link>
+
+          {showGardenButton &&
+            <Button className="garden-button" 
+                    type="submit"
+                    onClick={onViewGardenClick}>
+              View Garden ({selectedPlants.length})
+            </Button>
           }
       </div>
 
