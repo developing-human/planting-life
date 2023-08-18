@@ -14,7 +14,6 @@ use crate::{
 #[derive(Serialize, Deserialize, Debug)]
 struct GardensPostRequest {
     plant_ids: Vec<usize>,
-    name: String,
     zipcode: String,
     moisture: Moisture,
     shade: Shade,
@@ -30,6 +29,8 @@ struct GardensPutRequest {
 struct GardensPostResponse {
     read_id: String,
     write_id: String,
+    name: String,
+    region_name: String,
 }
 
 pub struct GardensController {
@@ -45,15 +46,22 @@ impl GardensController {
     async fn create(&self, payload: GardensPostRequest) -> impl Responder {
         info!("{payload:?}");
 
-        let garden = Garden::empty(
-            payload.name,
-            payload.zipcode,
-            payload.shade,
-            payload.moisture,
-        );
+        let region_name = self
+            .db
+            .get_region_name_by_zip(&payload.zipcode)
+            .await
+            .unwrap_or_else(|| format!("Near Zipcode {}", payload.zipcode));
+
+        let name = format!("Native Garden near {region_name}");
+        let garden = Garden::empty(name, payload.zipcode, payload.shade, payload.moisture);
 
         let response = match self.db.save_new_garden(&garden, payload.plant_ids).await {
-            Ok((read_id, write_id)) => GardensPostResponse { read_id, write_id },
+            Ok((read_id, write_id)) => GardensPostResponse {
+                read_id,
+                write_id,
+                region_name,
+                name: garden.name,
+            },
             Err(e) => {
                 warn!("Error saving garden: {e}");
                 return actix_web::HttpResponse::InternalServerError()
@@ -81,6 +89,8 @@ impl GardensController {
     }
 
     async fn read(&self, id: &str) -> impl Responder {
+        info!("GardensGetRequest id: {id}");
+
         // Fetch the garden, then populate the highlights on each plant
         let garden = self.db.get_garden(id).await.map(|g| Garden {
             plants: g
