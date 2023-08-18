@@ -20,7 +20,7 @@ use crate::{
     selector::Selector,
 };
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_web::{http::header, web, App, HttpServer};
 use mockall_double::double;
 
 pub struct PlantingLifeApp {
@@ -60,10 +60,19 @@ impl PlantingLifeApp {
 
     pub async fn start(&'static self) -> std::io::Result<()> {
         HttpServer::new(move || {
-            let cors = Cors::default()
-                .allowed_origin("https://www.planting.life")
-                .allowed_origin("https://planting.life")
-                .allowed_methods(vec!["GET"]);
+            let mut cors = Cors::default()
+                .allowed_methods(vec!["GET", "POST"])
+                .allowed_header(header::CONTENT_TYPE);
+
+            // In dev, allow localhost
+            // In prod, allow planting.life
+            if cfg!(debug_assertions) {
+                cors = cors.allowed_origin("http://localhost:3000")
+            } else {
+                cors = cors
+                    .allowed_origin("https://www.planting.life")
+                    .allowed_origin("https://planting.life")
+            }
 
             App::new()
                 .wrap(cors)
