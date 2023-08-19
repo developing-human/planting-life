@@ -13,13 +13,12 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import "./Home.css";
 
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Home = ({
   plants, setPlants, 
@@ -143,7 +142,7 @@ const Home = ({
         <CustomTabPanel value={selectedTab} index={0}>
           <section className="card-container">
             {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
-              <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
+              <PlantCard plant={plant} key={plant.id} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
            ))}
             {showSpinner ? <Spinner /> : null}
             
@@ -161,7 +160,7 @@ const Home = ({
           <section className="card-container">
             {selectedPlants.map((plant, index) => (
               <PlantCard plant={plant} 
-                         key={index} 
+                         key={plant.id}
                          setSelectedPlants={setSelectedPlants} 
                          showAddButton={false}
                          setPlants={setPlants}/>
@@ -198,7 +197,7 @@ function CustomTabPanel(props) {
     >
       {value === index && (
         <Box sx={{ p: 3 }}>
-          <Typography>{children}</Typography>
+          {children}
         </Box>
       )}
     </div>

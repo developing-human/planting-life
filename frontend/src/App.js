@@ -18,7 +18,7 @@ function App() {
   const [nurseries, setNurseries] = useState([]);
   const [selectedPlants, setSelectedPlants] = useState([]);
   const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
-  const [searchCriteria, setSearchCriteria] = useState({});
+  const [searchCriteria, setSearchCriteria] = useState({zip: ""});
 
   //TODO: Not a common scenario... but it could be worth differentiating
   //      between "search criteria" (what is currently in the box) and

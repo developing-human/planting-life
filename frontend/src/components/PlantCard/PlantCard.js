@@ -95,10 +95,10 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
             <div className="highlight-container">
               <Typography variant="body2" color="text.secondary">
                 {plant.highlights.map((highlight) => (
-                  <>
-                    <Highlight label={highlight.label} category={highlight.category}/>
+                  <span key={plant.id + "-" + highlight.label}>
+                    <Highlight label={highlight.label} category={highlight.category} />
                     <br />
-                  </>
+                  </span>
                 ))}
               </Typography>
             </div>
@@ -123,9 +123,9 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
 
               {plant.doneLoading ? 
                 null : 
-                <div className="card-loading">
+                <span className="card-loading">
                   <CircularProgress size={20} color="success"/>
-                </div>
+                </span>
               }
             </Typography>
           </CardContent>
