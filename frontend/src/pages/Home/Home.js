@@ -104,11 +104,11 @@ const Home = ({
                     sx={{maxWidth: "1000px", margin: "auto"}}
                     variant="fullWidth">
                 <Tab icon={<Search />} label="DISCOVER" />
-                <Tab disabled={selectedPlants.length == 0} icon={<Badge badgeContent={selectedPlants.length} color="success">
+                <Tab disabled={selectedPlants.length === 0} icon={<Badge badgeContent={selectedPlants.length} color="success">
                              <YardIcon />
                            </Badge>} 
                      label="MY GARDEN" />
-                <Tab icon={<Badge badgeContent={nurseries.length} color="success">
+                <Tab disabled={nurseries.length === 0} icon={<Badge badgeContent={nurseries.length} color="success">
                              <StorefrontIcon />
                            </Badge>} 
                      label="Nurseries" />
