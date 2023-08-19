@@ -21,7 +21,6 @@
 }
 
 .button-container {
-  width: 95vw;
   max-width: 825px;
   margin: auto;
   display: flex;

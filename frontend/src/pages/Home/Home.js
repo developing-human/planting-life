@@ -9,6 +9,7 @@ import Nursery from "../../components/Nursery/Nursery";
 // material ui & styling
 import YardIcon from '@mui/icons-material/Yard'
 import Search from '@mui/icons-material/Search'
+import StorefrontIcon from '@mui/icons-material/Storefront'
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Badge from '@mui/material/Badge';
@@ -33,9 +34,9 @@ const Home = ({
   const [expanded, setExpanded] = useState('welcome');
   
   const showMoreButton = plants.length >= maxPlantsToDisplay;
-  const showGardenButton = selectedPlants.length > 0;
   const showSpinner = loading && plants.length < maxPlantsToDisplay;
   const showSurvey = loading || plants.length > 0;
+  const showTabs = loading || plants.length > 0 || nurseries.length > 0;
 
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -120,65 +121,70 @@ const Home = ({
       </div>
 
 
-      <div id="tab-container">
-        <div style={{position: "sticky", 
-                     top: 0, 
-                     backgroundColor: "white", 
-                     paddingTop: "5px",
-                     zIndex: 1}}>
-          <Tabs value={selectedTab} 
-                onChange={handleTabChange} 
-                aria-label="icon label tabs example" 
-                centered 
-                sx={{maxWidth: "1000px", margin: "auto"}}
-                variant="fullWidth">
-            <Tab icon={<Search />} label="DISCOVER" />
-            <Tab icon={<Badge badgeContent={selectedPlants.length} color="success">
-                         <YardIcon />
-                       </Badge>} 
-                 label="MY GARDEN" />
-          </Tabs>
-        </div>
-        <CustomTabPanel value={selectedTab} index={0}>
-          <section className="card-container">
-            {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
-              <PlantCard plant={plant} key={plant.id} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
-           ))}
-            {showSpinner ? <Spinner /> : null}
-            
-          </section>
-        
-          <div className="button-container">
-              {showMoreButton &&
-                  <Button className="more-button" 
-                          type="submit" 
-                          onClick={onMoreClick}>Load More</Button>
-              }
+      {
+        showTabs ?
+        <div id="tab-container">
+          <div style={{position: "sticky", 
+                       top: 0, 
+                       backgroundColor: "white", 
+                       paddingTop: "5px",
+                       zIndex: 1}}>
+            <Tabs value={selectedTab} 
+                  onChange={handleTabChange} 
+                  aria-label="icon label tabs example" 
+                  centered 
+                  sx={{maxWidth: "1000px", margin: "auto"}}
+                  variant="fullWidth">
+              <Tab icon={<Search />} label="DISCOVER" />
+              <Tab disabled={selectedPlants.length == 0} icon={<Badge badgeContent={selectedPlants.length} color="success">
+                           <YardIcon />
+                         </Badge>} 
+                   label="MY GARDEN" />
+              <Tab icon={<Badge badgeContent={nurseries.length} color="success">
+                           <StorefrontIcon />
+                         </Badge>} 
+                   label="Nurseries" />
+            </Tabs>
           </div>
-        </CustomTabPanel>
-        <CustomTabPanel value={selectedTab} index={1}>
-          <section className="card-container">
-            {selectedPlants.map((plant, index) => (
-              <PlantCard plant={plant} 
-                         key={plant.id}
-                         setSelectedPlants={setSelectedPlants} 
-                         showAddButton={false}
-                         setPlants={setPlants}/>
-           ))}
-            {showSpinner ? <Spinner /> : null}
-            
-          </section>
-        </CustomTabPanel>
-      </div>
-
-      {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
-        <section className="card-container">
-          <h1>Native Nurseries Near You</h1>
-          {nurseries.map((nursery, index) => (
-            <Nursery nursery={nursery} key={index} />
-          ))}
-        </section>
-      : null}
+          <CustomTabPanel value={selectedTab} index={0}>
+            <section className="card-container">
+              {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
+                <PlantCard plant={plant} key={plant.id} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
+             ))}
+              {showSpinner ? <Spinner /> : null}
+              
+            </section>
+          
+            <div className="button-container">
+                {showMoreButton &&
+                    <Button className="more-button" 
+                            type="submit" 
+                            onClick={onMoreClick}>Load More</Button>
+                }
+            </div>
+          </CustomTabPanel>
+          <CustomTabPanel value={selectedTab} index={1}>
+            <section className="card-container">
+              {selectedPlants.map((plant, index) => (
+                <PlantCard plant={plant} 
+                           key={plant.id}
+                           setSelectedPlants={setSelectedPlants} 
+                           showAddButton={false}
+                           setPlants={setPlants}/>
+             ))}
+              {showSpinner ? <Spinner /> : null}
+              
+            </section>
+          </CustomTabPanel>
+          <CustomTabPanel value={selectedTab} index={2}>
+            <section className="card-container">
+              {nurseries.map((nursery, index) => (
+                <Nursery nursery={nursery} key={index} />
+              ))}
+            </section>
+          </CustomTabPanel>
+        </div> : null
+      }
     </>
   );
 };
