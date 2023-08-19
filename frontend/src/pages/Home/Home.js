@@ -92,10 +92,12 @@ const Home = ({
     <>
         <div id="tab-container">
           { showTabs ? 
-            <div style={{position: "sticky", 
+            <Box sx={{position: "sticky", 
                          top: 0, 
                          backgroundColor: "white", 
                          paddingTop: "2px",
+                         borderBottom: 1, 
+                         borderColor: 'divider',
                          zIndex: 5}}>
               <Tabs value={selectedTab} 
                     onChange={handleTabChange} 
@@ -113,7 +115,7 @@ const Home = ({
                            </Badge>} 
                      label="Nurseries" />
               </Tabs>
-            </div> : null
+            </Box> : null
           }
           <CustomTabPanel value={selectedTab} index={0}>
       <ConditionsForm searchCriteria={searchCriteria}
