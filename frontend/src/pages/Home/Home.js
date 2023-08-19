@@ -7,6 +7,14 @@ import PlantCard from "../../components/PlantCard/PlantCard";
 import Nursery from "../../components/Nursery/Nursery";
 
 // material ui & styling
+import YardIcon from '@mui/icons-material/Yard'
+import Search from '@mui/icons-material/Search'
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import Badge from '@mui/material/Badge';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+
 import Alert from "@mui/material/Alert";
 import Button from "@mui/material/Button";
 import "./Home.css";
@@ -30,15 +38,31 @@ const Home = ({
   const showSpinner = loading && plants.length < maxPlantsToDisplay;
   const showSurvey = loading || plants.length > 0;
 
+  const [selectedTab, setSelectedTab] = useState(0);
+
   const plantsWithImages = plants.filter((plant) => plant.image);
 
   const onMoreClick = () => {
     setMaxPlantsToDisplay((oldMax) => oldMax + 12);
   };
 
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedTab(newValue);
+
+    // Find the top of the tab container
+    const element = document.getElementById('tab-container');
+    const elementPosition = element.getBoundingClientRect().top;
+
+    // If its negative, its above the top of the viewport and we need to scroll
+    // up to the top when changing tabs.
+    if (elementPosition < 0) {
+      const offsetPosition = elementPosition + window.pageYOffset;
+      window.scrollTo({top: offsetPosition});
+    }
+  };
+
   const navigate = useNavigate();
   const onViewGardenClick = () => {
-    console.log("hi mom", JSON.stringify(searchCriteria));
     fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens`, {
       method: 'POST',
       headers: {
@@ -93,41 +117,60 @@ const Home = ({
         <Alert severity="info">Help decide how Planting Life grows by <a href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link" target="_blank" rel="noreferrer">sharing your thoughts</a>.</Alert>
         : null
       }
+
       </div>
 
 
-      <section className="card-container">
-        {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
-          <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
-       ))}
-        {showSpinner ? <Spinner /> : null}
+      <div id="tab-container">
+        <div style={{position: "sticky", 
+                     top: 0, 
+                     backgroundColor: "white", 
+                     paddingTop: "5px",
+                     zIndex: 1}}>
+          <Tabs value={selectedTab} 
+                onChange={handleTabChange} 
+                aria-label="icon label tabs example" 
+                centered 
+                sx={{maxWidth: "1000px", margin: "auto"}}
+                variant="fullWidth">
+            <Tab icon={<Search />} label="DISCOVER" />
+            <Tab icon={<Badge badgeContent={selectedPlants.length} color="success">
+                         <YardIcon />
+                       </Badge>} 
+                 label="MY GARDEN" />
+          </Tabs>
+        </div>
+        <CustomTabPanel value={selectedTab} index={0}>
+          <section className="card-container">
+            {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
+              <PlantCard plant={plant} key={index} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
+           ))}
+            {showSpinner ? <Spinner /> : null}
+            
+          </section>
         
-      </section>
-      
-      <div className="button-container">
-          {showMoreButton &&
-              <Button className="more-button" 
-                      type="submit" 
-                      onClick={onMoreClick}>Load More</Button>
-          }
+          <div className="button-container">
+              {showMoreButton &&
+                  <Button className="more-button" 
+                          type="submit" 
+                          onClick={onMoreClick}>Load More</Button>
+              }
+          </div>
+        </CustomTabPanel>
+        <CustomTabPanel value={selectedTab} index={1}>
+          <section className="card-container">
+            {selectedPlants.map((plant, index) => (
+              <PlantCard plant={plant} 
+                         key={index} 
+                         setSelectedPlants={setSelectedPlants} 
+                         showAddButton={false}
+                         setPlants={setPlants}/>
+           ))}
+            {showSpinner ? <Spinner /> : null}
+            
+          </section>
+        </CustomTabPanel>
       </div>
-      <div className="button-container">
-            <Link to="/gardens" state={{plants: selectedPlants}}>
-                <Button className="garden-button" 
-                        type="submit">
-                  View Garden ({selectedPlants.length})
-                </Button>
-            </Link>
-
-          {showGardenButton &&
-            <Button className="garden-button" 
-                    type="submit"
-                    onClick={onViewGardenClick}>
-              View Garden ({selectedPlants.length})
-            </Button>
-          }
-      </div>
-
 
       {nurseries && nurseries.length > 0 && (plants.length >= 12 || !loading) ?
         <section className="card-container">
@@ -140,5 +183,27 @@ const Home = ({
     </>
   );
 };
+
+
+function CustomTabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          <Typography>{children}</Typography>
+        </Box>
+      )}
+    </div>
+  );
+}
+
 
 export default Home;
