@@ -72,7 +72,14 @@ function ConditionsForm({
     // A brief delay on this helps it scroll nicely, since the accordion will
     // have collapsed.
     setTimeout(() => {
-      document.getElementById("top-survey-alert").scrollIntoView({behavior: 'smooth'});
+      // Find the top of the tab container
+      const element = document.getElementById("top-survey-alert");
+      const elementPosition = element.getBoundingClientRect().top;
+
+      // If its negative, its above the top of the viewport and we need to scroll
+      // up to the top when changing tabs.
+      const offsetPosition = elementPosition + window.pageYOffset - 75;
+      window.scrollTo({top: offsetPosition, behavior: 'smooth'});
     }, 100);
 
     let formData = {

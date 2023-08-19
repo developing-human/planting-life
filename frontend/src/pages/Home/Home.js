@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 // components
 import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
 import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
@@ -48,18 +48,22 @@ const Home = ({
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
+  };
 
+  useEffect(() => {
+    const elementId = selectedTab === 0 ? 'discover-cards' : 'tab-container';
+    const extraOffset = selectedTab === 0 ? -90 : 0;
+    console.log(selectedTab);
+    console.log(elementId);
     // Find the top of the tab container
-    const element = document.getElementById('tab-container');
+    const element = document.getElementById(elementId);
     const elementPosition = element.getBoundingClientRect().top;
 
     // If its negative, its above the top of the viewport and we need to scroll
     // up to the top when changing tabs.
-    if (elementPosition < 0) {
-      const offsetPosition = elementPosition + window.pageYOffset;
-      window.scrollTo({top: offsetPosition});
-    }
-  };
+    const offsetPosition = elementPosition + window.pageYOffset + extraOffset;
+    window.scrollTo({top: offsetPosition});
+  }, [selectedTab])
 
   const navigate = useNavigate();
   const onViewGardenClick = () => {
@@ -86,6 +90,32 @@ const Home = ({
 
   return (
     <>
+        <div id="tab-container">
+          { showTabs ? 
+            <div style={{position: "sticky", 
+                         top: 0, 
+                         backgroundColor: "white", 
+                         paddingTop: "2px",
+                         zIndex: 5}}>
+              <Tabs value={selectedTab} 
+                    onChange={handleTabChange} 
+                    aria-label="icon label tabs example" 
+                    centered 
+                    sx={{maxWidth: "1000px", margin: "auto"}}
+                    variant="fullWidth">
+                <Tab icon={<Search />} label="DISCOVER" />
+                <Tab disabled={selectedPlants.length == 0} icon={<Badge badgeContent={selectedPlants.length} color="success">
+                             <YardIcon />
+                           </Badge>} 
+                     label="MY GARDEN" />
+                <Tab icon={<Badge badgeContent={nurseries.length} color="success">
+                             <StorefrontIcon />
+                           </Badge>} 
+                     label="Nurseries" />
+              </Tabs>
+            </div> : null
+          }
+          <CustomTabPanel value={selectedTab} index={0}>
       <ConditionsForm searchCriteria={searchCriteria}
                       setSearchCriteria={setSearchCriteria} 
                       setPlants={setPlants} 
@@ -121,33 +151,7 @@ const Home = ({
       </div>
 
 
-      {
-        showTabs ?
-        <div id="tab-container">
-          <div style={{position: "sticky", 
-                       top: 0, 
-                       backgroundColor: "white", 
-                       paddingTop: "5px",
-                       zIndex: 1}}>
-            <Tabs value={selectedTab} 
-                  onChange={handleTabChange} 
-                  aria-label="icon label tabs example" 
-                  centered 
-                  sx={{maxWidth: "1000px", margin: "auto"}}
-                  variant="fullWidth">
-              <Tab icon={<Search />} label="DISCOVER" />
-              <Tab disabled={selectedPlants.length == 0} icon={<Badge badgeContent={selectedPlants.length} color="success">
-                           <YardIcon />
-                         </Badge>} 
-                   label="MY GARDEN" />
-              <Tab icon={<Badge badgeContent={nurseries.length} color="success">
-                           <StorefrontIcon />
-                         </Badge>} 
-                   label="Nurseries" />
-            </Tabs>
-          </div>
-          <CustomTabPanel value={selectedTab} index={0}>
-            <section className="card-container">
+            <section className="card-container" id="discover-cards">
               {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
                 <PlantCard plant={plant} key={plant.id} setSelectedPlants={setSelectedPlants} setPlants={setPlants}/>
              ))}
@@ -183,8 +187,7 @@ const Home = ({
               ))}
             </section>
           </CustomTabPanel>
-        </div> : null
-      }
+        </div>
     </>
   );
 };
