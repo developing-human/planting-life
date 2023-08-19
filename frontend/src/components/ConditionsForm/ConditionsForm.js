@@ -79,7 +79,7 @@ function ConditionsForm({
       // If its negative, its above the top of the viewport and we need to scroll
       // up to the top when changing tabs.
       const offsetPosition = elementPosition + window.pageYOffset - 75;
-      window.scrollTo({top: offsetPosition, behavior: 'smooth'});
+      window.scrollTo({top: offsetPosition, behavior: 'auto'});
     }, 100);
 
     let formData = {

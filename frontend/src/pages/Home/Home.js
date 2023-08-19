@@ -51,6 +51,12 @@ const Home = ({
   };
 
   useEffect(() => {
+    // Don't scroll if tabs aren't shown.  Without this, it scrolls down when
+    // the page loads on small screens.
+    if (!showTabs) {
+      return;
+    }
+
     const elementId = selectedTab === 0 ? 'discover-cards' : 'tab-container';
     const extraOffset = selectedTab === 0 ? -90 : 0;
     console.log(selectedTab);
@@ -63,7 +69,7 @@ const Home = ({
     // up to the top when changing tabs.
     const offsetPosition = elementPosition + window.pageYOffset + extraOffset;
     window.scrollTo({top: offsetPosition});
-  }, [selectedTab])
+  }, [selectedTab, showTabs])
 
   const navigate = useNavigate();
   const onViewGardenClick = () => {
