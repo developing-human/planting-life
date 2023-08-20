@@ -15,8 +15,6 @@ import Button from "@mui/material/Button";
 import "./ConditionsForm.css";
 
 function ConditionsForm({
-  searchCriteria,
-  setSearchCriteria,
   plants,
   setPlants,
   setNurseries,
@@ -26,6 +24,9 @@ function ConditionsForm({
   setExpanded,
   setMaxPlantsToDisplay,
   setSelectedPlants,
+  setLastSearchedCriteria,
+  searchCriteria,
+  setSearchCriteria,
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -93,6 +94,8 @@ function ConditionsForm({
       shade: searchCriteria.shade || defaultShade,
       moisture: searchCriteria.moisture || defaultMoisture,
     };
+
+    setLastSearchedCriteria(formData);
 
     // Try to close an existing eventSource, loading behaves weird if
     // two EventSources are open at the same time.

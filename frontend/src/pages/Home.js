@@ -16,25 +16,13 @@ import "./Home.css";
 
 import { useNavigate } from "react-router-dom";
 
-const Home = ({
-  plants,
-  setPlants,
-  nurseries,
-  setNurseries,
-  selectedPlants,
-  setSelectedPlants,
-  maxPlantsToDisplay,
-  setMaxPlantsToDisplay,
-  searchCriteria,
-  setSearchCriteria,
-}) => {
-  //TODO: These two could be defined further down if I had a better way to
-  //      determine if search has been clicked yet.  I think setting
-  //      "lastSearchedCriteria" could be a lot more clearer and solves other
-  //      problems too.
-
-  const [loading, setLoading] = useState(false);
-  const showTabs = loading || plants.length > 0 || nurseries.length > 0;
+const Home = () => {
+  const [searchCriteria, setSearchCriteria] = useState({ zip: "" });
+  const [lastSearchedCriteria, setLastSearchedCriteria] = useState(null);
+  const [plants, setPlants] = useState([]);
+  const [selectedPlants, setSelectedPlants] = useState([]);
+  const showTabs = lastSearchedCriteria != null;
+  const [nurseries, setNurseries] = useState([]);
 
   const [selectedTab, setSelectedTab] = useState(0);
 
@@ -71,9 +59,9 @@ const Home = ({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        zipcode: searchCriteria.zip,
-        shade: searchCriteria.shade,
-        moisture: searchCriteria.moisture,
+        zipcode: lastSearchedCriteria.zip,
+        shade: lastSearchedCriteria.shade,
+        moisture: lastSearchedCriteria.moisture,
         plant_ids: selectedPlants.map((p) => p.id),
       }),
     })
@@ -139,12 +127,9 @@ const Home = ({
             setPlants={setPlants}
             setNurseries={setNurseries}
             setSelectedPlants={setSelectedPlants}
-            maxPlantsToDisplay={maxPlantsToDisplay}
-            setMaxPlantsToDisplay={setMaxPlantsToDisplay}
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
-            loading={loading}
-            setLoading={setLoading}
+            setLastSearchedCriteria={setLastSearchedCriteria}
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={1}>
@@ -155,7 +140,6 @@ const Home = ({
                 key={plant.id}
                 setSelectedPlants={setSelectedPlants}
                 showAddButton={false}
-                setPlants={setPlants}
               />
             ))}
           </section>

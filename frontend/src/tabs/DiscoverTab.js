@@ -15,15 +15,15 @@ const DiscoverTab = ({
   setPlants,
   setNurseries,
   setSelectedPlants,
-  maxPlantsToDisplay,
-  setMaxPlantsToDisplay,
   searchCriteria,
   setSearchCriteria,
+  setLastSearchedCriteria,
 }) => {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState("welcome");
+  const [loading, setLoading] = useState(false);
+  const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
 
   const showMoreButton = plants.length >= maxPlantsToDisplay;
   const showSpinner = loading && plants.length < maxPlantsToDisplay;
@@ -38,8 +38,7 @@ const DiscoverTab = ({
   return (
     <>
       <ConditionsForm
-        searchCriteria={searchCriteria}
-        setSearchCriteria={setSearchCriteria}
+        setLastSearchedCriteria={setLastSearchedCriteria}
         setPlants={setPlants}
         setNurseries={setNurseries}
         setLoading={setLoading}
@@ -49,6 +48,8 @@ const DiscoverTab = ({
         setMaxPlantsToDisplay={setMaxPlantsToDisplay}
         setSelectedPlants={setSelectedPlants}
         plants={plants}
+        searchCriteria={searchCriteria}
+        setSearchCriteria={setSearchCriteria}
       />
 
       <div className="accordion-container">
