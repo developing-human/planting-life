@@ -2,6 +2,7 @@ use crate::domain::*;
 use anyhow::anyhow;
 use mockall::automock;
 use mockall_double::double;
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::collections::HashSet;
 use tracing::log::warn;
 
@@ -180,6 +181,110 @@ impl Database {
         }
     }
 
+    /// Fetches a garden by id.  The id may be the read_id or write_id.
+    pub async fn get_garden(&self, id: &str) -> Option<Garden> {
+        let mut garden = match self.sql_runner.select_garden_by_id(id, true).await {
+            Ok(Some(garden)) => Some(garden),
+            Ok(None) => None,
+            Err(e) => {
+                warn!("get_garden failed to select by read_id: {e}");
+                None
+            }
+        };
+
+        if garden.is_none() {
+            garden = match self.sql_runner.select_garden_by_id(id, false).await {
+                Ok(Some(garden)) => Some(garden),
+                Ok(None) => None,
+                Err(e) => {
+                    warn!("get_garden failed to select by write_id: {e}");
+                    None
+                }
+            }
+        }
+
+        // Unwrap garden, returning None if it wasn't found
+        let garden = garden?;
+
+        let plants = match self
+            .sql_runner
+            .select_plants_by_garden_id(id, garden.read_only)
+            .await
+        {
+            Ok(plants) => plants,
+            Err(e) => {
+                warn!("get_garden failed to select plants by garden id: {e}");
+                vec![]
+            }
+        };
+
+        Some(Garden { plants, ..garden })
+    }
+
+    /// Saves a new garden, returning the read_id and write_id.
+    pub async fn save_new_garden(
+        &self,
+        garden: &Garden,
+        plant_ids: Vec<usize>,
+    ) -> anyhow::Result<(String, String)> {
+        let read_id = self.get_unique_garden_read_id().await?;
+        let write_id = self.get_unique_garden_write_id().await?;
+
+        self.sql_runner
+            .insert_garden(garden, &read_id, &write_id)
+            .await
+            .map_err(|e| anyhow!("save_new_garden failed: {e}"))?;
+
+        match self
+            .sql_runner
+            .replace_garden_plants(&write_id, plant_ids)
+            .await
+        {
+            Ok(()) => Ok((read_id, write_id)),
+            Err(e) => Err(anyhow!("save_new_garden failed to replace plants: {e}")),
+        }
+    }
+
+    /// Updates an existing garden, returning an empty result.
+    pub async fn save_existing_garden(
+        &self,
+        write_id: &str,
+        name: &str,
+        plant_ids: Vec<usize>,
+    ) -> anyhow::Result<()> {
+        self.sql_runner
+            .update_garden(write_id, name)
+            .await
+            .map_err(|e| anyhow!("save_existing_garden failed: {e}"))?;
+
+        self.sql_runner
+            .replace_garden_plants(write_id, plant_ids)
+            .await
+            .map_err(|e| anyhow!("save_new_garden failed to replace plants: {e}"))
+    }
+
+    /// Generates a unique read id, ensuring it is not already used as the read_id
+    /// for an existing Garden.
+    async fn get_unique_garden_read_id(&self) -> anyhow::Result<String> {
+        let proposed_read_id = generate_random_string(5);
+
+        //TODO: Check that it doesn't exist.  If it does,  try again.
+        //      For now... odds of collision are very low :)
+
+        Ok(proposed_read_id)
+    }
+
+    /// Generates a unique read id, ensuring it is not already used as the write_id
+    /// for an existing Garden.
+    async fn get_unique_garden_write_id(&self) -> anyhow::Result<String> {
+        let proposed_write_id = generate_random_string(20);
+
+        //TODO: Check that it doesn't exist.  If it does,  try again.
+        //      For now... odds of collision are very low :)
+
+        Ok(proposed_write_id)
+    }
+
     /// Fetches the region name for a zipcodes.
     /// Returns None if not found or if there is a database error.
     pub async fn get_region_name_by_zip(&self, zip: &str) -> Option<String> {
@@ -195,6 +300,13 @@ impl Database {
             }
         }
     }
+}
+
+fn generate_random_string(length: u8) -> String {
+    let mut rng = thread_rng();
+    (0..length)
+        .map(|_| rng.sample(Alphanumeric) as char)
+        .collect()
 }
 
 #[cfg(test)]

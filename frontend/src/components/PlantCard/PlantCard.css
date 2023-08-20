@@ -2,7 +2,7 @@ figcaption {
   font-size: 8px;
   padding: 2px;
   max-width: fit-content;
-  margin-top: -23px;
+  margin-top: -24px;
   margin-left: auto;
   margin-right: 3px;
 }
@@ -18,7 +18,7 @@ figcaption a {
     display: flex;
     justify-content: flex-end;
     margin-top: -8px;
-    margin-right: -2px;
+    margin-right: -6px;
 }
 
 .highlight-container {
@@ -35,14 +35,35 @@ figcaption a {
 }
 
 .plant-card .MuiCardHeader-root {
-    padding-left: 10px;
-    padding-bottom: 0px;
+    padding-left: 15px;
+    padding-bottom: 6px;
 }
 
 .plant-card .MuiCardContent-root {
-    padding-top: 10px;
+    padding-top: 17px;
 }
 
-.plant-card .MuiGrid-root {
-    background-color: #fafafa;
+.plant-card.selected {
+    background-color: #a9ff89;
+}
+
+.plant-image-container {
+    position: relative;
+}
+
+button.add-plant-button {
+    background-color: #4caf50;
+    color: white;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: solid;
+    border-width: 2px;
+    border-color: white;
+    border-style: solid;
+}
+
+button:hover.add-plant-button {
+    background-color: #4caf50;
+    color: white;
 }

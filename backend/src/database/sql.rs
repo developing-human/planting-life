@@ -395,6 +395,168 @@ WHERE z.zipcode = ?"
             .await
             .map_err(|e| anyhow!(e))
     }
+
+    pub async fn select_garden_by_id(
+        &self,
+        id: &str,
+        read_only: bool,
+    ) -> anyhow::Result<Option<Garden>> {
+        let mut conn = self.get_connection().await?;
+
+        let id_field_name = if read_only { "read_id" } else { "write_id" };
+
+        format!(
+            "
+SELECT g.name, g.zipcode, r.name, shade, moisture, {read_only}
+FROM gardens g
+INNER JOIN zipcodes z ON z.zipcode = g.zipcode
+INNER JOIN regions r ON r.id = z.region_id
+WHERE {id_field_name} = ?"
+        )
+        .with((id,))
+        .first(&mut conn)
+        .await
+        .map_err(|e| anyhow!(e))
+    }
+
+    pub async fn select_plants_by_garden_id(
+        &self,
+        garden_id: &str,
+        read_only: bool,
+    ) -> anyhow::Result<Vec<Plant>> {
+        let mut conn = self.get_connection().await?;
+
+        let id_field_name = if read_only { "read_id" } else { "write_id" };
+
+        format!(
+            r"
+SELECT
+  p.id, p.scientific_name, p.common_name,
+  p.bloom, p.height, p.spread,
+  p.moistures, p.shades,
+  p.pollinator_rating,
+  p.bird_rating,
+  p.spread_rating, p.deer_resistance_rating,
+  p.usda_source, p.wiki_source,
+  i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
+FROM plants p
+INNER JOIN gardens_plants gp on gp.plant_id = p.id
+INNER JOIN gardens g on g.id = gp.garden_id
+LEFT JOIN images i ON i.id = p.image_id
+WHERE g.{id_field_name} = :garden_id
+ORDER BY gp.ordering
+"
+        )
+        .with(params! {
+            "garden_id" => garden_id,
+        })
+        .map(&mut conn, |plant: Plant| plant)
+        .await
+        .map_err(|e| anyhow!(e))
+    }
+
+    /// Inserts a Garden (but not the plants!), returning its id.
+    pub async fn insert_garden(
+        &self,
+        garden: &Garden,
+        read_id: &str,
+        write_id: &str,
+    ) -> anyhow::Result<usize> {
+        let mut conn = self.get_connection().await?;
+        r"INSERT INTO gardens (read_id, write_id, name, shade, moisture, zipcode)
+            VALUES (:read_id, :write_id, :name, :shade, :moisture, :zipcode)
+            RETURNING id"
+            .with(params! {
+                "read_id" => read_id,
+                "write_id" => write_id,
+                "name" => &garden.name,
+                "shade" => garden.shade.to_string(),
+                "moisture" => garden.moisture.to_string(),
+                "zipcode" => &garden.zipcode,
+            })
+            .fetch(&mut conn)
+            .await
+            .map(|ids| ids[0])
+            .map_err(|e| anyhow!("insert_garden failed: {}", e))
+    }
+
+    /// Updates an existing Garden (but not the plants!).
+    pub async fn update_garden(&self, write_id: &str, name: &str) -> anyhow::Result<()> {
+        let mut conn = self.get_connection().await?;
+
+        r"UPDATE gardens
+              SET name = :name
+              WHERE write_id = :write_id"
+            .with(params! {
+                "write_id" => write_id,
+
+                "name" => name
+
+            })
+            .ignore(&mut conn)
+            .await
+            .map_err(|e| anyhow!("update_garden failed: {}", e))
+    }
+
+    pub async fn replace_garden_plants(
+        &self,
+        write_id: &str,
+        plant_ids: Vec<usize>,
+    ) -> anyhow::Result<()> {
+        let mut conn = self.get_connection().await?;
+        let mut transaction = conn
+            .start_transaction(mysql_async::TxOpts::default())
+            .await?;
+
+        "DELETE gp FROM gardens_plants gp
+            INNER JOIN gardens g on g.id = gp.garden_id
+            WHERE write_id = :write_id"
+            .with(params! {
+                "write_id" => write_id
+            })
+            .ignore(&mut transaction)
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants delete failed: {e}"))?;
+
+        "INSERT INTO gardens_plants (garden_id, plant_id, ordering)
+           VALUES ((SELECT id from gardens where write_id = :write_id), :plant_id, :ordering)"
+            .with(plant_ids.iter().enumerate().map(|(ordering, id)| {
+                params! {
+                    "write_id" => write_id,
+                    "plant_id" => id,
+                    "ordering" => ordering
+                }
+            }))
+            .batch(&mut transaction)
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants insert failed: {e}"))?;
+
+        transaction
+            .commit()
+            .await
+            .map_err(|e| anyhow!("replace_garden_plants commit failed: {e}"))
+    }
+
+    /*
+    /// Checks if a read_id or write_id already exists.
+    /// Note: Currently untested/unused.
+    pub async fn _check_garden_id_exists(&self, id: &str, field: &str) -> anyhow::Result<bool> {
+        let mut conn = self.get_connection().await?;
+        let query_result: Result<Option<u8>, mysql_async::Error> =
+            format!("SELECT 1 from gardens where {field} = :id")
+                .with(params! {
+                    "id" => id,
+                })
+                .first(&mut conn)
+                .await;
+
+        match query_result {
+            Ok(Some(_)) => Ok(true),
+            Ok(None) => Ok(false),
+            Err(e) => Err(anyhow!("select from gardens failed: {e}")),
+        }
+    }
+    */
 }
 
 fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {

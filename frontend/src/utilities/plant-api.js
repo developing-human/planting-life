@@ -9,6 +9,7 @@ export default async function sendRequest(formData, setPlants, setLoading, setEr
     sse.addEventListener("plant", (event) => {
       let newPlant = JSON.parse(event.data);
       setPlants((prevPlants) => {
+      
         const index = prevPlants.findIndex(p => p.scientific === newPlant.scientific);
         const newPlants = prevPlants.slice();
         if (index === -1) {

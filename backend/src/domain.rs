@@ -25,16 +25,16 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub pollinator_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub bird_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub spread_rating: Option<u8>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(skip_serializing)]
     pub deer_resistance_rating: Option<u8>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -49,6 +49,7 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub spread: Option<String>,
 
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     pub highlights: Vec<Highlight>,
 
     pub done_loading: bool,
@@ -87,11 +88,8 @@ impl Plant {
             shades: other.shades.clone(),
             bloom: other.bloom.clone().or(self.bloom.clone()),
             image: other.image.clone().or(self.image.clone()),
-            pollinator_rating: other
-                .pollinator_rating
-                .clone()
-                .or(self.pollinator_rating.clone()),
-            bird_rating: other.bird_rating.clone().or(self.bird_rating.clone()),
+            pollinator_rating: other.pollinator_rating.or(self.pollinator_rating),
+            bird_rating: other.bird_rating.or(self.bird_rating),
             spread_rating: other.spread_rating.or(self.spread_rating),
             deer_resistance_rating: other.deer_resistance_rating.or(self.deer_resistance_rating),
             usda_source: other.usda_source.clone().or(self.usda_source.clone()),
@@ -238,6 +236,47 @@ pub enum HighlightCategory {
     Bad,
     #[serde(rename = "worse")]
     Worse,
+}
+
+/// A named collection of plants, which knows where it is native and the conditions
+/// it will thrive in.
+#[derive(Serialize)]
+pub struct Garden {
+    /// The plants in this garden
+    pub plants: Vec<Plant>,
+
+    /// A short name for this garden, defaulted to something reasonable but changable
+    pub name: String,
+
+    /// The zipcode this garden was created in
+    pub zipcode: String,
+
+    /// The name of the region this garden was created in
+    pub region_name: Option<String>,
+
+    /// Shade condition this Garden will thrive in
+    pub shade: Shade,
+
+    /// Moisture condition this Garden will thrive in
+    pub moisture: Moisture,
+
+    /// Is this instance read only in the UI?
+    pub read_only: bool,
+}
+
+impl Garden {
+    /// Creates a Garden without plants or region_name
+    pub fn empty(name: String, zipcode: String, shade: Shade, moisture: Moisture) -> Self {
+        Self {
+            name,
+            zipcode,
+            shade,
+            moisture,
+            plants: vec![],
+            region_name: None,
+            read_only: true,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]

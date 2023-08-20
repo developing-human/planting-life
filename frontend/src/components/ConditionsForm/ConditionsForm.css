@@ -4,19 +4,13 @@ form {
   padding-inline: 10px;
 }
 
-button[type="submit"] {
+form button[type="submit"] {
   width: 300px;
-  max-width: 95vw;
   background-color: #4caf50;
-  color: white;
-  font-weight: bold;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  text-align: center;
   margin-bottom: 25px;
 }
 
 button[type="submit"]:hover {
   background-color: #45a049;
 }
+

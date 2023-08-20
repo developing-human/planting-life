@@ -52,3 +52,4 @@ async-trait = "0.1"
 mockall = "0.11"
 mockall_double = "0.3"
 
+rand = "0.8.5"
