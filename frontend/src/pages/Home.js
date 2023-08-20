@@ -39,8 +39,7 @@ const Home = () => {
 
     const elementId = selectedTab === 0 ? "discover-cards" : "tab-container";
     const extraOffset = selectedTab === 0 ? -90 : 0;
-    console.log(selectedTab);
-    console.log(elementId);
+
     // Find the top of the tab container
     const element = document.getElementById(elementId);
     const elementPosition = element.getBoundingClientRect().top;
