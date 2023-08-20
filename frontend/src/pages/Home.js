@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 // components
-import ConditionsForm from "../../components/ConditionsForm/ConditionsForm";
-import IntroAccordion from "../../components/IntroAccordion/IntroAccordion";
-import Spinner from "../../components/Spinner/Spinner";
-import PlantCard from "../../components/PlantCard/PlantCard";
-import Nursery from "../../components/Nursery/Nursery";
+import ConditionsForm from "../components/ConditionsForm";
+import IntroAccordion from "../components/IntroAccordion";
+import Spinner from "../components/Spinner";
+import PlantCard from "../components/PlantCard";
+import Nursery from "../components/Nursery";
 
 // material ui & styling
 import YardIcon from "@mui/icons-material/Yard";

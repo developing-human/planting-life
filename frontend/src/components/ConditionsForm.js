@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 
 // components
-import DropdownSelect from "../DropdownSelect/DropdownSelect";
+import DropdownSelect from "./DropdownSelect";
 
 // utilities
-import sendRequest from "../../utilities/plant-api";
+import sendRequest from "../utilities/plant-api";
 
 // material ui
 import TextField from "@mui/material/TextField";
@@ -110,17 +110,17 @@ function ConditionsForm({
       () => {
         if (plantsRef.current.length === 0) {
           setInfoMessage(
-            `Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`,
+            `Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`
           );
         }
-      },
+      }
     );
 
     // This loads at the same time as plants, but logic elsewhere hides the
     // nurseries until plants load enough for the screen to stop bouncing
     // around.
     fetch(
-      `${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`,
+      `${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`
     )
       .then((response) => response.json())
       .then((nurseries) => setNurseries(nurseries))

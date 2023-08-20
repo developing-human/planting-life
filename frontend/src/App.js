@@ -2,10 +2,10 @@ import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
 
 // pages
-import Home from "./pages/Home/Home";
-import Garden from "./pages/Garden/Garden";
-import NavBar from "./components/NavBar/NavBar";
-import Footer from "./components/Footer/Footer";
+import Home from "./pages/Home";
+import Garden from "./pages/Garden";
+import NavBar from "./components/NavBar";
+import Footer from "./components/Footer";
 
 // styling
 import "./App.css";

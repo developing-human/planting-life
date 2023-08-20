@@ -1,5 +1,5 @@
 // components
-import PlantCard from "../../components/PlantCard/PlantCard";
+import PlantCard from "../components/PlantCard";
 
 import "./Garden.css";
 
@@ -33,7 +33,7 @@ const Garden = () => {
         {state.plants.map((plant, index) =>
           plant.image ? (
             <PlantCard plant={plant} key={index} showAddButton={false} />
-          ) : null,
+          ) : null
         )}
       </section>
     </>

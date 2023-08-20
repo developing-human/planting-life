@@ -1,8 +1,8 @@
 import { useState, memo } from "react";
 
 // attribution popover component
-import AttributionPopover from "../AttributionPopover/AttributionPopover";
-import Highlight from "../Highlight/Highlight";
+import AttributionPopover from "./AttributionPopover";
+import Highlight from "./Highlight";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -37,7 +37,7 @@ const PlantCard = memo(function PlantCard({
         return prevPlants.concat(plant);
       } else {
         return prevPlants.filter(
-          (existing) => existing.scientific !== plant.scientific,
+          (existing) => existing.scientific !== plant.scientific
         );
       }
     });
@@ -46,7 +46,7 @@ const PlantCard = memo(function PlantCard({
     // back to Home from the Garden page.
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
-        (p) => p.scientific === plant.scientific,
+        (p) => p.scientific === plant.scientific
       );
       if (index === -1) {
         return prevPlants;
