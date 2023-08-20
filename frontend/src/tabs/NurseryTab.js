@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 // components
+import ConditionsForm from "../components/ConditionsForm";
+import IntroAccordion from "../components/IntroAccordion";
+import Spinner from "../components/Spinner";
 import PlantCard from "../components/PlantCard";
 import Nursery from "../components/Nursery";
-import DiscoverTab from "../tabs/DiscoverTab";
 
 // material ui & styling
 import YardIcon from "@mui/icons-material/Yard";
@@ -12,6 +14,9 @@ import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
+
+import Alert from "@mui/material/Alert";
+import Button from "@mui/material/Button";
 import "./Home.css";
 
 import { useNavigate } from "react-router-dom";
@@ -28,15 +33,23 @@ const Home = ({
   searchCriteria,
   setSearchCriteria,
 }) => {
-  //TODO: These two could be defined further down if I had a better way to
-  //      determine if search has been clicked yet.  I think setting
-  //      "lastSearchedCriteria" could be a lot more clearer and solves other
-  //      problems too.
-
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [infoMessage, setInfoMessage] = useState(null);
+  const [expanded, setExpanded] = useState("welcome");
+
+  const showMoreButton = plants.length >= maxPlantsToDisplay;
+  const showSpinner = loading && plants.length < maxPlantsToDisplay;
+  const showSurvey = loading || plants.length > 0;
   const showTabs = loading || plants.length > 0 || nurseries.length > 0;
 
   const [selectedTab, setSelectedTab] = useState(0);
+
+  const plantsWithImages = plants.filter((plant) => plant.image);
+
+  const onMoreClick = () => {
+    setMaxPlantsToDisplay((oldMax) => oldMax + 12);
+  };
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -134,18 +147,74 @@ const Home = ({
           </Box>
         ) : null}
         <CustomTabPanel value={selectedTab} index={0}>
-          <DiscoverTab
-            plants={plants}
-            setPlants={setPlants}
-            setNurseries={setNurseries}
-            setSelectedPlants={setSelectedPlants}
-            maxPlantsToDisplay={maxPlantsToDisplay}
-            setMaxPlantsToDisplay={setMaxPlantsToDisplay}
+          <ConditionsForm
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
-            loading={loading}
+            setPlants={setPlants}
+            setNurseries={setNurseries}
             setLoading={setLoading}
+            setError={setError}
+            setInfoMessage={setInfoMessage}
+            setExpanded={setExpanded}
+            setMaxPlantsToDisplay={setMaxPlantsToDisplay}
+            setSelectedPlants={setSelectedPlants}
+            plants={plants}
           />
+
+          <div className="accordion-container">
+            <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
+          </div>
+
+          {error || infoMessage ? (
+            <div className="alert-container">
+              {error ? <Alert severity="error">{error}</Alert> : null}
+              {infoMessage ? (
+                <Alert severity="info">{infoMessage}</Alert>
+              ) : null}
+            </div>
+          ) : null}
+
+          <div className="alert-container" id="top-survey-alert">
+            {showSurvey ? (
+              <Alert severity="info">
+                Help decide how Planting Life grows by{" "}
+                <a
+                  href="https://docs.google.com/forms/d/e/1FAIpQLSfN9W9GusLRo5rIX3yENrBLKcNIu3y9BQpdRwOnCYYvTSX3zA/viewform?usp=sf_link"
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  sharing your thoughts
+                </a>
+                .
+              </Alert>
+            ) : null}
+          </div>
+
+          <section className="card-container" id="discover-cards">
+            {plantsWithImages
+              .slice(0, maxPlantsToDisplay)
+              .map((plant, index) => (
+                <PlantCard
+                  plant={plant}
+                  key={plant.id}
+                  setSelectedPlants={setSelectedPlants}
+                  setPlants={setPlants}
+                />
+              ))}
+            {showSpinner ? <Spinner /> : null}
+          </section>
+
+          <div className="button-container">
+            {showMoreButton && (
+              <Button
+                className="more-button"
+                type="submit"
+                onClick={onMoreClick}
+              >
+                Load More
+              </Button>
+            )}
+          </div>
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={1}>
           <section className="card-container">
@@ -158,6 +227,7 @@ const Home = ({
                 setPlants={setPlants}
               />
             ))}
+            {showSpinner ? <Spinner /> : null}
           </section>
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={2}>
