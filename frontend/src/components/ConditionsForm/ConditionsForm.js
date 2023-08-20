@@ -12,18 +12,21 @@ import Grid from "@mui/material/Grid";
 import Button from "@mui/material/Button";
 
 // styling
-import "./ConditionsForm.css"
+import "./ConditionsForm.css";
 
-function ConditionsForm({ 
-  searchCriteria, setSearchCriteria,
-  plants, setPlants, 
-  setNurseries, 
-  setLoading, 
-  setError, 
-  setInfoMessage, 
-  setExpanded, 
-  setMaxPlantsToDisplay, 
-  setSelectedPlants }) {
+function ConditionsForm({
+  searchCriteria,
+  setSearchCriteria,
+  plants,
+  setPlants,
+  setNurseries,
+  setLoading,
+  setError,
+  setInfoMessage,
+  setExpanded,
+  setMaxPlantsToDisplay,
+  setSelectedPlants,
+}) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
@@ -35,27 +38,30 @@ function ConditionsForm({
   const plantsRef = useRef(plants);
   plantsRef.current = plants;
 
-  const handleZipChange = (event) => setSearchCriteria((prev) => {
-    return {...prev, zip: event.target.value};
-  });
+  const handleZipChange = (event) =>
+    setSearchCriteria((prev) => {
+      return { ...prev, zip: event.target.value };
+    });
 
-  const handleShadeChange = (newValue) => setSearchCriteria((prev) => {
-    return {...prev, shade: newValue};
-  });
+  const handleShadeChange = (newValue) =>
+    setSearchCriteria((prev) => {
+      return { ...prev, shade: newValue };
+    });
 
-  const handleMoistureChange = (newValue) => setSearchCriteria((prev) => {
-    return {...prev, moisture: newValue};
-  });
+  const handleMoistureChange = (newValue) =>
+    setSearchCriteria((prev) => {
+      return { ...prev, moisture: newValue };
+    });
 
   // On page load, set the default values in the search criteria
   useEffect(() => {
     setSearchCriteria((prev) => {
       return {
-        zip: prev.zip || "", 
-        shade: prev.shade || defaultShade, 
-        moisture: prev.moisture || defaultMoisture
-      }
-    })
+        zip: prev.zip || "",
+        shade: prev.shade || defaultShade,
+        moisture: prev.moisture || defaultMoisture,
+      };
+    });
   }, [setSearchCriteria, defaultShade, defaultMoisture]);
 
   const handleSubmit = async (event) => {
@@ -79,7 +85,7 @@ function ConditionsForm({
       // If its negative, its above the top of the viewport and we need to scroll
       // up to the top when changing tabs.
       const offsetPosition = elementPosition + window.pageYOffset - 75;
-      window.scrollTo({top: offsetPosition, behavior: 'auto'});
+      window.scrollTo({ top: offsetPosition, behavior: "auto" });
     }, 100);
 
     let formData = {
@@ -94,74 +100,86 @@ function ConditionsForm({
       eventSource.close();
     }
 
-    sendRequest(formData, setPlants, setLoading, setError, setInfoMessage, setEventSource, () => {
-      if (plantsRef.current.length === 0) {
-        setInfoMessage(`Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`);
-      }
-    });
+    sendRequest(
+      formData,
+      setPlants,
+      setLoading,
+      setError,
+      setInfoMessage,
+      setEventSource,
+      () => {
+        if (plantsRef.current.length === 0) {
+          setInfoMessage(
+            `Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`,
+          );
+        }
+      },
+    );
 
-    // This loads at the same time as plants, but logic elsewhere hides the 
+    // This loads at the same time as plants, but logic elsewhere hides the
     // nurseries until plants load enough for the screen to stop bouncing
     // around.
-    fetch(`${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`)
-      .then(response => response.json())
-      .then(nurseries => setNurseries(nurseries))
-      .catch(error => console.error('Error: ', error));
+    fetch(
+      `${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`,
+    )
+      .then((response) => response.json())
+      .then((nurseries) => setNurseries(nurseries))
+      .catch((error) => console.error("Error: ", error));
   };
 
   return (
-      <form onSubmit={handleSubmit}>
-        <Grid
-          container
-          spacing={3}
-          style={{ display: "flex", justifyContent: "center" }}
-        >
-          <Grid item xs={12} sm={4}>
-            <TextField
-              id="zip"
-              label="Zip Code"
-              value={searchCriteria.zip}
-              variant="outlined"
-              onChange={handleZipChange}
-              required
-              sx={{ width: "100%" }}
-              inputProps={{
-                inputMode: "numeric",
-                pattern: "[0-9]{5}",
-                maxLength: 5,
-                title: "US Zip Code",
-              }}
-              onKeyPress={(event) => {
-                // Only allow numbers & Enter to be typed
-                if (!/[0-9]/.test(event.key) && event.key !== 'Enter') {
-                  event.preventDefault();
-                }
-              }}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <DropdownSelect
-              id="shade"
-              label="Shade"
-              options={shadeOptions}
-              onChange={handleShadeChange}
-              value={searchCriteria.shade || defaultShade}
-            />
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <DropdownSelect
-              id="moisture"
-              label="Moisture"
-              options={moistureOptions}
-              onChange={handleMoistureChange}
-              value={searchCriteria.moisture || defaultMoisture}
-            />
-          </Grid>
-          <Grid item>
-            <Button type="submit">Find Native Plants</Button>
-          </Grid>
+    <form onSubmit={handleSubmit}>
+      <Grid
+        container
+        spacing={3}
+        style={{ display: "flex", justifyContent: "center" }}
+      >
+        <Grid item xs={12} sm={4}>
+          <TextField
+            id="zip"
+            label="Zip Code"
+            value={searchCriteria.zip}
+            variant="outlined"
+            onChange={handleZipChange}
+            required
+            sx={{ width: "100%" }}
+            inputProps={{
+              inputMode: "numeric",
+              pattern: "[0-9]{5}",
+              maxLength: 5,
+              title: "US Zip Code",
+            }}
+            onKeyPress={(event) => {
+              // Only allow numbers & Enter to be typed
+              if (!/[0-9]/.test(event.key) && event.key !== "Enter") {
+                event.preventDefault();
+              }
+            }}
+          />
         </Grid>
-      </form>
+        <Grid item xs={12} sm={4}>
+          <DropdownSelect
+            id="shade"
+            label="Shade"
+            options={shadeOptions}
+            onChange={handleShadeChange}
+            value={searchCriteria.shade || defaultShade}
+          />
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <DropdownSelect
+            id="moisture"
+            label="Moisture"
+            options={moistureOptions}
+            onChange={handleMoistureChange}
+            value={searchCriteria.moisture || defaultMoisture}
+          />
+        </Grid>
+        <Grid item>
+          <Button type="submit">Find Native Plants</Button>
+        </Grid>
+      </Grid>
+    </form>
   );
 }
 

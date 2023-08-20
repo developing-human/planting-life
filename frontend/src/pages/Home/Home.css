@@ -37,8 +37,8 @@
 }
 
 .card-container h1 {
-    grid-column: 1 / -1;
-    justify-items: None;
+  grid-column: 1 / -1;
+  justify-items: None;
 }
 
 a {
@@ -47,7 +47,7 @@ a {
 }
 
 .alert-container a {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 button.more-button {

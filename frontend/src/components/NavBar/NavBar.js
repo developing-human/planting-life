@@ -18,7 +18,7 @@ function NavBar() {
         }}
       >
         <Toolbar
-        variant="dense"
+          variant="dense"
           sx={{
             display: "flex",
             flexWrap: "wrap",
@@ -40,7 +40,7 @@ function NavBar() {
             sx={{
               flexGrow: 1,
               paddingTop: "10px",
-              paddingLeft: "5px"
+              paddingLeft: "5px",
             }}
           >
             Planting Life
@@ -66,7 +66,7 @@ function NavBar() {
           </Typography>
         </Toolbar>
       </AppBar>
-      </Box>
+    </Box>
   );
 }
 

@@ -7,7 +7,13 @@ import MuiAccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 
 const Accordion = styled((props) => (
-  <MuiAccordion disableGutters elevation={0} square {...props} TransitionProps={{timeout: 0}} />
+  <MuiAccordion
+    disableGutters
+    elevation={0}
+    square
+    {...props}
+    TransitionProps={{ timeout: 0 }}
+  />
 ))(({ theme }) => ({
   border: `1px solid ${theme.palette.divider}`,
   "&:not(:last-child)": {
@@ -26,8 +32,8 @@ const AccordionSummary = styled((props) => (
 ))(({ theme }) => ({
   backgroundColor:
     theme.palette.mode === "dark"
-    ? "rgba(255, 255, 255, .05)"
-    : "rgba(0, 0, 0, .03)",
+      ? "rgba(255, 255, 255, .05)"
+      : "rgba(0, 0, 0, .03)",
   flexDirection: "row-reverse",
   "& .MuiAccordionSummary-expandIconWrapper.Mui-expanded": {
     transform: "rotate(90deg)",
@@ -35,13 +41,12 @@ const AccordionSummary = styled((props) => (
   "& .MuiAccordionSummary-content": {
     marginLeft: theme.spacing(1),
   },
-}
-));
+}));
 
 const AccordionDetails = styled(MuiAccordionDetails)(({ theme }) => ({
   padding: theme.spacing(2),
   borderTop: "1px solid rgba(0, 0, 0, .125)",
-  textAlign: 'justify'
+  textAlign: "justify",
 }));
 
 function IntroAccordion({ expanded, setExpanded }) {
@@ -61,16 +66,15 @@ function IntroAccordion({ expanded, setExpanded }) {
         </AccordionSummary>
         <AccordionDetails>
           <Typography>
-	  Planting Life helps you discover native plants that will
-	  thrive in your garden.  Whether you're a new or experienced
-	  gardener, it will help you choose plants which support
-	  your local ecosystem.
-          <br />
-          <br />
-	  By planting native, you'll provide food and shelter for wildlife
-	  which already lives near you.  You'll also simplify maintenance
-	  for your garden by selecting plants which are well-suited to
-	  the moisture and soil conditions in your area.
+            Planting Life helps you discover native plants that will thrive in
+            your garden. Whether you're a new or experienced gardener, it will
+            help you choose plants which support your local ecosystem.
+            <br />
+            <br />
+            By planting native, you'll provide food and shelter for wildlife
+            which already lives near you. You'll also simplify maintenance for
+            your garden by selecting plants which are well-suited to the
+            moisture and soil conditions in your area.
           </Typography>
         </AccordionDetails>
       </Accordion>
