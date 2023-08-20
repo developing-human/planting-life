@@ -4,9 +4,6 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/system";
 
-// styling
-//import "./Nursery.css"
-
 function Nursery({ nursery }) {
   const NoPaddingCardContent = styled(CardContent)({
     paddingTop: "0px",

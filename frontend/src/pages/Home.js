@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-// components
-import PlantCard from "../components/PlantCard";
-import Nursery from "../components/Nursery";
+
+// tabs
 import DiscoverTab from "../tabs/DiscoverTab";
+import GardenTab from "../tabs/GardenTab";
+import NurseryTab from "../tabs/NurseryTab";
 
 // material ui & styling
 import YardIcon from "@mui/icons-material/Yard";
@@ -132,23 +133,10 @@ const Home = () => {
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={1}>
-          <section className="card-container">
-            {selectedPlants.map((plant, index) => (
-              <PlantCard
-                plant={plant}
-                key={plant.id}
-                setSelectedPlants={setSelectedPlants}
-                showAddButton={false}
-              />
-            ))}
-          </section>
+          <GardenTab selectedPlants={selectedPlants} />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={2}>
-          <section className="card-container">
-            {nurseries.map((nursery, index) => (
-              <Nursery nursery={nursery} key={index} />
-            ))}
-          </section>
+          <NurseryTab nurseries={nurseries} />
         </CustomTabPanel>
       </div>
     </>
