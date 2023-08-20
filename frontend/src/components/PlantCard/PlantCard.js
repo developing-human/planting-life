@@ -11,16 +11,20 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import CircularProgress from "@mui/material/CircularProgress"
-import IconButton from "@mui/material/IconButton"
-import Add from "@mui/icons-material/Add"
-import Remove from "@mui/icons-material/Remove"
+import CircularProgress from "@mui/material/CircularProgress";
+import IconButton from "@mui/material/IconButton";
+import Add from "@mui/icons-material/Add";
+import Remove from "@mui/icons-material/Remove";
 
 // styling
-import "./PlantCard.css"
+import "./PlantCard.css";
 
-const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddButton, setPlants }) {
-  
+const PlantCard = memo(function PlantCard({
+  plant,
+  setSelectedPlants,
+  showAddButton,
+  setPlants,
+}) {
   const [selected, setSelected] = useState(plant.selected || false);
   const togglePlant = () => {
     const newSelected = !selected;
@@ -30,46 +34,64 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
     // Add or remove from the list of selected plants
     setSelectedPlants((prevPlants) => {
       if (newSelected) {
-        return prevPlants.concat(plant)
+        return prevPlants.concat(plant);
       } else {
-        return prevPlants.filter((existing) => existing.scientific !== plant.scientific)
+        return prevPlants.filter(
+          (existing) => existing.scientific !== plant.scientific,
+        );
       }
     });
 
     // Update plants state with the flag, this will be remembered when navigating
     // back to Home from the Garden page.
     setPlants((prevPlants) => {
-        const index = prevPlants.findIndex(p => p.scientific === plant.scientific);
-        if (index === -1) {
-          return prevPlants;
-        }
+      const index = prevPlants.findIndex(
+        (p) => p.scientific === plant.scientific,
+      );
+      if (index === -1) {
+        return prevPlants;
+      }
 
-        const newPlants = prevPlants.slice();
-        newPlants[index] = {...prevPlants[index], selected: newSelected };
-        return newPlants;
+      const newPlants = prevPlants.slice();
+      newPlants[index] = { ...prevPlants[index], selected: newSelected };
+      return newPlants;
     });
   };
 
-
   return (
-    <Card className={"plant-card" + (selected ? " selected" : "")}
-          raised={true}
-          sx={{ width: 350, maxWidth: "90vw", minHeight: 540, maxHeight: 540, borderRadius: "12px" }}>
-
+    <Card
+      className={"plant-card" + (selected ? " selected" : "")}
+      raised={true}
+      sx={{
+        width: 350,
+        maxWidth: "90vw",
+        minHeight: 540,
+        maxHeight: 540,
+        borderRadius: "12px",
+      }}
+    >
       <CardHeader title={plant.common} subheader={plant.scientific} />
 
       <div className="plant-image-container">
-        { showAddButton !== false && (
-           selected ?
-            <IconButton size="small" className="add-plant-button" onClick={togglePlant}>
+        {showAddButton !== false &&
+          (selected ? (
+            <IconButton
+              size="small"
+              className="add-plant-button"
+              onClick={togglePlant}
+            >
               <Remove />
             </IconButton>
-            :
-            <IconButton size="small" className="add-plant-button" onClick={togglePlant}>
+          ) : (
+            <IconButton
+              size="small"
+              className="add-plant-button"
+              onClick={togglePlant}
+            >
               <Add />
             </IconButton>
-        )}
-        
+          ))}
+
         <CardMedia
           component="img"
           height="350"
@@ -96,43 +118,52 @@ const PlantCard = memo(function PlantCard({ plant, setSelectedPlants, showAddBut
               <Typography variant="body2" color="text.secondary">
                 {plant.highlights.map((highlight) => (
                   <span key={plant.id + "-" + highlight.label}>
-                    <Highlight label={highlight.label} category={highlight.category} />
+                    <Highlight
+                      label={highlight.label}
+                      category={highlight.category}
+                    />
                     <br />
                   </span>
                 ))}
               </Typography>
             </div>
             <Typography variant="body2" color="text.secondary">
-              {plant.wikiSource ? 
-                  <a href={plant.wikiSource} target="_blank" rel="noreferrer">Wikipedia</a> 
-                  : null}
+              {plant.wikiSource ? (
+                <a href={plant.wikiSource} target="_blank" rel="noreferrer">
+                  Wikipedia
+                </a>
+              ) : null}
               {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-              {plant.usdaSource ? 
-                  <a href={plant.usdaSource} target="_blank" rel="noreferrer">USDA</a> 
-                  : null}
+              {plant.usdaSource ? (
+                <a href={plant.usdaSource} target="_blank" rel="noreferrer">
+                  USDA
+                </a>
+              ) : null}
             </Typography>
           </CardContent>
         </Grid>
         <Grid item xs={5.75}>
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}<br/>
-              {plant.height ? <span>Height: {plant.height}</span> : null}<br/>
-              {plant.spread ? <span>Spread: {plant.spread}</span> : null}<br/>
+              {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}
+              <br />
+              {plant.height ? <span>Height: {plant.height}</span> : null}
+              <br />
+              {plant.spread ? <span>Spread: {plant.spread}</span> : null}
+              <br />
               <br />
 
-              {plant.doneLoading ? 
-                null : 
+              {plant.doneLoading ? null : (
                 <span className="card-loading">
-                  <CircularProgress size={20} color="success"/>
+                  <CircularProgress size={20} color="success" />
                 </span>
-              }
+              )}
             </Typography>
           </CardContent>
         </Grid>
       </Grid>
     </Card>
   );
-})
+});
 
 export default PlantCard;

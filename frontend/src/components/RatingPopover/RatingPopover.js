@@ -3,7 +3,7 @@ import { useState } from "react";
 import Popover from "@mui/material/Popover";
 import Typography from "@mui/material/Typography";
 import Link from "@mui/material/Link";
-import InfoOutlined from "@mui/icons-material/InfoOutlined"
+import InfoOutlined from "@mui/icons-material/InfoOutlined";
 
 import "./RatingPopover.css";
 
@@ -27,9 +27,9 @@ function RatingPopover({ id, header, text }) {
         underline="none"
         aria-describedby={openId}
         onClick={handleClick}
-        sx={{ cursor: 'pointer' }}
+        sx={{ cursor: "pointer" }}
       >
-        <InfoOutlined className="ratings-info-icon"/>
+        <InfoOutlined className="ratings-info-icon" />
       </Link>
       <Popover
         id={openId}
@@ -43,8 +43,8 @@ function RatingPopover({ id, header, text }) {
       >
         <div className="ratings-popover-content">
           <Typography sx={{ p: 1.5 }}>
-              <h4>{header}</h4>
-              {text}
+            <h4>{header}</h4>
+            {text}
           </Typography>
         </div>
       </Popover>

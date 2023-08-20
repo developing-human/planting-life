@@ -8,7 +8,10 @@ import "./AttributionPopover.css";
 
 function AttributionPopover({ caption, title, author, license, link }) {
   let captionUppercase = caption.toUpperCase();
-  let captionLink = captionUppercase.length > 40 ? captionUppercase.substring(0,40) + "..." : captionUppercase;
+  let captionLink =
+    captionUppercase.length > 40
+      ? captionUppercase.substring(0, 40) + "..."
+      : captionUppercase;
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -28,7 +31,7 @@ function AttributionPopover({ caption, title, author, license, link }) {
         underline="none"
         aria-describedby={id}
         onClick={handleClick}
-        sx={{ fontSize: "10px", paddingBottom: "4px", cursor: 'pointer' }}
+        sx={{ fontSize: "10px", paddingBottom: "4px", cursor: "pointer" }}
       >
         {captionLink}
       </Link>

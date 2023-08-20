@@ -1,6 +1,10 @@
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .spinner {
@@ -13,11 +17,11 @@
 }
 
 .spinner img {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 20px;
-    width: 128px;
-    height: 128px;
-    animation: spin 2.5s linear infinite 
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 20px;
+  width: 128px;
+  height: 128px;
+  animation: spin 2.5s linear infinite;
 }

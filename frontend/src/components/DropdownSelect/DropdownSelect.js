@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState } from "react";
 
 // material ui
-import Box from '@mui/material/Box';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import Select from '@mui/material/Select';
+import Box from "@mui/material/Box";
+import InputLabel from "@mui/material/InputLabel";
+import MenuItem from "@mui/material/MenuItem";
+import FormControl from "@mui/material/FormControl";
+import Select from "@mui/material/Select";
 
-function DropdownSelect( {id, label, options, onChange, value} ) {
+function DropdownSelect({ id, label, options, onChange, value }) {
   // use state to handle selected option
   const [option, setOption] = useState(value);
 
@@ -22,7 +22,9 @@ function DropdownSelect( {id, label, options, onChange, value} ) {
   return (
     <Box sx={{ minWidth: 120 }}>
       <FormControl fullWidth>
-        <InputLabel id={`${id}-input-label`} htmlFor={`${id}-select`}>{label}</InputLabel>
+        <InputLabel id={`${id}-input-label`} htmlFor={`${id}-select`}>
+          {label}
+        </InputLabel>
 
         <Select
           labelId={`${id}-input-label`}
@@ -31,11 +33,13 @@ function DropdownSelect( {id, label, options, onChange, value} ) {
           label={`${label}`}
           onChange={handleChange}
         >
-
-        {options.map(option => {
-            return <MenuItem key={option.toLowerCase()} value={option}>{option}</MenuItem>
-        })}
-
+          {options.map((option) => {
+            return (
+              <MenuItem key={option.toLowerCase()} value={option}>
+                {option}
+              </MenuItem>
+            );
+          })}
         </Select>
       </FormControl>
     </Box>

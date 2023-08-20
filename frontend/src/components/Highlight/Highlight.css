@@ -1,25 +1,25 @@
 svg.highlight-icon {
-    width: 18px;
-    height: 18px;
-    margin-left: -10px;
-    margin-right: 4px;
-    margin-top: -3px;
-    margin-bottom: -3px;
-    align: bottom;
+  width: 18px;
+  height: 18px;
+  margin-left: -10px;
+  margin-right: 4px;
+  margin-top: -3px;
+  margin-bottom: -3px;
+  align: bottom;
 }
 
 svg.highlight-great {
-    fill: #ffcb00;
+  fill: #ffcb00;
 }
 
 svg.highlight-good {
-    fill: #ffcb00;
+  fill: #ffcb00;
 }
 
 svg.highlight-bad {
-    fill: #ff902e;
+  fill: #ff902e;
 }
 
 svg.highlight-worse {
-    fill: red;
+  fill: red;
 }

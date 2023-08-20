@@ -1,18 +1,18 @@
 .ratings-popover-content {
-    max-width: 400px;
+  max-width: 400px;
 }
 
 .ratings-popover-content h4 {
-    max-width: 400px;
-    margin-top: 2px;
-    margin-bottom: 10px;
+  max-width: 400px;
+  margin-top: 2px;
+  margin-bottom: 10px;
 }
 
 svg.ratings-info-icon {
-    width: 18px;
-    height: 18px;
-    fill: #45a049;
-    margin-left: 5px;
-    margin-bottom: -3px;
-    align: bottom;
+  width: 18px;
+  height: 18px;
+  fill: #45a049;
+  margin-left: 5px;
+  margin-bottom: -3px;
+  align: bottom;
 }
