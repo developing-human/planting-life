@@ -20,7 +20,7 @@ use crate::{
     selector::Selector,
 };
 use actix_cors::Cors;
-use actix_web::{web, App, HttpServer};
+use actix_web::{http, web, App, HttpServer};
 use mockall_double::double;
 
 pub struct PlantingLifeApp {
@@ -63,6 +63,7 @@ impl PlantingLifeApp {
             let cors = Cors::default()
                 .allowed_origin("https://www.planting.life")
                 .allowed_origin("https://planting.life")
+                .allowed_header(http::header::CONTENT_TYPE)
                 .allowed_methods(vec!["GET"]);
 
             App::new()
