@@ -23,10 +23,10 @@ function ConditionsForm({
   setInfoMessage,
   setExpanded,
   setMaxPlantsToDisplay,
-  setSelectedPlants,
   setLastSearchedCriteria,
   searchCriteria,
   setSearchCriteria,
+  selectedPlants,
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -71,7 +71,6 @@ function ConditionsForm({
     setPlants([]);
     setMaxPlantsToDisplay(12);
     setNurseries([]);
-    setSelectedPlants([]);
     setLoading(true);
     setError(null);
     setInfoMessage(null);
@@ -110,6 +109,7 @@ function ConditionsForm({
       setError,
       setInfoMessage,
       setEventSource,
+      selectedPlants,
       () => {
         if (plantsRef.current.length === 0) {
           setInfoMessage(

@@ -5,20 +5,25 @@ export default async function sendRequest(
   setError,
   setInfoMessage,
   setEventSource,
-  onFinishedLoading,
+  selectedPlants,
+  onFinishedLoading
 ) {
   const { zip, shade, moisture } = formData;
   const sse = new EventSource(
-    `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`,
+    `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
   );
 
   setEventSource(sse);
 
   sse.addEventListener("plant", (event) => {
     let newPlant = JSON.parse(event.data);
+    newPlant.selected = selectedPlants.some(
+      (sp) => sp.scientific === newPlant.scientific
+    );
+
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
-        (p) => p.scientific === newPlant.scientific,
+        (p) => p.scientific === newPlant.scientific
       );
       const newPlants = prevPlants.slice();
       if (index === -1) {

@@ -14,7 +14,8 @@ const DiscoverTab = ({
   plants,
   setPlants,
   setNurseries,
-  setSelectedPlants,
+  garden,
+  setGarden,
   searchCriteria,
   setSearchCriteria,
   setLastSearchedCriteria,
@@ -47,10 +48,10 @@ const DiscoverTab = ({
         setInfoMessage={setInfoMessage}
         setExpanded={setExpanded}
         setMaxPlantsToDisplay={setMaxPlantsToDisplay}
-        setSelectedPlants={setSelectedPlants}
         plants={plants}
         searchCriteria={searchCriteria}
         setSearchCriteria={setSearchCriteria}
+        selectedPlants={garden.plants}
       />
 
       {error || infoMessage ? (
@@ -85,7 +86,7 @@ const DiscoverTab = ({
           <PlantCard
             plant={plant}
             key={plant.id}
-            setSelectedPlants={setSelectedPlants}
+            setGarden={setGarden}
             setPlants={setPlants}
           />
         ))}

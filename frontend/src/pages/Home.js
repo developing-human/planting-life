@@ -6,6 +6,8 @@ import DiscoverTab from "../tabs/DiscoverTab";
 import GardenTab from "../tabs/GardenTab";
 import NurseryTab from "../tabs/NurseryTab";
 
+import { getGarden } from "../utilities/garden-api";
+
 // material ui & styling
 import YardIcon from "@mui/icons-material/Yard";
 import Search from "@mui/icons-material/Search";
@@ -23,10 +25,10 @@ const Home = () => {
   const [searchCriteria, setSearchCriteria] = useState({ zip: "" });
   const [lastSearchedCriteria, setLastSearchedCriteria] = useState(null);
   const [plants, setPlants] = useState([]);
-  const [selectedPlants, setSelectedPlants] = useState([]);
   const [nurseries, setNurseries] = useState([]);
   const [selectedTab, setSelectedTab] = useState(DISCOVER_TAB_INDEX);
   const [error, setError] = useState(null);
+  const [garden, setGarden] = useState({ plants: [] });
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX || lastSearchedCriteria != null;
@@ -36,30 +38,11 @@ const Home = () => {
   };
 
   const loadGarden = (id) => {
-    fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens/${id}`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(
-            `Error fetching /gardens, status: ${response.status}`
-          );
-        }
-
-        return response.json();
-      })
-      .then((data) => {
-        console.log(data);
-        setSelectedPlants(data.plants);
-      })
-      .catch((error) => {
-        console.error(error);
-        setSelectedTab(DISCOVER_TAB_INDEX);
-        setError(`Couldn't find the garden you're looking for 😞`);
-      });
+    getGarden(id, setGarden, (error) => {
+      console.error(error);
+      setSelectedTab(DISCOVER_TAB_INDEX);
+      setError(`Couldn't find the garden you're looking for 😞`);
+    });
   };
 
   const { id } = useParams();
@@ -157,9 +140,9 @@ const Home = () => {
             >
               <Tab icon={<Search />} label="DISCOVER" />
               <Tab
-                disabled={selectedPlants.length === 0}
+                disabled={garden.plants.length === 0}
                 icon={
-                  <Badge badgeContent={selectedPlants.length} color="success">
+                  <Badge badgeContent={garden.plants.length} color="success">
                     <YardIcon />
                   </Badge>
                 }
@@ -182,7 +165,8 @@ const Home = () => {
             plants={plants}
             setPlants={setPlants}
             setNurseries={setNurseries}
-            setSelectedPlants={setSelectedPlants}
+            garden={garden}
+            setGarden={setGarden}
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
             setLastSearchedCriteria={setLastSearchedCriteria}
@@ -191,7 +175,7 @@ const Home = () => {
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>
-          <GardenTab selectedPlants={selectedPlants} />
+          <GardenTab garden={garden} />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
           <NurseryTab nurseries={nurseries} />

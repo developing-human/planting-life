@@ -21,7 +21,7 @@ import "./PlantCard.css";
 
 const PlantCard = memo(function PlantCard({
   plant,
-  setSelectedPlants,
+  setGarden,
   showAddButton,
   setPlants,
 }) {
@@ -32,14 +32,17 @@ const PlantCard = memo(function PlantCard({
     setSelected(newSelected);
 
     // Add or remove from the list of selected plants
-    setSelectedPlants((prevPlants) => {
+    setGarden((prevGarden) => {
+      let newSelectedPlants;
       if (newSelected) {
-        return prevPlants.concat(plant);
+        newSelectedPlants = prevGarden.plants.concat(plant);
       } else {
-        return prevPlants.filter(
+        newSelectedPlants = prevGarden.plants.filter(
           (existing) => existing.scientific !== plant.scientific
         );
       }
+
+      return { ...prevGarden, plants: newSelectedPlants };
     });
 
     // Update plants state with the flag, this will be remembered when navigating
