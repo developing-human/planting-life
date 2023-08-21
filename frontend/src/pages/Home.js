@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 
 // tabs
 import DiscoverTab from "../tabs/DiscoverTab";
@@ -15,21 +16,73 @@ import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import "./Home.css";
 
-import { useNavigate } from "react-router-dom";
-
 const Home = () => {
+  const DISCOVER_TAB_INDEX = 0;
+  const GARDEN_TAB_INDEX = 1;
+  const NURSERY_TAB_INDEX = 2;
   const [searchCriteria, setSearchCriteria] = useState({ zip: "" });
   const [lastSearchedCriteria, setLastSearchedCriteria] = useState(null);
   const [plants, setPlants] = useState([]);
   const [selectedPlants, setSelectedPlants] = useState([]);
-  const showTabs = lastSearchedCriteria != null;
   const [nurseries, setNurseries] = useState([]);
+  const [selectedTab, setSelectedTab] = useState(DISCOVER_TAB_INDEX);
+  const [error, setError] = useState(null);
 
-  const [selectedTab, setSelectedTab] = useState(0);
+  const showTabs =
+    selectedTab !== DISCOVER_TAB_INDEX || lastSearchedCriteria != null;
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
   };
+
+  const loadGarden = (id) => {
+    fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(
+            `Error fetching /gardens, status: ${response.status}`
+          );
+        }
+
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+        setSelectedPlants(data.plants);
+      })
+      .catch((error) => {
+        console.error(error);
+        setSelectedTab(DISCOVER_TAB_INDEX);
+        setError(`Couldn't find the garden you're looking for 😞`);
+      });
+  };
+
+  const { id } = useParams();
+  const location = useLocation();
+  useEffect(() => {
+    const currentPath = location.pathname;
+
+    let tab;
+    switch (currentPath) {
+      case "/":
+        tab = DISCOVER_TAB_INDEX;
+        break;
+      case `/g/${id}`:
+      case `/gardens/${id}`:
+        tab = GARDEN_TAB_INDEX;
+        loadGarden(id);
+        break;
+      default:
+        tab = DISCOVER_TAB_INDEX;
+    }
+
+    setSelectedTab(tab);
+  }, [id, location, setSelectedTab]);
 
   useEffect(() => {
     // Don't scroll if tabs aren't shown.  Without this, it scrolls down when
@@ -38,7 +91,8 @@ const Home = () => {
       return;
     }
 
-    const elementId = selectedTab === 0 ? "discover-cards" : "tab-container";
+    const elementId =
+      selectedTab === DISCOVER_TAB_INDEX ? "discover-cards" : "tab-container";
     const extraOffset = selectedTab === 0 ? -90 : 0;
 
     // Find the top of the tab container
@@ -51,6 +105,7 @@ const Home = () => {
     window.scrollTo({ top: offsetPosition });
   }, [selectedTab, showTabs]);
 
+  /*
   const navigate = useNavigate();
   const onViewGardenClick = () => {
     fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens`, {
@@ -75,6 +130,7 @@ const Home = () => {
       //TODO: Better error handling?
       .catch((error) => console.error("Error:", error));
   };
+  */
 
   return (
     <>
@@ -121,7 +177,7 @@ const Home = () => {
             </Tabs>
           </Box>
         ) : null}
-        <CustomTabPanel value={selectedTab} index={0}>
+        <CustomTabPanel value={selectedTab} index={DISCOVER_TAB_INDEX}>
           <DiscoverTab
             plants={plants}
             setPlants={setPlants}
@@ -130,12 +186,14 @@ const Home = () => {
             searchCriteria={searchCriteria}
             setSearchCriteria={setSearchCriteria}
             setLastSearchedCriteria={setLastSearchedCriteria}
+            error={error}
+            setError={setError}
           />
         </CustomTabPanel>
-        <CustomTabPanel value={selectedTab} index={1}>
+        <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>
           <GardenTab selectedPlants={selectedPlants} />
         </CustomTabPanel>
-        <CustomTabPanel value={selectedTab} index={2}>
+        <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
           <NurseryTab nurseries={nurseries} />
         </CustomTabPanel>
       </div>

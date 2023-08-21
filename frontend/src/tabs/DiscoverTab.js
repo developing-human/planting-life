@@ -18,8 +18,9 @@ const DiscoverTab = ({
   searchCriteria,
   setSearchCriteria,
   setLastSearchedCriteria,
+  error,
+  setError,
 }) => {
-  const [error, setError] = useState(null);
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState("welcome");
   const [loading, setLoading] = useState(false);
@@ -52,16 +53,16 @@ const DiscoverTab = ({
         setSearchCriteria={setSearchCriteria}
       />
 
-      <div className="accordion-container">
-        <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
-      </div>
-
       {error || infoMessage ? (
         <div className="alert-container">
           {error ? <Alert severity="error">{error}</Alert> : null}
           {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
         </div>
       ) : null}
+
+      <div className="accordion-container">
+        <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
+      </div>
 
       <div className="alert-container" id="top-survey-alert">
         {showSurvey ? (
