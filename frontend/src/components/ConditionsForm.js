@@ -13,6 +13,7 @@ import Button from "@mui/material/Button";
 
 // styling
 import "./ConditionsForm.css";
+import { getNurseries } from "../utilities/nursery-api";
 
 function ConditionsForm({
   plants,
@@ -105,29 +106,13 @@ function ConditionsForm({
     sendRequest(
       formData,
       setPlants,
-      setLoading,
       setError,
-      setInfoMessage,
       setEventSource,
       selectedPlants,
-      () => {
-        if (plantsRef.current.length === 0) {
-          setInfoMessage(
-            `Can't find anything near ${searchCriteria.zip} which thrives in ${searchCriteria.shade} and ${searchCriteria.moisture} moisture`
-          );
-        }
-      }
+      setLoading
     );
 
-    // This loads at the same time as plants, but logic elsewhere hides the
-    // nurseries until plants load enough for the screen to stop bouncing
-    // around.
-    fetch(
-      `${process.env.REACT_APP_URL_PREFIX}/nurseries?zip=${searchCriteria.zip}`
-    )
-      .then((response) => response.json())
-      .then((nurseries) => setNurseries(nurseries))
-      .catch((error) => console.error("Error: ", error));
+    getNurseries(searchCriteria.zip, setNurseries);
   };
 
   return (

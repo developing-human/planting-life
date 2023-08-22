@@ -1,12 +1,10 @@
 export default async function sendRequest(
   formData,
   setPlants,
-  setLoading,
   setError,
-  setInfoMessage,
   setEventSource,
   selectedPlants,
-  onFinishedLoading
+  setLoading
 ) {
   const { zip, shade, moisture } = formData;
   const sse = new EventSource(
@@ -39,17 +37,22 @@ export default async function sendRequest(
   // Hides the loading animation when the last plant appears,
   // rather than when all plants finish loading.
   sse.addEventListener("allPlantsLoaded", (event) => {
-    setLoading(false);
-    onFinishedLoading();
+    if (setLoading) {
+      setLoading(false);
+    }
   });
 
   sse.addEventListener("close", (event) => {
-    setLoading(false);
+    if (setLoading) {
+      setLoading(false);
+    }
     sse.close();
   });
 
   sse.addEventListener("error", (event) => {
-    setLoading(false);
+    if (setLoading) {
+      setLoading(false);
+    }
     setError("Well that's embarassing... please try again.");
     sse.close();
   });

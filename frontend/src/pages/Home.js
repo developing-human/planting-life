@@ -51,6 +51,11 @@ const Home = () => {
   };
 
   const loadGarden = (id) => {
+    //TODO: As part of loading the garden... I want to use the returned zip/etc
+    //      to trigger nursery/plant queries.  So I think setGarden needs to be
+    //      replaced with onSuccess.  And in that onSuccess... I need to call
+    //      the plants api and nursery api.  Which are just single calls, but
+    //      do take a lot of params.
     getGarden(id, setGarden, (error) => {
       console.error(error);
       setSelectedTab(DISCOVER_TAB_INDEX);
