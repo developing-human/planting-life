@@ -31,7 +31,9 @@ const Home = () => {
   const [garden, setGarden] = useState({ plants: [] });
 
   const showTabs =
-    selectedTab !== DISCOVER_TAB_INDEX || lastSearchedCriteria != null;
+    selectedTab !== DISCOVER_TAB_INDEX ||
+    plants.length > 0 ||
+    garden.plants.length > 0;
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -45,6 +47,7 @@ const Home = () => {
     });
   };
 
+  // When the page is loaded, process the URL path and load data / switch tabs
   const { id } = useParams();
   const location = useLocation();
   useEffect(() => {
