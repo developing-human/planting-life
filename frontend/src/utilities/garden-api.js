@@ -1,4 +1,4 @@
-export async function getGarden(id, setGarden, onError) {
+export async function getGarden(id, onSuccess, onError) {
   console.log(onError);
   fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens/${id}`, {
     method: "GET",
@@ -14,7 +14,7 @@ export async function getGarden(id, setGarden, onError) {
       return response.json();
     })
     .then((garden) => {
-      setGarden(garden);
+      onSuccess(garden);
     })
     .catch((error) => {
       onError(error);

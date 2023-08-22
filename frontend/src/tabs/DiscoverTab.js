@@ -21,6 +21,8 @@ const DiscoverTab = ({
   setLastSearchedCriteria,
   error,
   setError,
+  eventSource,
+  setEventSource,
 }) => {
   const [infoMessage, setInfoMessage] = useState(null);
   const [expanded, setExpanded] = useState("welcome");
@@ -52,6 +54,8 @@ const DiscoverTab = ({
         searchCriteria={searchCriteria}
         setSearchCriteria={setSearchCriteria}
         selectedPlants={garden.plants}
+        eventSource={eventSource}
+        setEventSource={setEventSource}
       />
 
       {error || infoMessage ? (

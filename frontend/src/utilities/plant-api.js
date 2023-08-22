@@ -1,4 +1,4 @@
-export default async function sendRequest(
+export default async function openPlantsStream(
   formData,
   setPlants,
   setError,

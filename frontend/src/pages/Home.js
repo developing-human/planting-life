@@ -17,6 +17,8 @@ import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import "./Home.css";
+import openPlantsStream from "../utilities/plant-api";
+import { getNurseries } from "../utilities/nursery-api";
 
 const Home = () => {
   const DISCOVER_TAB_INDEX = 0;
@@ -29,6 +31,7 @@ const Home = () => {
   const [selectedTab, setSelectedTab] = useState(DISCOVER_TAB_INDEX);
   const [error, setError] = useState(null);
   const [garden, setGarden] = useState({ plants: [] });
+  const [eventSource, setEventSource] = useState(null);
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX ||
@@ -51,16 +54,39 @@ const Home = () => {
   };
 
   const loadGarden = (id) => {
-    //TODO: As part of loading the garden... I want to use the returned zip/etc
-    //      to trigger nursery/plant queries.  So I think setGarden needs to be
-    //      replaced with onSuccess.  And in that onSuccess... I need to call
-    //      the plants api and nursery api.  Which are just single calls, but
-    //      do take a lot of params.
-    getGarden(id, setGarden, (error) => {
-      console.error(error);
-      setSelectedTab(DISCOVER_TAB_INDEX);
-      setError(`Couldn't find the garden you're looking for 😞`);
-    });
+    getGarden(
+      id,
+      (fetchedGarden) => {
+        setGarden(fetchedGarden);
+
+        const gardenSearchCriteria = {
+          zip: fetchedGarden.zipcode,
+          shade: fetchedGarden.shade,
+          moisture: fetchedGarden.moisture,
+        };
+
+        // Populate the Discover tab's search criteria based on the criteria
+        // that were used to build the loaded garden
+        setSearchCriteria(gardenSearchCriteria);
+
+        // Populate the discover tab based on those criteria, too
+        openPlantsStream(
+          gardenSearchCriteria,
+          setPlants,
+          setError,
+          setEventSource,
+          fetchedGarden.plants
+        );
+
+        // Populate the Nurseries tab using the zipcode from the garden
+        getNurseries(fetchedGarden.zipcode, setNurseries);
+      },
+      (error) => {
+        console.error(error);
+        setSelectedTab(DISCOVER_TAB_INDEX);
+        setError(`Couldn't find the garden you're looking for 😞`);
+      }
+    );
   };
 
   // When the page is loaded, process the URL path and load data / switch tabs
@@ -179,6 +205,8 @@ const Home = () => {
             setLastSearchedCriteria={setLastSearchedCriteria}
             error={error}
             setError={setError}
+            eventSource={eventSource}
+            setEventSource={setEventSource}
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>

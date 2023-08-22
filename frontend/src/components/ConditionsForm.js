@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect } from "react";
+import { useRef, useEffect } from "react";
 
 // components
 import DropdownSelect from "./DropdownSelect";
 
 // utilities
-import sendRequest from "../utilities/plant-api";
+import openPlantsStream from "../utilities/plant-api";
 
 // material ui
 import TextField from "@mui/material/TextField";
@@ -28,14 +28,14 @@ function ConditionsForm({
   searchCriteria,
   setSearchCriteria,
   selectedPlants,
+  eventSource,
+  setEventSource,
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
   const defaultShade = shadeOptions[1];
   const defaultMoisture = moistureOptions[1];
-
-  const [eventSource, setEventSource] = useState(null);
 
   const plantsRef = useRef(plants);
   plantsRef.current = plants;
@@ -103,7 +103,7 @@ function ConditionsForm({
       eventSource.close();
     }
 
-    sendRequest(
+    openPlantsStream(
       formData,
       setPlants,
       setError,
