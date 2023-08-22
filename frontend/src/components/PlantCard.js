@@ -119,15 +119,17 @@ const PlantCard = memo(function PlantCard({
           <CardContent>
             <div className="highlight-container">
               <Typography variant="body2" color="text.secondary">
-                {plant.highlights.map((highlight) => (
-                  <span key={plant.id + "-" + highlight.label}>
-                    <Highlight
-                      label={highlight.label}
-                      category={highlight.category}
-                    />
-                    <br />
-                  </span>
-                ))}
+                {plant.highlights
+                  ? plant.highlights.map((highlight) => (
+                      <span key={plant.id + "-" + highlight.label}>
+                        <Highlight
+                          label={highlight.label}
+                          category={highlight.category}
+                        />
+                        <br />
+                      </span>
+                    ))
+                  : null}
               </Typography>
             </div>
             <Typography variant="body2" color="text.secondary">
