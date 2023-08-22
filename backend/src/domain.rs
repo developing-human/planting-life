@@ -260,8 +260,11 @@ pub struct Garden {
     /// Moisture condition this Garden will thrive in
     pub moisture: Moisture,
 
-    /// Is this instance read only in the UI?
-    pub read_only: bool,
+    /// An identifier which allows read-only access to this Garden
+    pub read_id: Option<String>,
+
+    /// An identifier which allows this Garden to be updated
+    pub write_id: Option<String>,
 }
 
 impl Garden {
@@ -274,7 +277,8 @@ impl Garden {
             moisture,
             plants: vec![],
             region_name: None,
-            read_only: true,
+            read_id: None,
+            write_id: None,
         }
     }
 }

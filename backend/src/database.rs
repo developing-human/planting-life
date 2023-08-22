@@ -194,7 +194,11 @@ impl Database {
 
         if garden.is_none() {
             garden = match self.sql_runner.select_garden_by_id(id, false).await {
-                Ok(Some(garden)) => Some(garden),
+                Ok(Some(garden)) => Some(Garden {
+                    // get_garden was called with a write_id, so populate it
+                    write_id: Some(id.to_string()),
+                    ..garden
+                }),
                 Ok(None) => None,
                 Err(e) => {
                     warn!("get_garden failed to select by write_id: {e}");
@@ -208,7 +212,7 @@ impl Database {
 
         let plants = match self
             .sql_runner
-            .select_plants_by_garden_id(id, garden.read_only)
+            .select_plants_by_garden_id(id, garden.write_id.is_none())
             .await
         {
             Ok(plants) => plants,

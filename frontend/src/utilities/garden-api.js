@@ -14,7 +14,6 @@ export async function getGarden(id, setGarden, onError) {
       return response.json();
     })
     .then((garden) => {
-      garden.read_id = id;
       setGarden(garden);
     })
     .catch((error) => {

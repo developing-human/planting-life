@@ -407,7 +407,7 @@ WHERE z.zipcode = ?"
 
         format!(
             "
-SELECT g.name, g.zipcode, r.name, shade, moisture, {read_only}
+SELECT g.name, g.zipcode, r.name, shade, moisture, g.read_id
 FROM gardens g
 INNER JOIN zipcodes z ON z.zipcode = g.zipcode
 INNER JOIN regions r ON r.id = z.region_id

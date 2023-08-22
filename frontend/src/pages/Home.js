@@ -36,6 +36,17 @@ const Home = () => {
     garden.plants.length > 0;
 
   const handleTabChange = (event, newValue) => {
+    if (
+      newValue === GARDEN_TAB_INDEX &&
+      garden.name &&
+      (garden.write_id || garden.read_id)
+    ) {
+      window.history.replaceState(
+        null,
+        garden.name,
+        `/gardens/${garden.write_id || garden.read_id}`
+      );
+    }
     setSelectedTab(newValue);
   };
 

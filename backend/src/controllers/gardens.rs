@@ -20,17 +20,17 @@ struct GardensPostRequest {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct GardensPutRequest {
-    plant_ids: Vec<usize>,
-    name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
 struct GardensPostResponse {
     read_id: String,
     write_id: String,
     name: String,
     region_name: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct GardensPutRequest {
+    plant_ids: Vec<usize>,
+    name: String,
 }
 
 pub struct GardensController {
