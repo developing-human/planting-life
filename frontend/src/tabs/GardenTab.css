@@ -1,0 +1,16 @@
+.garden-summary {
+    max-width: 800px;
+    margin: auto;
+    padding: 1px 20px 20px 20px;
+    margin-bottom: 30px;
+}
+
+.garden-summary div {
+    display: flex;
+    justify-content: center;
+}
+
+.garden-summary h3 {
+    display: flex;
+    justify-content: center;
+}

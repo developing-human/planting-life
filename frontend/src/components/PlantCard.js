@@ -42,7 +42,7 @@ const PlantCard = memo(function PlantCard({
         );
       }
 
-      return { ...prevGarden, plants: newSelectedPlants };
+      return { ...prevGarden, plants: newSelectedPlants, needsSave: true };
     });
 
     // Update plants state with the flag, this will be remembered when navigating

@@ -50,7 +50,7 @@ impl GardensController {
             .db
             .get_region_name_by_zip(&payload.zipcode)
             .await
-            .unwrap_or_else(|| format!("Near Zipcode {}", payload.zipcode));
+            .unwrap_or_else(|| format!("Zipcode {}", payload.zipcode));
 
         let name = format!("Native Garden near {region_name}");
         let garden = Garden::empty(name, payload.zipcode, payload.shade, payload.moisture);

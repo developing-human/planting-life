@@ -60,11 +60,18 @@ impl PlantingLifeApp {
 
     pub async fn start(&'static self) -> std::io::Result<()> {
         HttpServer::new(move || {
-            let cors = Cors::default()
+            let mut cors = Cors::default()
                 .allowed_origin("https://www.planting.life")
                 .allowed_origin("https://planting.life")
                 .allowed_header(http::header::CONTENT_TYPE)
                 .allowed_methods(vec!["GET"]);
+
+            // In local (debug build, not release), don't restrict origin
+            // This allows localhost, but also networked locations (ex: access
+            // from phone on local network)
+            if cfg!(debug_assertions) {
+                cors = cors.allow_any_origin()
+            }
 
             App::new()
                 .wrap(cors)

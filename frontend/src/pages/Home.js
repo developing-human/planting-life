@@ -6,7 +6,7 @@ import DiscoverTab from "../tabs/DiscoverTab";
 import GardenTab from "../tabs/GardenTab";
 import NurseryTab from "../tabs/NurseryTab";
 
-import { getGarden } from "../utilities/garden-api";
+import { getGarden, saveGarden } from "../utilities/garden-api";
 
 // material ui & styling
 import YardIcon from "@mui/icons-material/Yard";
@@ -91,32 +91,20 @@ const Home = () => {
     window.scrollTo({ top: offsetPosition });
   }, [selectedTab, showTabs]);
 
-  /*
-  const navigate = useNavigate();
-  const onViewGardenClick = () => {
-    fetch(`${process.env.REACT_APP_URL_PREFIX}/gardens`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        zipcode: lastSearchedCriteria.zip,
-        shade: lastSearchedCriteria.shade,
-        moisture: lastSearchedCriteria.moisture,
-        plant_ids: selectedPlants.map((p) => p.id),
-      }),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        //TODO: Pass nurseries, search criteria, region_name, zipcode, read_id
-        navigate(`gardens/${data.write_id}`, {
-          state: { plants: selectedPlants },
-        });
-      })
-      //TODO: Better error handling?
-      .catch((error) => console.error("Error:", error));
-  };
-  */
+  // When a Garden is updated, save it.
+  useEffect(() => {
+    // By checking a needsSave flag, we avoid saving for garden updates which
+    // didn't intend to cause a save (i.e. loading from GET /gardens).
+    if (garden.needsSave) {
+      saveGarden(garden, setGarden, lastSearchedCriteria, (error) => {
+        console.error(error);
+      });
+
+      setGarden((prevGarden) => {
+        return { ...prevGarden, needsSave: false };
+      });
+    }
+  }, [garden, lastSearchedCriteria]);
 
   return (
     <>
