@@ -119,8 +119,13 @@ const Home = () => {
       return;
     }
 
+    // If the user hasn't searched yet (which usually means they came to the
+    // site through a garden link), scroll to the top when going to the discover
+    // tab.  If they've already searched, scroll down to the cards.
     const elementId =
-      selectedTab === DISCOVER_TAB_INDEX ? "discover-cards" : "tab-container";
+      selectedTab === DISCOVER_TAB_INDEX && lastSearchedCriteria
+        ? "discover-cards"
+        : "tab-container";
     const extraOffset = selectedTab === 0 ? -90 : 0;
 
     // Find the top of the tab container
