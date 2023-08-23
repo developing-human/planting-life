@@ -38,7 +38,7 @@ function GardenSummary({ garden }) {
             <TextField
               id="share-garden-url"
               label="Share this Garden"
-              value={"https://planting.life/g/bfl2q"}
+              value={gardenUrl}
               sx={{
                 marginTop: "25px",
                 minWidth: "275px",
