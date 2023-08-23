@@ -64,7 +64,8 @@ impl PlantingLifeApp {
                 .allowed_origin("https://www.planting.life")
                 .allowed_origin("https://planting.life")
                 .allowed_header(http::header::CONTENT_TYPE)
-                .allowed_methods(vec!["GET"]);
+                .allowed_header(http::header::ACCEPT)
+                .allowed_methods(vec!["GET", "POST", "PUT"]);
 
             // In local (debug build, not release), don't restrict origin
             // This allows localhost, but also networked locations (ex: access
