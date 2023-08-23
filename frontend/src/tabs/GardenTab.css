@@ -14,3 +14,7 @@
     display: flex;
     justify-content: center;
 }
+
+#share-garden-url:disabled {
+    color: rgb(0, 0, 0, 0.87);
+}
