@@ -89,6 +89,27 @@ const Home = () => {
     );
   };
 
+  const onNewGarden = () => {
+    // Clear the garden.  Its a new garden.
+    setGarden({ plants: [] });
+
+    // Set all plants as unselected
+    setPlants((prevPlants) => {
+      return prevPlants.map((plant) => ({
+        ...plant,
+        selected: false,
+      }));
+    });
+
+    // Go to Discover tab, so a new garden can be planned
+    setSelectedTab(DISCOVER_TAB_INDEX);
+
+    // Since we're keeping search results, keep the last searched criteria
+    setLastSearchedCriteria(searchCriteria);
+
+    window.history.replaceState(null, null, `/`);
+  };
+
   // When the page is loaded, process the URL path and load data / switch tabs
   const { id } = useParams();
   const location = useLocation();
@@ -111,32 +132,6 @@ const Home = () => {
 
     setSelectedTab(tab);
   }, [id, location, setSelectedTab]);
-
-  useEffect(() => {
-    // Don't scroll if tabs aren't shown.  Without this, it scrolls down when
-    // the page loads on small screens.
-    if (!showTabs) {
-      return;
-    }
-
-    // If the user hasn't searched yet (which usually means they came to the
-    // site through a garden link), scroll to the top when going to the discover
-    // tab.  If they've already searched, scroll down to the cards.
-    const elementId =
-      selectedTab === DISCOVER_TAB_INDEX && lastSearchedCriteria
-        ? "discover-cards"
-        : "tab-container";
-    const extraOffset = selectedTab === 0 ? -90 : 0;
-
-    // Find the top of the tab container
-    const element = document.getElementById(elementId);
-    const elementPosition = element.getBoundingClientRect().top;
-
-    // If its negative, its above the top of the viewport and we need to scroll
-    // up to the top when changing tabs.
-    const offsetPosition = elementPosition + window.pageYOffset + extraOffset;
-    window.scrollTo({ top: offsetPosition });
-  }, [selectedTab, showTabs]);
 
   // When a Garden is updated, save it.
   useEffect(() => {
@@ -215,7 +210,11 @@ const Home = () => {
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>
-          <GardenTab garden={garden} />
+          <GardenTab
+            garden={garden}
+            setGarden={setGarden}
+            onNewGarden={onNewGarden}
+          />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
           <NurseryTab nurseries={nurseries} />

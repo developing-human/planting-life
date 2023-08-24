@@ -2,10 +2,13 @@ import PlantCard from "../components/PlantCard";
 import GardenSummary from "../components/GardenSummary";
 import "./GardenTab.css";
 
-const GardenTab = ({ garden }) => {
+const GardenTab = ({ garden, onNewGarden }) => {
+  const onSave = () => {
+    alert("save");
+  };
   return garden ? (
     <>
-      <GardenSummary garden={garden} />
+      <GardenSummary garden={garden} onNew={onNewGarden} onSave={onSave} />
 
       <section className="card-container">
         {garden.plants.map((plant) => (

@@ -1,17 +1,20 @@
 import { useState } from "react";
 // components
 import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import Add from "@mui/icons-material/Add";
+import SaveIcon from "@mui/icons-material/Save";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
 
-function GardenSummary({ garden }) {
+function GardenSummary({ garden, onNew, onSave }) {
   const gardenUrl = garden.read_id
     ? process.env.REACT_APP_GARDEN_URL_PREFIX + garden.read_id
     : null;
@@ -77,6 +80,20 @@ function GardenSummary({ garden }) {
               disabled={true}
             />
           ) : null}
+          <Box sx={{ marginTop: "15px" }}>
+            <Button variant="outlined" startIcon={<Add />} onClick={onNew}>
+              New Garden
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              sx={{ marginLeft: "10px" }}
+              startIcon={<SaveIcon />}
+              onClick={onSave}
+            >
+              Save As...
+            </Button>
+          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -65,9 +65,11 @@ const DiscoverTab = ({
         </div>
       ) : null}
 
-      <div className="accordion-container">
-        <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
-      </div>
+      {plants.length === 0 ? (
+        <div className="accordion-container">
+          <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
+        </div>
+      ) : null}
 
       <div className="alert-container" id="top-survey-alert">
         {showSurvey ? (
