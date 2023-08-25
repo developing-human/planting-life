@@ -8,18 +8,20 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import Add from "@mui/icons-material/Add";
+import ReplayIcon from "@mui/icons-material/Replay";
 import SaveIcon from "@mui/icons-material/Save";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
+import SaveGardenModal from "./SaveGardenModal";
 
-function GardenSummary({ garden, onNew, onSave }) {
+function GardenSummary({ garden, onNew, setGarden }) {
   const gardenUrl = garden.read_id
     ? process.env.REACT_APP_GARDEN_URL_PREFIX + garden.read_id
     : null;
 
   const [copied, setCopied] = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const narrowScreen = useMediaQuery("(max-width: 400px");
 
   return garden ? (
@@ -81,18 +83,29 @@ function GardenSummary({ garden, onNew, onSave }) {
             />
           ) : null}
           <Box sx={{ marginTop: "15px" }}>
-            <Button variant="outlined" startIcon={<Add />} onClick={onNew}>
+            <Button
+              sx={{ padding: "5px 10px 5px 10px" }}
+              variant="outlined"
+              startIcon={<ReplayIcon />}
+              onClick={onNew}
+            >
               New Garden
             </Button>
             <Button
               variant="contained"
               color="primary"
-              sx={{ marginLeft: "10px" }}
+              sx={{ marginLeft: "10px", padding: "5px 10px 5px 10px" }}
               startIcon={<SaveIcon />}
-              onClick={onSave}
+              onClick={() => setSaveModalOpen(true)}
             >
               Save As...
             </Button>
+            <SaveGardenModal
+              isOpen={saveModalOpen}
+              setIsOpen={setSaveModalOpen}
+              garden={garden}
+              setGarden={setGarden}
+            />
           </Box>
         </CardContent>
       </Card>
