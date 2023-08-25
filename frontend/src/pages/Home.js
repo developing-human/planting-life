@@ -51,6 +51,9 @@ const Home = () => {
       );
     }
     setSelectedTab(newValue);
+
+    // Scroll to top when switching tabs
+    window.scrollTo({ top: 0, behavior: "auto" });
   };
 
   const loadGarden = (id) => {
@@ -68,6 +71,10 @@ const Home = () => {
         // Populate the Discover tab's search criteria based on the criteria
         // that were used to build the loaded garden
         setSearchCriteria(gardenSearchCriteria);
+
+        // Populate lastSearchedCriteria since plants will be loaded as though
+        // they were searched for
+        setLastSearchedCriteria(gardenSearchCriteria);
 
         // Populate the discover tab based on those criteria, too
         openPlantsStream(

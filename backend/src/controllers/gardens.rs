@@ -17,6 +17,7 @@ struct GardensPostRequest {
     zipcode: String,
     moisture: Moisture,
     shade: Shade,
+    name: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -52,7 +53,10 @@ impl GardensController {
             .await
             .unwrap_or_else(|| format!("Zipcode {}", payload.zipcode));
 
-        let name = format!("Native Garden near {region_name}");
+        let name = payload
+            .name
+            .unwrap_or_else(|| format!("Native Garden near {region_name}"));
+
         let garden = Garden::empty(name, payload.zipcode, payload.shade, payload.moisture);
 
         let response = match self.db.save_new_garden(&garden, payload.plant_ids).await {

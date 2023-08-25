@@ -47,6 +47,7 @@ async function postGarden(garden, setGarden, lastSearchedCriteria, onError) {
       shade: lastSearchedCriteria.shade,
       moisture: lastSearchedCriteria.moisture,
       plant_ids: garden.plants.map((p) => p.id),
+      name: garden.name,
     }),
   })
     .then((response) => response.json())
