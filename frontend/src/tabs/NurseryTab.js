@@ -20,14 +20,14 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
         <Card
           sx={{
             minWidth: 275,
-            maxWidth: 625,
+            maxWidth: 525,
             marginBottom: "20px",
             textAlign: "center",
             display: "inline-flex",
           }}
         >
           <CardContent sx={{}}>
-            <Box display="flex">
+            <Box display="flex" justifyContent="center">
               <Typography variant="h5">
                 Native-Focused Nurseries near
                 <TextField
@@ -39,6 +39,7 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
                   sx={{
                     marginLeft: "5px",
                     width: "110px",
+                    marginBottom: "15px",
                   }}
                   InputProps={{
                     endAdornment: (
@@ -68,8 +69,8 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
               variant="body1"
               sx={{ paddingTop: "10px", textAlign: "justify" }}
             >
-              These nurseries are committed to offering indigenous species that
-              are well-suited to your local environment. By focusing on native
+              These nurseries are committed to offering native species that are
+              well-suited to your local environment. By focusing on native
               plants, these nurseries support the health of ecosystems and
               promote sustainable gardening practices.
             </Typography>
