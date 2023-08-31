@@ -18,6 +18,7 @@ import Remove from "@mui/icons-material/Remove";
 
 // styling
 import "./PlantCard.css";
+import { Divider } from "@mui/material";
 
 const PlantCard = memo(function PlantCard({
   plant,
@@ -78,18 +79,16 @@ const PlantCard = memo(function PlantCard({
       sx={{
         width: 350,
         maxWidth: "90vw",
-        minHeight: 540,
-        maxHeight: 540,
+        minHeight: 523,
+        maxHeight: 523,
         borderRadius: "12px",
       }}
     >
-      <CardHeader title={plant.common} subheader={plant.scientific} />
-
       <div className="plant-image-container">
         {showAddButton !== false &&
           (selected ? (
             <IconButton
-              size="small"
+              size="large"
               className="add-plant-button"
               onClick={togglePlant}
             >
@@ -97,7 +96,7 @@ const PlantCard = memo(function PlantCard({
             </IconButton>
           ) : (
             <IconButton
-              size="small"
+              size="large"
               className="add-plant-button"
               onClick={togglePlant}
             >
@@ -124,9 +123,20 @@ const PlantCard = memo(function PlantCard({
         ) : null}
       </div>
 
-      <Grid container spacing={0}>
-        <Grid item xs={6.25}>
-          <CardContent>
+      <CardHeader
+        title={plant.common}
+        subheader={plant.scientific}
+        subheaderTypographyProps={{
+          sx: {
+            paddingLeft: "4px",
+          },
+        }}
+      />
+      <Divider variant="middle" />
+
+      <CardContent>
+        <Grid container spacing={2}>
+          <Grid item xs={6.25}>
             <div className="highlight-container">
               <Typography variant="body2" color="text.secondary">
                 {plant.highlights
@@ -142,7 +152,11 @@ const PlantCard = memo(function PlantCard({
                   : null}
               </Typography>
             </div>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ marginTop: "-7px" }}
+            >
               {plant.wikiSource ? (
                 <a href={plant.wikiSource} target="_blank" rel="noreferrer">
                   Wikipedia
@@ -155,10 +169,8 @@ const PlantCard = memo(function PlantCard({
                 </a>
               ) : null}
             </Typography>
-          </CardContent>
-        </Grid>
-        <Grid item xs={5.75}>
-          <CardContent>
+          </Grid>
+          <Grid item xs={5.75}>
             <Typography variant="body2" color="text.secondary">
               {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}
               <br />
@@ -174,9 +186,9 @@ const PlantCard = memo(function PlantCard({
                 </span>
               )}
             </Typography>
-          </CardContent>
+          </Grid>
         </Grid>
-      </Grid>
+      </CardContent>
     </Card>
   );
 });

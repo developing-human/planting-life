@@ -17,8 +17,8 @@ figcaption a {
 .card-loading {
   display: flex;
   justify-content: flex-end;
-  margin-top: -8px;
-  margin-right: -6px;
+  margin-top: -15px;
+  margin-right: -2px;
 }
 
 .highlight-container {
@@ -35,16 +35,19 @@ figcaption a {
 }
 
 .plant-card .MuiCardHeader-root {
-  padding-left: 15px;
-  padding-bottom: 6px;
+  padding-left: 10px;
+  padding-bottom: 0px;
 }
 
 .plant-card .MuiCardContent-root {
-  padding-top: 17px;
+  padding-top: 10px;
 }
 
 .plant-card.selected {
   background-color: #a9ff89;
+  outline-style:solid ;
+  outline-color: #a9ff89;
+  outline-width: 4px;
 }
 
 .plant-image-container {
