@@ -1,0 +1,7 @@
+.nursery-card .MuiCardHeader-title {
+  max-width: 325px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 0px;
+}

@@ -34,6 +34,7 @@ const Home = () => {
   const [garden, setGarden] = useState({ plants: [] });
   const [eventSource, setEventSource] = useState(null);
   const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
+  const [nurserySearchZip, setNurserySearchZip] = useState("");
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX ||
@@ -177,6 +178,12 @@ const Home = () => {
       });
     }
   }, [garden, lastSearchedCriteria]);
+
+  // When search criteria are updated, update the nursery search zip as well.
+  useEffect(() => {
+    setNurserySearchZip(lastSearchedCriteria?.zip || "");
+  }, [lastSearchedCriteria]);
+
   return (
     <>
       <div id="tab-container">
@@ -247,7 +254,12 @@ const Home = () => {
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
-          <NurseryTab nurseries={nurseries} />
+          <NurseryTab
+            nurseries={nurseries}
+            setNurseries={setNurseries}
+            zip={nurserySearchZip}
+            setZip={setNurserySearchZip}
+          />
         </CustomTabPanel>
       </div>
       <Snackbar

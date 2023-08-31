@@ -4,13 +4,18 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import { styled } from "@mui/system";
 
+import "./Nursery.css";
+
 function Nursery({ nursery }) {
   const NoPaddingCardContent = styled(CardContent)({
     paddingTop: "0px",
   });
 
   return (
-    <Card sx={{ width: 350, maxWidth: "90vw", minHeight: 125, maxHeight: 575 }}>
+    <Card
+      className="nursery-card"
+      sx={{ width: 350, maxWidth: "90vw", minHeight: 125, maxHeight: 575 }}
+    >
       <CardHeader
         title={nursery.name}
         subheader={`${nursery.miles} miles away`}

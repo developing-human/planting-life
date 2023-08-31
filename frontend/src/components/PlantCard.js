@@ -27,7 +27,6 @@ const PlantCard = memo(function PlantCard({
   setPlants,
   highlightSelected,
 }) {
-  console.log(JSON.stringify(plant));
   const [selected, setSelected] = useState(plant.selected || false);
   const togglePlant = () => {
     const newSelected = !selected;
