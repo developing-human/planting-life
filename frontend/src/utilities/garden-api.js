@@ -73,11 +73,9 @@ async function putGarden(garden, onError) {
       plant_ids: garden.plants.map((p) => p.id),
       name: garden.name,
     }),
-  })
-    .then((response) => response.json())
-    .catch((error) => {
-      onError(error);
-    });
+  }).catch((error) => {
+    onError(error);
+  });
 
   return () => {};
 }
