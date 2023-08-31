@@ -5,6 +5,7 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 
 import "./NavBar.css";
+import { Link } from "@mui/material";
 
 function NavBar() {
   return (
@@ -22,29 +23,33 @@ function NavBar() {
           sx={{
             display: "flex",
             flexWrap: "wrap",
-            justifyContent: "center",
+            justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <IconButton disabled size="string" edge="start" color="inherit">
-            <img
-              className="icon"
-              src="https://planting.life/favicon-32x32.png"
-              alt="icon"
-            />
-          </IconButton>
+          <a href="/">
+            <div style={{ display: "flex" }}>
+              <IconButton disabled size="string" edge="start" color="inherit">
+                <img
+                  className="icon"
+                  src="https://planting.life/favicon-32x32.png"
+                  alt="icon"
+                />
+              </IconButton>
 
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              flexGrow: 1,
-              paddingTop: "10px",
-              paddingLeft: "5px",
-            }}
-          >
-            Planting Life
-          </Typography>
+              <Typography
+                variant="h6"
+                component="div"
+                sx={{
+                  flexGrow: 1,
+                  paddingTop: "12px",
+                  paddingLeft: "5px",
+                }}
+              >
+                Planting Life
+              </Typography>
+            </div>
+          </a>
 
           <Typography
             id="slogan"
@@ -53,7 +58,7 @@ function NavBar() {
             sx={{
               flexGrow: 1,
               fontStyle: "italic",
-              textAlign: "center",
+              textAlign: "right",
               width: "40vw",
               maxWidth: "500px",
               paddingTop: "15px",
