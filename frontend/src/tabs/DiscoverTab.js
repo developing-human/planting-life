@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 // components
 import ConditionsForm from "../components/ConditionsForm";
@@ -8,7 +8,6 @@ import PlantCard from "../components/PlantCard";
 
 // material ui & styling
 import Alert from "@mui/material/Alert";
-import Button from "@mui/material/Button";
 
 const DiscoverTab = ({
   plants,
@@ -28,16 +27,30 @@ const DiscoverTab = ({
   const [expanded, setExpanded] = useState("welcome");
   const [loading, setLoading] = useState(false);
   const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
+  const lastPlantRef = useRef(null);
 
-  const showMoreButton = plants.length >= maxPlantsToDisplay;
   const showSpinner = loading && plants.length < maxPlantsToDisplay;
   const showSurvey = loading || plants.length > 0;
 
   const plantsWithImages = plants.filter((plant) => plant.image);
 
-  const onMoreClick = () => {
-    setMaxPlantsToDisplay((oldMax) => oldMax + 12);
-  };
+  // When plants or maxPlantsToDisplay changes, watch for when the last plant
+  // comes into view.  When it does, increment the # of plants to display.
+  // This lets us load all the JSON at once (cheap) while waiting to load images
+  // (expensive) until they're needed.
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting) {
+        setMaxPlantsToDisplay((oldMax) => oldMax + 12);
+      }
+    });
+
+    if (lastPlantRef.current) {
+      observer.observe(lastPlantRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [plants, maxPlantsToDisplay]);
 
   return (
     <>
@@ -89,23 +102,19 @@ const DiscoverTab = ({
 
       <section className="card-container" id="discover-cards">
         {plantsWithImages.slice(0, maxPlantsToDisplay).map((plant, index) => (
-          <PlantCard
-            plant={plant}
+          <div
             key={plant.id}
-            setGarden={setGarden}
-            setPlants={setPlants}
-          />
+            ref={index + 1 === maxPlantsToDisplay ? lastPlantRef : null}
+          >
+            <PlantCard
+              plant={plant}
+              setGarden={setGarden}
+              setPlants={setPlants}
+            />
+          </div>
         ))}
         {showSpinner ? <Spinner /> : null}
       </section>
-
-      <div className="button-container">
-        {showMoreButton && (
-          <Button className="more-button" type="submit" onClick={onMoreClick}>
-            Load More
-          </Button>
-        )}
-      </div>
     </>
   );
 };
