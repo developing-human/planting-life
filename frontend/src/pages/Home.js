@@ -19,6 +19,7 @@ import Box from "@mui/material/Box";
 import "./Home.css";
 import openPlantsStream from "../utilities/plant-api";
 import { getNurseries } from "../utilities/nursery-api";
+import { Alert, Snackbar } from "@mui/material";
 
 const Home = () => {
   const DISCOVER_TAB_INDEX = 0;
@@ -32,6 +33,7 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [garden, setGarden] = useState({ plants: [] });
   const [eventSource, setEventSource] = useState(null);
+  const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX ||
@@ -122,6 +124,18 @@ const Home = () => {
     window.history.replaceState(null, null, `/`);
   };
 
+  const showCopyGardenMessage = () => {
+    setIsCopyGardenMessageOpen(true);
+  };
+
+  const closeCopyGardenMessage = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setIsCopyGardenMessageOpen(false);
+  };
+
   // When the page is loaded, process the URL path and load data / switch tabs
   const { id } = useParams();
   const location = useLocation();
@@ -150,6 +164,10 @@ const Home = () => {
     // By checking a needsSave flag, we avoid saving for garden updates which
     // didn't intend to cause a save (i.e. loading from GET /gardens).
     if (garden.needsSave) {
+      if (garden.read_id && !garden.write_id) {
+        showCopyGardenMessage();
+      }
+
       saveGarden(garden, setGarden, lastSearchedCriteria, (error) => {
         console.error(error);
       });
@@ -159,7 +177,6 @@ const Home = () => {
       });
     }
   }, [garden, lastSearchedCriteria]);
-
   return (
     <>
       <div id="tab-container">
@@ -233,6 +250,19 @@ const Home = () => {
           <NurseryTab nurseries={nurseries} />
         </CustomTabPanel>
       </div>
+      <Snackbar
+        open={isCopyGardenMessageOpen}
+        autoHideDuration={4000}
+        onClose={closeCopyGardenMessage}
+      >
+        <Alert
+          onClose={closeCopyGardenMessage}
+          severity="success"
+          variant="filled"
+        >
+          Created your copy of this garden
+        </Alert>
+      </Snackbar>
     </>
   );
 };
