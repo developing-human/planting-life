@@ -5,7 +5,6 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 
 import "./NavBar.css";
-import { Link } from "@mui/material";
 
 function NavBar() {
   return (
