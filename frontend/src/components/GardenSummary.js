@@ -54,6 +54,14 @@ function GardenSummary({ garden, onNew, setGarden }) {
                   color: "inherit",
                 },
               }}
+              inputProps={{
+                sx: {
+                  backgroundColor: "#e4e4e4",
+                  borderRadius: "0 3px 3px 0",
+                  paddingLeft: "15px",
+                  marginLeft: "3px",
+                },
+              }}
               InputProps={{
                 startAdornment: (
                   <CopyToClipboard
