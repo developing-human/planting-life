@@ -38,7 +38,7 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
                   onChange={handleZipChange}
                   sx={{
                     marginLeft: "5px",
-                    width: "120px",
+                    width: "110px",
                   }}
                   InputProps={{
                     endAdornment: (
@@ -51,7 +51,7 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
                     maxLength: 5,
                     title: "US Zip Code",
                     sx: {
-                      padding: "5px 10px 5px 10px",
+                      padding: "5px 0px 0px 10px",
                       fontSize: "1.2rem",
                     },
                   }}
