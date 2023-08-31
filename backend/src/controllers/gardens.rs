@@ -138,6 +138,5 @@ async fn update_garden_handler(
     web::Json(payload): web::Json<GardensPutRequest>,
     app: web::Data<&'static PlantingLifeApp>,
 ) -> impl Responder {
-    println!("put");
     app.gardens_controller.update(&write_id, payload).await
 }
