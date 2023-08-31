@@ -24,7 +24,9 @@ const PlantCard = memo(function PlantCard({
   setGarden,
   showAddButton,
   setPlants,
+  highlightSelected,
 }) {
+  console.log(JSON.stringify(plant));
   const [selected, setSelected] = useState(plant.selected || false);
   const togglePlant = () => {
     const newSelected = !selected;
@@ -35,7 +37,10 @@ const PlantCard = memo(function PlantCard({
     setGarden((prevGarden) => {
       let newSelectedPlants;
       if (newSelected) {
-        newSelectedPlants = prevGarden.plants.concat(plant);
+        newSelectedPlants = prevGarden.plants.concat({
+          ...plant,
+          selected: true,
+        });
       } else {
         newSelectedPlants = prevGarden.plants.filter(
           (existing) => existing.scientific !== plant.scientific
@@ -63,7 +68,12 @@ const PlantCard = memo(function PlantCard({
 
   return (
     <Card
-      className={"plant-card" + (selected ? " selected" : "")}
+      className={
+        "plant-card" +
+        // only add the selected class (to highlight this card) if it is
+        // selected and it should be highlighted
+        (highlightSelected !== false && selected ? " selected" : "")
+      }
       raised={true}
       sx={{
         width: 350,

@@ -60,6 +60,11 @@ const Home = () => {
     getGarden(
       id,
       (fetchedGarden) => {
+        // Everything in the garden is selected by default
+        fetchedGarden.plants.forEach((plant) => {
+          plant.selected = true;
+        });
+
         setGarden(fetchedGarden);
 
         const gardenSearchCriteria = {
@@ -221,6 +226,7 @@ const Home = () => {
             garden={garden}
             setGarden={setGarden}
             onNewGarden={onNewGarden}
+            setPlants={setPlants}
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
