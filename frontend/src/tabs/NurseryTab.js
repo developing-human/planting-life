@@ -52,7 +52,7 @@ const NurseryTab = ({ nurseries, setNurseries, zip, setZip }) => {
                     maxLength: 5,
                     title: "US Zip Code",
                     sx: {
-                      padding: "5px 0px 0px 10px",
+                      padding: "3px 0px 0px 10px",
                       fontSize: "1.2rem",
                     },
                   }}
