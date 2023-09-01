@@ -55,13 +55,6 @@ export default function PlantAutocomplete({ setPlants, selectedPlants }) {
     openPlantsStream({ scientificName: option.scientific }, setPlants);
   };
 
-  //TODO: Need a migration before sending this to prod!  I created the freetext
-  //      index jankily.
-
-  //TODO: When searching multiple words, can I do an AND instead of OR?
-
-  //TODO: Plants which are searched for won't be marked as selected on discover tab
-
   //TODO: Some sort of confirmation that the plant was added?  Choosing feels
   //      like it does nothing if you can't see the new entry (like on mobile).
 

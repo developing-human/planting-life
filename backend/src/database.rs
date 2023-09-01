@@ -306,7 +306,12 @@ impl Database {
     }
 
     pub async fn find_plants_by_word_prefix(&self, word_prefix: &str) -> Vec<Plant> {
-        match self.sql_runner.find_plant_by_word_prefix(word_prefix).await {
+        let search_expression = build_word_prefix_expression(word_prefix);
+        match self
+            .sql_runner
+            .find_plant_by_word_prefix(&search_expression)
+            .await
+        {
             Ok(plants) => plants,
             Err(e) => {
                 warn!("find_plants_by_word_prefix failed to select: {e}");
@@ -321,6 +326,18 @@ fn generate_random_string(length: u8) -> String {
     (0..length)
         .map(|_| rng.sample(Alphanumeric) as char)
         .collect()
+}
+
+fn build_word_prefix_expression(word_prefix: &str) -> String {
+    let mut expression = String::new();
+
+    for word in word_prefix.split_whitespace() {
+        if !word.is_empty() {
+            expression.push_str(&format!("+{}* ", word));
+        }
+    }
+
+    expression.trim().to_string()
 }
 
 #[cfg(test)]
@@ -393,6 +410,15 @@ mod tests {
 
         let result = db.lookup_closest_valid_zip("43083").await;
         assert_eq!(result.unwrap_err().to_string(), "oops")
+    }
+
+    #[test]
+    fn test_build_word_prefix_expression() {
+        assert_eq!(build_word_prefix_expression("foo bar"), "+foo* +bar*");
+        assert_eq!(build_word_prefix_expression("foo      bar"), "+foo* +bar*");
+        assert_eq!(build_word_prefix_expression("  foo   bar "), "+foo* +bar*");
+        assert_eq!(build_word_prefix_expression("  foo    "), "+foo*");
+        assert_eq!(build_word_prefix_expression("  foobar    "), "+foobar*");
     }
 
     fn make_db() -> Database {
