@@ -55,12 +55,6 @@ export default function PlantAutocomplete({ setPlants, selectedPlants }) {
     openPlantsStream({ scientificName: option.scientific }, setPlants);
   };
 
-  //TODO: Some sort of confirmation that the plant was added?  Choosing feels
-  //      like it does nothing if you can't see the new entry (like on mobile).
-
-  //TODO: Should/Can I filter to only natives on this screen?  I think I want
-  //      to use USDA data to determine all native regions for each plant first.
-
   // Clears options when the autocomplete is closed
   // Without this, the previous options repopulate when its reopened
   useEffect(() => {

@@ -537,16 +537,15 @@ ORDER BY gp.ordering
             .map_err(|e| anyhow!("replace_garden_plants commit failed: {e}"))
     }
 
-    pub async fn find_plant_by_word_prefix(&self, expression: &str) -> anyhow::Result<Vec<Plant>> {
+    pub async fn find_plants_by_word_prefix(&self, expression: &str) -> anyhow::Result<Vec<Plant>> {
         let mut conn = self.get_connection().await?;
 
-        format!(
-            r"
+        r"
  SELECT id, scientific_name, common_name 
  FROM plants 
- WHERE MATCH(scientific_name, common_name) AGAINST (:expression IN BOOLEAN MODE);
+ WHERE MATCH(scientific_name, common_name) AGAINST (:expression IN BOOLEAN MODE)
+ LIMIT 10
 "
-        )
         .with(params! {
             "expression" => expression
         })

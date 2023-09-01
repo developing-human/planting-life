@@ -309,7 +309,7 @@ impl Database {
         let search_expression = build_word_prefix_expression(word_prefix);
         match self
             .sql_runner
-            .find_plant_by_word_prefix(&search_expression)
+            .find_plants_by_word_prefix(&search_expression)
             .await
         {
             Ok(plants) => plants,
