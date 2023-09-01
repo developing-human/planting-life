@@ -1,23 +1,37 @@
 export default async function openPlantsStream(
-  formData,
+  searchParams,
   setPlants,
   setError,
   setEventSource,
   selectedPlants,
   setLoading
 ) {
-  const { zip, shade, moisture } = formData;
-  const sse = new EventSource(
-    `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`
-  );
+  const { zip, shade, moisture, scientificName } = searchParams;
+  let sse = null;
+  let queryingByName = false;
+  if (zip && shade && moisture) {
+    sse = new EventSource(
+      `${process.env.REACT_APP_URL_PREFIX}/plants/stream?zip=${zip}&shade=${shade}&moisture=${moisture}`
+    );
+  } else {
+    queryingByName = true;
+    sse = new EventSource(
+      `${process.env.REACT_APP_URL_PREFIX}/plants/stream/${scientificName}`
+    );
+  }
 
-  setEventSource(sse);
+  if (setEventSource) {
+    setEventSource(sse);
+  }
 
   sse.addEventListener("plant", (event) => {
     let newPlant = JSON.parse(event.data);
-    newPlant.selected = selectedPlants.some(
-      (sp) => sp.scientific === newPlant.scientific
-    );
+
+    // When querying by name, assume it is selected.  Because this use case is
+    // when searching for plants by name via garden screen.
+    newPlant.selected =
+      queryingByName ||
+      selectedPlants.some((sp) => sp.scientific === newPlant.scientific);
 
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
@@ -60,4 +74,20 @@ export default async function openPlantsStream(
   return () => {
     sse.close();
   };
+}
+
+export async function fetchPlantsByName(name, onSuccess, onError) {
+  return fetch(`${process.env.REACT_APP_URL_PREFIX}/plants?name=${name}`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(
+        `Error fetching plants by name, status: ${response.status}`
+      );
+    }
+    return response.json();
+  });
 }

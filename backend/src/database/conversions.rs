@@ -1,5 +1,8 @@
 use crate::domain::*;
-use mysql_async::{prelude::FromRow, FromRowError};
+use mysql_async::{
+    prelude::{FromRow, FromValue},
+    FromRowError, Row,
+};
 use std::str::FromStr;
 
 impl FromRow for Nursery {
@@ -31,34 +34,28 @@ impl FromRow for Plant {
         let id = row.take("id").unwrap();
         let scientific: String = row.take("scientific_name").unwrap();
         let common = row.take("common_name").unwrap();
-        let bloom = row.take("bloom").unwrap();
-        let pollinator_rating = row.take_opt("pollinator_rating").unwrap().ok();
-        let bird_rating = row.take_opt("bird_rating").unwrap().ok();
-        let spread_rating = row.take_opt("spread_rating").unwrap().ok();
-        let deer_resistance_rating = row.take_opt("deer_resistance_rating").unwrap().ok();
-        let img_id = row.take_opt("image_id").unwrap().ok();
-        let title = row.take_opt("title").unwrap().ok();
-        let card_url = row.take_opt("card_url").unwrap().ok();
-        let original_url = row.take_opt("original_url").unwrap().ok();
-        let author = row.take_opt("author").unwrap().ok();
-        let license = row.take_opt("license").unwrap().ok();
-        let usda_source: Option<String> = row.take_opt("usda_source").unwrap().ok();
-        let wiki_source: Option<String> = row.take_opt("wiki_source").unwrap().ok();
-        let height: Option<String> = row.take_opt("height").unwrap().ok();
-        let spread: Option<String> = row.take_opt("spread").unwrap().ok();
+        let bloom = take_lenient(&mut row, "bloom");
+        let pollinator_rating = take_lenient(&mut row, "pollinator_rating");
+        let bird_rating = take_lenient(&mut row, "bird_rating");
+        let spread_rating = take_lenient(&mut row, "spread_rating");
+        let deer_resistance_rating = take_lenient(&mut row, "deer_resistance_rating");
+        let img_id = take_lenient(&mut row, "image_id");
+        let title = take_lenient(&mut row, "title");
+        let card_url = take_lenient(&mut row, "card_url");
+        let original_url = take_lenient(&mut row, "original_url");
+        let author = take_lenient(&mut row, "author");
+        let license = take_lenient(&mut row, "license");
+        let usda_source: Option<String> = take_lenient(&mut row, "usda_source");
+        let wiki_source: Option<String> = take_lenient(&mut row, "wiki_source");
+        let height: Option<String> = take_lenient(&mut row, "height");
+        let spread: Option<String> = take_lenient(&mut row, "spread");
 
-        // These are comma separted, ex: "Some,Lots"
+        // These are comma separated, ex: "Some,Lots"
         // This parses them into their respective vectors of enums
-        let moistures: Vec<Moisture> = row
-            .take_opt("moistures")
-            .unwrap()
-            .ok()
+        let moistures: Vec<Moisture> = take_lenient(&mut row, "moistures")
             .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
             .unwrap_or_else(Vec::new);
-        let shades: Vec<Shade> = row
-            .take_opt("shades")
-            .unwrap()
-            .ok()
+        let shades: Vec<Shade> = take_lenient(&mut row, "shades")
             .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
             .unwrap_or_else(Vec::new);
 
@@ -127,5 +124,16 @@ impl FromRow for Garden {
             write_id: None,
             plants: vec![],
         })
+    }
+}
+
+pub fn take_lenient<T>(row: &mut Row, field: &str) -> Option<T>
+where
+    T: FromValue,
+{
+    match row.take_opt(field) {
+        Some(Ok(value)) => Some(value),
+        Some(Err(_)) => None, //TODO: Maybe log
+        None => None,
     }
 }
