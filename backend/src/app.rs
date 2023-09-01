@@ -12,7 +12,10 @@ use crate::{
             create_garden_handler, read_garden_handler, update_garden_handler, GardensController,
         },
         nurseries::{fetch_nurseries_handler, NurseriesController},
-        plants::{fetch_plants_handler, PlantController},
+        plants::{
+            plants_by_name_handler, plants_stream_by_scientific_name_handler,
+            plants_stream_handler, PlantController,
+        },
     },
     flickr::Flickr,
     highlights::Highlights,
@@ -77,7 +80,9 @@ impl PlantingLifeApp {
             App::new()
                 .wrap(cors)
                 .app_data(web::Data::new(self))
-                .service(fetch_plants_handler)
+                .service(plants_stream_handler)
+                .service(plants_stream_by_scientific_name_handler)
+                .service(plants_by_name_handler)
                 .service(fetch_nurseries_handler)
                 .service(read_garden_handler)
                 .service(create_garden_handler)

@@ -17,10 +17,15 @@ use crate::{
 };
 
 #[derive(Serialize, Deserialize, Debug)]
-struct PlantsRequest {
+struct PlantsStreamRequest {
     zip: String,
     shade: Shade,
     moisture: Moisture,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+struct PlantsByNameRequest {
+    name: String,
 }
 
 pub struct PlantController {
@@ -38,14 +43,27 @@ impl PlantController {
         }
     }
 
+    async fn search_by_name(
+        &'static self,
+        payload: PlantsByNameRequest,
+    ) -> Result<impl Responder, actix_web::Error> {
+        // Don't search for very short strings, force more text before searching
+        if payload.name.len() < 3 {
+            return Ok(actix_web::HttpResponse::Ok().body("[]"));
+        }
+
+        let plants = self.db.find_plants_by_word_prefix(&payload.name).await;
+        Ok(actix_web::HttpResponse::Ok().json(plants))
+    }
+
     async fn stream(
         &'static self,
-        payload: PlantsRequest,
+        payload: PlantsStreamRequest,
     ) -> Result<impl Responder, actix_web::Error> {
         info!("{payload:?}");
 
         let valid_zip = self.get_closest_valid_zip(&payload.zip).await?;
-        let valid_payload = PlantsRequest {
+        let valid_payload = PlantsStreamRequest {
             zip: valid_zip,
             ..payload
         };
@@ -67,7 +85,7 @@ impl PlantController {
             match plant_stream {
                 Ok(plant_stream) => {
                     self.hydrate_and_send_plants(
-                        &valid_payload,
+                        Some(valid_payload),
                         plant_stream.stream,
                         &frontend_sender,
                         plant_stream.from_db,
@@ -104,7 +122,7 @@ impl PlantController {
 
     async fn hydrate_and_send_plants(
         &'static self,
-        payload: &PlantsRequest,
+        payload: Option<PlantsStreamRequest>,
         plant_stream: Pin<Box<dyn Stream<Item = Plant> + Send>>,
         frontend_sender: &Sender,
         plants_from_db: bool,
@@ -146,17 +164,55 @@ impl PlantController {
 
         // We only need to cache the query results if these results aren't from the database
         // When they are from the database, we know its already there.
-        if !plants_from_db {
-            self.db
-                .save_query_results(
-                    &payload.zip,
-                    &payload.moisture,
-                    &payload.shade,
-                    all_plants,
-                    saved_plants,
-                )
-                .await;
+        if let Some(payload) = payload {
+            if !plants_from_db {
+                self.db
+                    .save_query_results(
+                        &payload.zip,
+                        &payload.moisture,
+                        &payload.shade,
+                        all_plants,
+                        saved_plants,
+                    )
+                    .await;
+            }
         }
+    }
+
+    /// Streams one plant back by scientific name.  Uses a stream because it may
+    /// need to be populated still and it should load incrementally.  Uses
+    /// scientific name rather than id because id makes it trivial to download
+    /// the entire database :)
+    async fn stream_by_scientific_name(
+        &'static self,
+        id: String,
+    ) -> Result<impl Responder, actix_web::Error> {
+        info!("stream_by_scientific_name {id}");
+
+        let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
+
+        // The real work is done in a new thread so the connection to the front end can stay open.
+        actix_web::rt::spawn(async move {
+            let plant = self.db.get_plant_by_scientific_name(&id).await;
+            if plant.is_none() {
+                warn!("Couldn't find plant with id: {id}");
+                return;
+            }
+
+            // Create a stream to interface nicely with hydrate/send function
+            // Unwrap is safe due to is_none check above.
+            let stream = Box::pin(futures::stream::iter(vec![plant.unwrap()]));
+
+            self.hydrate_and_send_plants(None, stream, &frontend_sender, true)
+                .await;
+
+            send_event(&frontend_sender, "close", "").await;
+        });
+
+        Ok(stream
+            .with_keep_alive(Duration::from_secs(1))
+            .customize()
+            .insert_header(("X-Accel-Buffering", "no")))
     }
 }
 
@@ -175,10 +231,28 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
     }
 }
 
-#[get("/plants")]
-async fn fetch_plants_handler(
-    web::Query(payload): web::Query<PlantsRequest>,
+#[get("/plants/stream")]
+async fn plants_stream_handler(
+    web::Query(payload): web::Query<PlantsStreamRequest>,
     app: web::Data<&'static PlantingLifeApp>,
 ) -> Result<impl Responder, actix_web::Error> {
     app.plant_controller.stream(payload).await
+}
+
+#[get("/plants/stream/{scientific_name}")]
+async fn plants_stream_by_scientific_name_handler(
+    id: web::Path<String>,
+    app: web::Data<&'static PlantingLifeApp>,
+) -> Result<impl Responder, actix_web::Error> {
+    app.plant_controller
+        .stream_by_scientific_name(id.to_string())
+        .await
+}
+
+#[get("/plants")]
+async fn plants_by_name_handler(
+    web::Query(payload): web::Query<PlantsByNameRequest>,
+    app: web::Data<&'static PlantingLifeApp>,
+) -> Result<impl Responder, actix_web::Error> {
+    app.plant_controller.search_by_name(payload).await
 }

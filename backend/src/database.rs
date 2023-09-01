@@ -304,6 +304,16 @@ impl Database {
             }
         }
     }
+
+    pub async fn find_plants_by_word_prefix(&self, word_prefix: &str) -> Vec<Plant> {
+        match self.sql_runner.find_plant_by_word_prefix(word_prefix).await {
+            Ok(plants) => plants,
+            Err(e) => {
+                warn!("find_plants_by_word_prefix failed to select: {e}");
+                vec![]
+            }
+        }
+    }
 }
 
 fn generate_random_string(length: u8) -> String {
