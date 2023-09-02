@@ -27,6 +27,7 @@ const GardenTab = ({ garden, onNewGarden, setGarden, setPlants }) => {
         <PlantAutocomplete
           setPlants={setGardenPlants}
           selectedPlants={garden.plants}
+          setDiscoverPlants={setPlants}
         />
       </Box>
 

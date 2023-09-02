@@ -4,7 +4,11 @@ import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
 import openPlantsStream, { fetchPlantsByName } from "../utilities/plant-api";
 
-export default function PlantAutocomplete({ setPlants, selectedPlants }) {
+export default function PlantAutocomplete({
+  setPlants,
+  selectedPlants,
+  setDiscoverPlants,
+}) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState([]);
   const showLoadingText = open && options.length === 0;
@@ -51,6 +55,20 @@ export default function PlantAutocomplete({ setPlants, selectedPlants }) {
     if (reason !== "selectOption") {
       return;
     }
+
+    // When adding a plant, it may be in the "discover" tab, so select it.
+    setDiscoverPlants((prevPlants) => {
+      const index = prevPlants.findIndex(
+        (p) => p.scientific === option.scientific
+      );
+
+      const newPlants = prevPlants.slice();
+      if (index >= 0) {
+        newPlants[index] = { ...prevPlants[index], selected: true };
+      }
+
+      return newPlants;
+    });
 
     openPlantsStream({ scientificName: option.scientific }, setPlants);
   };
