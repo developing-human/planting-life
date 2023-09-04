@@ -1,4 +1,5 @@
 #hero-container {
+  background-image: linear-gradient(#c5ffc7, lightgreen);
   background-color: lightgreen;
   color: black;
   padding: 30px 15px;
