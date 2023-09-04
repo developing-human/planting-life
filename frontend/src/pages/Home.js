@@ -19,7 +19,7 @@ import Box from "@mui/material/Box";
 import "./Home.css";
 import openPlantsStream from "../utilities/plant-api";
 import { getNurseries } from "../utilities/nursery-api";
-import { Alert, Snackbar } from "@mui/material";
+import { Alert, Button, Paper, Snackbar } from "@mui/material";
 
 const Home = () => {
   const DISCOVER_TAB_INDEX = 0;
@@ -35,6 +35,7 @@ const Home = () => {
   const [eventSource, setEventSource] = useState(null);
   const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
   const [nurserySearchZip, setNurserySearchZip] = useState("");
+  const [showHero, setShowHero] = useState(false);
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX ||
@@ -137,6 +138,11 @@ const Home = () => {
     setIsCopyGardenMessageOpen(false);
   };
 
+  const handleStartGardenClicked = () => {
+    setShowHero(false);
+    document.getElementById("zip").focus();
+  };
+
   // When the page is loaded, process the URL path and load data / switch tabs
   const { id } = useParams();
   const location = useLocation();
@@ -146,6 +152,7 @@ const Home = () => {
     let tab;
     switch (currentPath) {
       case "/":
+        setShowHero(true);
         tab = DISCOVER_TAB_INDEX;
         break;
       case `/g/${id}`:
@@ -186,6 +193,30 @@ const Home = () => {
 
   return (
     <>
+      {showHero ? (
+        <Paper id="hero-container">
+          <div id="hero-contents">
+            <h1>
+              Discover native plants
+              <br /> & plan your garden
+            </h1>
+            <h5>
+              <b>Search for native plants</b> by zipcode & growing conditions
+              <br />
+              <b>Plan your garden</b> to share with friends or a nursery <br />
+              <b>Find a nursery</b> near you which focuses on native plants
+            </h5>
+            <Button
+              variant="contained"
+              color="success"
+              onClick={handleStartGardenClicked}
+            >
+              Start Your Garden
+            </Button>
+            <div id="free-no-signup">(Free, no signup)</div>
+          </div>
+        </Paper>
+      ) : null}
       <div id="tab-container">
         {showTabs ? (
           <Box

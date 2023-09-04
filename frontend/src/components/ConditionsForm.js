@@ -22,7 +22,6 @@ function ConditionsForm({
   setLoading,
   setError,
   setInfoMessage,
-  setExpanded,
   setMaxPlantsToDisplay,
   setLastSearchedCriteria,
   searchCriteria,
@@ -68,7 +67,6 @@ function ConditionsForm({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setExpanded(false);
     setPlants([]);
     setMaxPlantsToDisplay(12);
     setNurseries([]);

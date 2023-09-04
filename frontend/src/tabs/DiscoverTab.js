@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from "react";
 
 // components
 import ConditionsForm from "../components/ConditionsForm";
-import IntroAccordion from "../components/IntroAccordion";
 import Spinner from "../components/Spinner";
 import PlantCard from "../components/PlantCard";
 
@@ -24,7 +23,6 @@ const DiscoverTab = ({
   setEventSource,
 }) => {
   const [infoMessage, setInfoMessage] = useState(null);
-  const [expanded, setExpanded] = useState("welcome");
   const [loading, setLoading] = useState(false);
   const [maxPlantsToDisplay, setMaxPlantsToDisplay] = useState(12);
   const lastPlantRef = useRef(null);
@@ -61,7 +59,6 @@ const DiscoverTab = ({
         setLoading={setLoading}
         setError={setError}
         setInfoMessage={setInfoMessage}
-        setExpanded={setExpanded}
         setMaxPlantsToDisplay={setMaxPlantsToDisplay}
         plants={plants}
         searchCriteria={searchCriteria}
@@ -75,12 +72,6 @@ const DiscoverTab = ({
         <div className="alert-container">
           {error ? <Alert severity="error">{error}</Alert> : null}
           {infoMessage ? <Alert severity="info">{infoMessage}</Alert> : null}
-        </div>
-      ) : null}
-
-      {plants.length === 0 ? (
-        <div className="accordion-container">
-          <IntroAccordion expanded={expanded} setExpanded={setExpanded} />
         </div>
       ) : null}
 

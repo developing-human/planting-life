@@ -1,3 +1,68 @@
+#hero-container {
+  background-color: lightgreen;
+  color: black;
+  padding: 30px 15px;
+  margin: auto;
+  margin-bottom: 20px;
+  display: grid;
+  justify-content: center;
+  text-align: center;
+
+  /* Don't take up space.. this lets the search form appear underneath which
+     makes it easier to focus the input & have keyboard popup. */
+  position: absolute;
+  width: 100%;
+  z-index: 5;
+}
+#hero-contents {
+  max-width: 550px;
+}
+
+#hero-container h1 {
+  font-size: 3rem;
+  line-height: 4rem;
+  justify-content: center;
+  text-align: center;
+  margin-top: 10px;
+}
+
+/* Maximum width */
+@media (max-width: 600px) {
+  #hero-container h1 {
+    font-size: 2rem;
+    line-height: 3rem;
+  }
+}
+
+#hero-container h5 {
+  font-size: 0.8rem;
+  line-height: 1.4rem;
+  font-weight:300;
+}
+
+#hero-container h5 b {
+  font-weight:900;
+}
+
+#hero-container button {
+  width: 300px;
+  background-color: #4caf50;
+  color: white;
+  font-weight: bold;
+  margin-bottom: 5px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+#hero-container button:hover {
+  background-color: #45a049;
+}
+
+#hero-container #free-no-signup {
+  color: rgb(66, 66, 66);
+  font-size: 12px;
+}
+
 .accordion-container {
   max-width: 725px;
   margin-inline: auto;
