@@ -37,7 +37,9 @@ function GardenSummary({ garden, onNew, setGarden }) {
         }}
       >
         <CardContent sx={{ margin: "auto" }}>
-          <Typography variant="h5">{garden.name}</Typography>
+          <Typography variant="h5">
+            {garden.name || "My Native Garden"}
+          </Typography>
 
           {gardenUrl ? (
             <TextField

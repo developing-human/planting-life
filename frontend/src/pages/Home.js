@@ -240,7 +240,6 @@ const Home = () => {
             >
               <Tab icon={<Search />} label="DISCOVER" />
               <Tab
-                disabled={garden.plants.length === 0}
                 icon={
                   <Badge badgeContent={garden.plants.length} color="success">
                     <YardIcon />
@@ -249,7 +248,6 @@ const Home = () => {
                 label="MY GARDEN"
               />
               <Tab
-                disabled={nurseries.length === 0}
                 icon={
                   <Badge badgeContent={nurseries.length} color="success">
                     <StorefrontIcon />
