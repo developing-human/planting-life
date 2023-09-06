@@ -156,7 +156,7 @@ const Home = () => {
     const id = garden.write_id || garden.read_id;
     const url = id ? `/gardens/${id}` : "/gardens";
     window.history.replaceState(null, garden.name, url);
-  }, [garden.read_id, garden.write_id]);
+  }, [garden.read_id, garden.write_id, garden.name]);
 
   // When a Garden is updated, save it.
   useEffect(() => {
