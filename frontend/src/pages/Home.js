@@ -43,17 +43,6 @@ const Home = () => {
     garden.plants.length > 0;
 
   const handleTabChange = (event, newValue) => {
-    if (
-      newValue === GARDEN_TAB_INDEX &&
-      garden.name &&
-      (garden.write_id || garden.read_id)
-    ) {
-      window.history.replaceState(
-        null,
-        garden.name,
-        `/gardens/${garden.write_id || garden.read_id}`
-      );
-    }
     setSelectedTab(newValue);
 
     // Scroll to top when switching tabs
@@ -117,13 +106,8 @@ const Home = () => {
       }));
     });
 
-    // Go to Discover tab, so a new garden can be planned
-    setSelectedTab(DISCOVER_TAB_INDEX);
-
     // Since we're keeping search results, keep the last searched criteria
     setLastSearchedCriteria(searchCriteria);
-
-    window.history.replaceState(null, null, `/`);
   };
 
   const showCopyGardenMessage = () => {
@@ -166,6 +150,13 @@ const Home = () => {
 
     setSelectedTab(tab);
   }, [id, location, setSelectedTab]);
+
+  // When ids change, update the page's url.  Prioritize write url over read.
+  useEffect(() => {
+    const id = garden.write_id || garden.read_id;
+    const url = id ? `/gardens/${id}` : "/gardens";
+    window.history.replaceState(null, garden.name, url);
+  }, [garden.read_id, garden.write_id]);
 
   // When a Garden is updated, save it.
   useEffect(() => {

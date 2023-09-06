@@ -8,20 +8,19 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import ReplayIcon from "@mui/icons-material/Replay";
-import SaveIcon from "@mui/icons-material/Save";
+import ClearIcon from "@mui/icons-material/Clear";
+import EditIcon from "@mui/icons-material/Edit";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
 import { CopyToClipboard } from "react-copy-to-clipboard";
-import SaveGardenModal from "./SaveGardenModal";
+import { IconButton, Input, InputAdornment } from "@mui/material";
 
-function GardenSummary({ garden, onNew, setGarden }) {
+function GardenSummary({ garden, onNew, setGarden, readOnly }) {
   const gardenUrl = garden.read_id
     ? process.env.REACT_APP_GARDEN_URL_PREFIX + garden.read_id
     : null;
 
   const [copied, setCopied] = useState(false);
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
   const narrowScreen = useMediaQuery("(max-width: 400px");
 
   return garden ? (
@@ -33,15 +32,22 @@ function GardenSummary({ garden, onNew, setGarden }) {
           marginBottom: "20px",
           textAlign: "center",
           display: "inline-flex",
-          padding: narrowScreen ? "10px 10px 10px 10px" : "10px 50px 10px 50px",
+          padding: narrowScreen ? "10px 10px 0px 10px" : "10px 50px 0px 50px",
         }}
       >
         <CardContent sx={{ margin: "auto" }}>
           <Typography variant="h5">
-            {garden.name || "My Native Garden"}
+            {readOnly ? (
+              garden.name || "My Native Garden"
+            ) : (
+              <EditableGardenName
+                gardenName={garden.name}
+                setGarden={setGarden}
+              />
+            )}
           </Typography>
 
-          {gardenUrl ? (
+          {gardenUrl && !readOnly ? (
             <TextField
               id="share-garden-url"
               label="Share this Garden"
@@ -92,35 +98,130 @@ function GardenSummary({ garden, onNew, setGarden }) {
               disabled={true}
             />
           ) : null}
-          <Box sx={{ marginTop: "15px" }}>
-            <Button
-              sx={{ padding: "5px 10px 5px 10px" }}
-              variant="outlined"
-              startIcon={<ReplayIcon />}
-              onClick={onNew}
-            >
-              New Garden
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              sx={{ marginLeft: "10px", padding: "5px 10px 5px 10px" }}
-              startIcon={<SaveIcon />}
-              onClick={() => setSaveModalOpen(true)}
-            >
-              Save As...
-            </Button>
-            <SaveGardenModal
-              isOpen={saveModalOpen}
-              setIsOpen={setSaveModalOpen}
-              garden={garden}
-              setGarden={setGarden}
-            />
-          </Box>
+          {garden.plants.length > 0 ? (
+            <Box sx={{ marginTop: "15px" }}>
+              <Button
+                sx={{ margin: "5px", padding: "5px 10px 5px 10px" }}
+                variant="outlined"
+                onClick={onNew}
+              >
+                Start New Garden
+              </Button>
+              {readOnly ? (
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  sx={{ margin: "5px", padding: "5px 10px 5px 10px" }}
+                  onClick={() => {
+                    setGarden((prevGarden) => {
+                      return {
+                        ...prevGarden,
+                        read_id: null,
+                        write_id: null,
+                        needsSave: true,
+                      };
+                    });
+                  }}
+                >
+                  Copy This Garden
+                </Button>
+              ) : null}
+            </Box>
+          ) : null}
         </CardContent>
       </Card>
     </Box>
   ) : null;
+}
+
+// I pulled this out for readability above, but I don't think its worth moving
+// into another file since its so specific to the garden summary.  May change
+// my mind on that.
+function EditableGardenName({ gardenName, setGarden }) {
+  const [editingName, setEditingName] = useState(false);
+  const [transientGardenName, setTransientGardenName] = useState(gardenName);
+
+  return (
+    <>
+      <Typography variant="h5">
+        {!editingName ? (
+          gardenName || "My Native Garden"
+        ) : (
+          <Input
+            id="garden-name"
+            label="Garden Name"
+            value={transientGardenName}
+            onChange={(event) => {
+              setTransientGardenName(event.target.value);
+            }}
+            variant="standard"
+            required
+            inputProps={{ maxLength: "255" }}
+            sx={{ width: "100%" }}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  edge="end"
+                  sx={{ paddingBottom: "15px" }}
+                  onClick={() => {
+                    setTransientGardenName("");
+                    document.getElementById("garden-name").focus();
+                  }}
+                >
+                  <ClearIcon />
+                </IconButton>
+              </InputAdornment>
+            }
+          />
+        )}
+      </Typography>
+      <Box sx={{ paddingTop: "5px" }}>
+        {!editingName ? (
+          <Button
+            variant="outlined"
+            sx={{ padding: "2px 7px" }}
+            startIcon={<EditIcon />}
+            onClick={() => {
+              setTransientGardenName(gardenName);
+              setEditingName(true);
+            }}
+          >
+            Rename
+          </Button>
+        ) : null}
+        {editingName ? (
+          <>
+            <Button
+              variant="contained"
+              sx={{
+                padding: "2px 7px",
+                marginRight: "5px",
+              }}
+              onClick={() => {
+                setGarden((prevGarden) => {
+                  return {
+                    ...prevGarden,
+                    name: transientGardenName,
+                    needsSave: true,
+                  };
+                });
+                setEditingName(false);
+              }}
+            >
+              Save
+            </Button>
+            <Button
+              variant="outlined"
+              sx={{ padding: "2px 7px" }}
+              onClick={() => setEditingName(false)}
+            >
+              Cancel
+            </Button>
+          </>
+        ) : null}
+      </Box>
+    </>
+  );
 }
 
 export default GardenSummary;

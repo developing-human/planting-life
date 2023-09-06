@@ -13,23 +13,34 @@ const GardenTab = ({ garden, onNewGarden, setGarden, setPlants }) => {
     }));
   };
 
+  // Having a read_id without a write id means the user got here through a read
+  // only link.  Both missing just means they haven't saved yet.
+  const readOnly = !garden.write_id && garden.read_id;
+
   return garden ? (
     <>
       <GardenSummary
         garden={garden}
         onNew={onNewGarden}
         setGarden={setGarden}
+        readOnly={readOnly}
       />
 
-      <Box
-        sx={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}
-      >
-        <PlantAutocomplete
-          setPlants={setGardenPlants}
-          selectedPlants={garden.plants}
-          setDiscoverPlants={setPlants}
-        />
-      </Box>
+      {!readOnly ? (
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "20px",
+          }}
+        >
+          <PlantAutocomplete
+            setPlants={setGardenPlants}
+            selectedPlants={garden.plants}
+            setDiscoverPlants={setPlants}
+          />
+        </Box>
+      ) : null}
 
       <section className="card-container">
         {garden.plants.map((plant) => (
@@ -39,6 +50,7 @@ const GardenTab = ({ garden, onNewGarden, setGarden, setPlants }) => {
             setGarden={setGarden}
             setPlants={setPlants}
             highlightSelected={false}
+            showAddButton={!readOnly}
           />
         ))}
       </section>
