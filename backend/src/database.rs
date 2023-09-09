@@ -231,8 +231,8 @@ impl Database {
         garden: &Garden,
         plant_ids: Vec<usize>,
     ) -> anyhow::Result<(String, String)> {
-        let read_id = self.get_unique_garden_read_id().await?;
-        let write_id = self.get_unique_garden_write_id().await?;
+        let read_id = self.get_unique_garden_id(5).await?;
+        let write_id = self.get_unique_garden_id(20).await?;
 
         self.sql_runner
             .insert_garden(garden, &read_id, &write_id)
@@ -267,26 +267,25 @@ impl Database {
             .map_err(|e| anyhow!("save_new_garden failed to replace plants: {e}"))
     }
 
-    /// Generates a unique read id, ensuring it is not already used as the read_id
+    /// Generates a unique garden id, ensuring it is not already used as an id
     /// for an existing Garden.
-    async fn get_unique_garden_read_id(&self) -> anyhow::Result<String> {
-        let proposed_read_id = generate_random_string(5);
+    async fn get_unique_garden_id(&self, length: u8) -> anyhow::Result<String> {
+        let mut tries_remaining = 5;
+        while tries_remaining > 0 {
+            let proposed_id = generate_random_string(length);
 
-        //TODO: Check that it doesn't exist.  If it does,  try again.
-        //      For now... odds of collision are very low :)
+            if self.get_garden(&proposed_id).await.is_none() {
+                return Ok(proposed_id);
+            } else {
+                warn!("Collision when generating garden id w/ length={length}")
+            }
 
-        Ok(proposed_read_id)
-    }
+            tries_remaining -= 1;
+        }
 
-    /// Generates a unique read id, ensuring it is not already used as the write_id
-    /// for an existing Garden.
-    async fn get_unique_garden_write_id(&self) -> anyhow::Result<String> {
-        let proposed_write_id = generate_random_string(20);
-
-        //TODO: Check that it doesn't exist.  If it does,  try again.
-        //      For now... odds of collision are very low :)
-
-        Ok(proposed_write_id)
+        Err(anyhow!(
+            "Ran out of tries generating garden read_id of length={length}"
+        ))
     }
 
     /// Fetches the region name for a zipcodes.
@@ -342,6 +341,8 @@ fn build_word_prefix_expression(word_prefix: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use mockall::Sequence;
+
     use super::{sql::MockSqlRunner, *};
 
     #[tokio::test]
@@ -410,6 +411,74 @@ mod tests {
 
         let result = db.lookup_closest_valid_zip("43083").await;
         assert_eq!(result.unwrap_err().to_string(), "oops")
+    }
+
+    #[tokio::test]
+    async fn test_generate_garden_id_first_try() {
+        let db = make_db_with_mock(|mock| {
+            mock.expect_select_garden_by_id().returning(|_, _| Ok(None));
+        });
+
+        let result = db.get_unique_garden_id(5).await;
+        assert_eq!(result.unwrap().len(), 5);
+    }
+
+    #[tokio::test]
+    async fn test_generate_garden_id_third_try() {
+        let db = make_db_with_mock(|mock| {
+            let mut seq = Sequence::new();
+            // Finds garden first two times
+            mock.expect_select_garden_by_id()
+                .times(2)
+                .in_sequence(&mut seq)
+                .returning(|_, _| {
+                    Ok(Some(Garden::empty(
+                        "name".to_string(),
+                        "zip".to_string(),
+                        Shade::Lots,
+                        Moisture::Lots,
+                    )))
+                });
+
+            // Doesn't find garden by read or write id on third attempt
+            mock.expect_select_garden_by_id()
+                .times(2)
+                .in_sequence(&mut seq)
+                .returning(|_, _| Ok(None));
+
+            // Never finds plants, but thats ok.
+            mock.expect_select_plants_by_garden_id()
+                .returning(|_, _| Ok(vec![]));
+        });
+
+        let result = db.get_unique_garden_id(5).await;
+        assert_eq!(result.unwrap().len(), 5);
+    }
+
+    #[tokio::test]
+    async fn test_generate_garden_id_out_of_tries() {
+        let db = make_db_with_mock(|mock| {
+            let mut seq = Sequence::new();
+            // Finds garden first two times
+            mock.expect_select_garden_by_id()
+                .times(5)
+                .in_sequence(&mut seq)
+                .returning(|_, _| {
+                    Ok(Some(Garden::empty(
+                        "name".to_string(),
+                        "zip".to_string(),
+                        Shade::Lots,
+                        Moisture::Lots,
+                    )))
+                });
+
+            // Never finds plants, but thats ok.
+            mock.expect_select_plants_by_garden_id()
+                .returning(|_, _| Ok(vec![]));
+        });
+
+        let result = db.get_unique_garden_id(5).await;
+        assert!(result.is_err());
     }
 
     #[test]
