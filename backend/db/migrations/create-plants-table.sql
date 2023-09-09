@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset doug:5
+--changeset doug:7
 CREATE TABLE IF NOT EXISTS plants (
   id INT PRIMARY KEY AUTO_INCREMENT,
   scientific_name VARCHAR(100),
@@ -16,9 +16,10 @@ CREATE TABLE IF NOT EXISTS plants (
   -- optional, may not find image
   image_id INT,
 
+  CONSTRAINT UC_Plants UNIQUE (scientific_name),
   CONSTRAINT FK_PlantsImage FOREIGN KEY (image_id)  REFERENCES images(id),
   FULLTEXT (scientific_name, common_name)
 );
 
---changeset doug:6
-ALTER TABLE plants ADD FULLTEXT (scientific_name, common_name);
+--changeset doug:8
+ALTER TABLE plants ADD CONSTRAINT UC_Plants UNIQUE (scientific_name);
