@@ -46,6 +46,17 @@ impl Selector {
 
         let filtered_stream = unfiltered_stream
             .stream
+            .filter_map(|plant| {
+                let has_spp = plant.scientific.to_lowercase().contains("spp.");
+                let has_sp = plant.scientific.to_lowercase().contains("sp.");
+                let has_two_words = plant.scientific.chars().filter(|c| *c == ' ').count() == 1;
+
+                if !has_spp && !has_sp && has_two_words {
+                    future::ready(Some(plant))
+                } else {
+                    future::ready(None)
+                }
+            })
             .filter(move |plant| {
                 // Filter out common names that have already been seen.  Often, we'll seen
                 // something like Joe Pye Weed come through via 2-3 scientific names
