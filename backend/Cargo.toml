@@ -15,7 +15,6 @@ tracing-subscriber = "0.3"
 
 actix-web = "4.3"
 actix-cors = "0.6.4"
-actix-rt = "2.8.0"
 
 futures = "0.3.28"
 tokio = "1.18"
@@ -36,18 +35,10 @@ tokio-util = { version = "0.6", features = ["io"]}
 tokio-stream = { version = "0.1.14", features = ["io-util"]}
 
 lazy_static = "1.4.0"
-csv = "1.2"
 
-# for calculating distance from lat/long
-geo = "0.25.1"
-
-mysql_async = "0.32.2"
-
-async-mutex = "1.4.0"
+mysql_async = { version = "0.32.2", default-features = false, features = ["minimal"] }
 
 regex = "1.9.1"
-
-async-trait = "0.1"
 
 mockall = "0.11"
 mockall_double = "0.3"
