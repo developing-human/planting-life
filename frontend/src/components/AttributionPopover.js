@@ -6,7 +6,14 @@ import Link from "@mui/material/Link";
 
 import "./AttributionPopover.css";
 
-function AttributionPopover({ caption, title, author, license, link }) {
+function AttributionPopover({
+  caption,
+  title,
+  author,
+  license,
+  licenseUrl,
+  originalUrl,
+}) {
   let captionUppercase = caption.toUpperCase();
   let captionLink =
     captionUppercase.length > 40
@@ -47,14 +54,17 @@ function AttributionPopover({ caption, title, author, license, link }) {
       >
         <Typography sx={{ p: 1.5 }}>
           <div id="popover">
-            "{title}"<br />
+            <Link href={originalUrl} target="_blank">
+              "{title}"
+            </Link>
+            <br />
             <span className="author">by {author}</span>
             <br />
             <Link
               className="license-link"
               variant="body2"
-              href={link}
-              target="blank"
+              href={licenseUrl}
+              target="_blank"
               sx={{ fontSize: "12px" }}
             >
               {license}

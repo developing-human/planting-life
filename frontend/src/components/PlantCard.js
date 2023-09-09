@@ -116,7 +116,8 @@ const PlantCard = memo(function PlantCard({
               title={plant.image.title}
               author={plant.image.author}
               license={plant.image.license}
-              link={plant.image.licenseUrl}
+              licenseUrl={plant.image.licenseUrl}
+              originalUrl={plant.image.originalUrl}
             />
           </figcaption>
         ) : null}
