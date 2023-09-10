@@ -47,7 +47,9 @@ async function postGarden(garden, setGarden, lastSearchedCriteria, onError) {
       shade: lastSearchedCriteria.shade,
       moisture: lastSearchedCriteria.moisture,
       plant_ids: garden.plants.map((p) => p.id),
-      name: garden.name,
+
+      // Send blank string as null - this tells backend to generate the name.
+      name: garden.name || null,
     }),
   })
     .then((response) => response.json())

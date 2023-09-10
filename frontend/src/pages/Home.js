@@ -31,7 +31,7 @@ const Home = () => {
   const [nurseries, setNurseries] = useState([]);
   const [selectedTab, setSelectedTab] = useState(DISCOVER_TAB_INDEX);
   const [error, setError] = useState(null);
-  const [garden, setGarden] = useState({ plants: [] });
+  const [garden, setGarden] = useState({ plants: [], name: "" });
   const [eventSource, setEventSource] = useState(null);
   const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
   const [nurserySearchZip, setNurserySearchZip] = useState("");

@@ -36,16 +36,16 @@ function GardenSummary({ garden, onNew, setGarden, readOnly }) {
         }}
       >
         <CardContent sx={{ margin: "auto" }}>
-          <Typography variant="h5">
-            {readOnly ? (
-              garden.name || "My Native Garden"
-            ) : (
-              <EditableGardenName
-                gardenName={garden.name}
-                setGarden={setGarden}
-              />
-            )}
-          </Typography>
+          {readOnly ? (
+            <Typography variant="h5">
+              garden.name || My Native Garden
+            </Typography>
+          ) : (
+            <EditableGardenName
+              gardenName={garden.name}
+              setGarden={setGarden}
+            />
+          )}
 
           {gardenUrl && !readOnly ? (
             <TextField
