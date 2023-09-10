@@ -35,7 +35,8 @@ const Home = () => {
   const [eventSource, setEventSource] = useState(null);
   const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
   const [nurserySearchZip, setNurserySearchZip] = useState("");
-  const [showHero, setShowHero] = useState(false);
+  const location = useLocation();
+  const [showHero, setShowHero] = useState(location.pathname === "/");
 
   const showTabs =
     selectedTab !== DISCOVER_TAB_INDEX ||
@@ -129,14 +130,15 @@ const Home = () => {
 
   // When the page is loaded, process the URL path and load data / switch tabs
   const { id } = useParams();
-  const location = useLocation();
   useEffect(() => {
     const currentPath = location.pathname;
 
     let tab;
     switch (currentPath) {
       case "/":
-        setShowHero(true);
+        tab = DISCOVER_TAB_INDEX;
+        break;
+      case "/gardens":
         tab = DISCOVER_TAB_INDEX;
         break;
       case `/g/${id}`:
@@ -153,10 +155,14 @@ const Home = () => {
 
   // When ids change, update the page's url.  Prioritize write url over read.
   useEffect(() => {
+    if (showHero === true) {
+      return; // Don't set URL if hero div is shown
+    }
+
     const id = garden.write_id || garden.read_id;
     const url = id ? `/gardens/${id}` : "/gardens";
     window.history.replaceState(null, garden.name, url);
-  }, [garden.read_id, garden.write_id, garden.name]);
+  }, [garden.read_id, garden.write_id, garden.name, showHero]);
 
   // When a Garden is updated, save it.
   useEffect(() => {
