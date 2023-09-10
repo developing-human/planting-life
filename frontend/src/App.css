@@ -9,15 +9,3 @@ body {
   display: flex;
   flex-direction: column;
 }
-
-button[type="submit"] {
-  max-width: 95vw;
-  color: white;
-  font-weight: bold;
-  padding: 10px;
-  border: none;
-  cursor: pointer;
-  text-align: center;
-  margin-left: 12px;
-  margin-right: 12px;
-}

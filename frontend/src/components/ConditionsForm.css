@@ -1,15 +1,27 @@
-form {
+#conditions-form {
   max-width: 725px;
   margin-inline: auto;
   padding-inline: 10px;
 }
 
-form button[type="submit"] {
+#conditions-form button[type="submit"] {
   width: 300px;
   background-color: #4caf50;
   margin-bottom: 25px;
 }
 
-button[type="submit"]:hover {
+#conditions-form button[type="submit"]:hover {
   background-color: #45a049;
+}
+
+#conditions-form button[type="submit"] {
+  max-width: 95vw;
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  border: none;
+  cursor: pointer;
+  text-align: center;
+  margin-left: 12px;
+  margin-right: 12px;
 }

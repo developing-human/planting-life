@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 // components
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -38,7 +38,7 @@ function GardenSummary({ garden, onNew, setGarden, readOnly }) {
         <CardContent sx={{ margin: "auto" }}>
           {readOnly ? (
             <Typography variant="h5">
-              garden.name || My Native Garden
+              {garden.name || "My Native Garden"}
             </Typography>
           ) : (
             <EditableGardenName
@@ -141,8 +141,29 @@ function EditableGardenName({ gardenName, setGarden }) {
   const [editingName, setEditingName] = useState(false);
   const [transientGardenName, setTransientGardenName] = useState(gardenName);
 
+  // When editingName switches to true, focus & select all text in the field.
+  useEffect(() => {
+    if (editingName) {
+      const gardenNameElement = document.getElementById("garden-name");
+      gardenNameElement.focus();
+      gardenNameElement.select();
+    }
+  }, [editingName]);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setGarden((prevGarden) => {
+      return {
+        ...prevGarden,
+        name: transientGardenName,
+        needsSave: true,
+      };
+    });
+    setEditingName(false);
+  };
+
   return (
-    <>
+    <form onSubmit={handleSubmit}>
       <Typography variant="h5">
         {!editingName ? (
           gardenName || "My Native Garden"
@@ -193,19 +214,10 @@ function EditableGardenName({ gardenName, setGarden }) {
           <>
             <Button
               variant="contained"
+              type="submit"
               sx={{
                 padding: "2px 7px",
                 marginRight: "5px",
-              }}
-              onClick={() => {
-                setGarden((prevGarden) => {
-                  return {
-                    ...prevGarden,
-                    name: transientGardenName,
-                    needsSave: true,
-                  };
-                });
-                setEditingName(false);
               }}
             >
               Save
@@ -220,7 +232,7 @@ function EditableGardenName({ gardenName, setGarden }) {
           </>
         ) : null}
       </Box>
-    </>
+    </form>
   );
 }
 

@@ -114,7 +114,7 @@ function ConditionsForm({
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form id="conditions-form" onSubmit={handleSubmit}>
       <Grid
         container
         spacing={3}
