@@ -74,14 +74,14 @@ impl FromRow for Plant {
             deer_resistance_rating,
             usda_source,
             wiki_source,
-            image: img_id.map(|_| {
+            images: img_id.map_or(vec![], |_| {
                 let license: String = license.unwrap();
                 let title: String = title.unwrap();
                 let card_url: String = card_url.unwrap();
                 let original_url: String = original_url.unwrap();
                 let author: String = author.unwrap();
 
-                Image {
+                vec![Image {
                     id: img_id,
                     title,
                     card_url,
@@ -89,10 +89,31 @@ impl FromRow for Plant {
                     author,
                     license_url: Image::get_license_url(&license).unwrap(),
                     license,
-                }
+                }]
             }),
             highlights: vec![],
             done_loading: false,
+        })
+    }
+}
+
+impl FromRow for Image {
+    fn from_row_opt(row: mysql_async::Row) -> Result<Self, FromRowError>
+    where
+        Self: Sized,
+    {
+        let (id, title, card_url, original_url, author, license) = mysql_async::from_row_opt(row)?;
+
+        let license: String = license;
+
+        Ok(Image {
+            id: Some(id),
+            title,
+            card_url,
+            original_url,
+            author,
+            license_url: Image::get_license_url(&license).unwrap(),
+            license,
         })
     }
 }

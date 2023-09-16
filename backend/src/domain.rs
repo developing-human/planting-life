@@ -22,8 +22,8 @@ pub struct Plant {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
 
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub image: Option<Image>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub images: Vec<Image>,
 
     #[serde(skip_serializing)]
     pub pollinator_rating: Option<u8>,
@@ -70,7 +70,7 @@ impl Plant {
             bird_rating: None,
             spread_rating: None,
             deer_resistance_rating: None,
-            image: None,
+            images: vec![],
             usda_source: None,
             wiki_source: None,
             done_loading: false,
@@ -87,7 +87,11 @@ impl Plant {
             moistures: other.moistures.clone(),
             shades: other.shades.clone(),
             bloom: other.bloom.clone().or(self.bloom.clone()),
-            image: other.image.clone().or(self.image.clone()),
+            images: if other.images.is_empty() {
+                self.images.clone()
+            } else {
+                other.images.clone()
+            },
             pollinator_rating: other.pollinator_rating.or(self.pollinator_rating),
             bird_rating: other.bird_rating.or(self.bird_rating),
             spread_rating: other.spread_rating.or(self.spread_rating),

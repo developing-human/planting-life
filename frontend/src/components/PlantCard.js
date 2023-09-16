@@ -16,6 +16,10 @@ import IconButton from "@mui/material/IconButton";
 import Add from "@mui/icons-material/Add";
 import Remove from "@mui/icons-material/Remove";
 
+import Carousel from "react-material-ui-carousel";
+import { LazyLoadComponent } from "react-lazy-load-image-component";
+import "react-lazy-load-image-component/src/effects/blur.css";
+
 // styling
 import "./PlantCard.css";
 import { Divider } from "@mui/material";
@@ -83,45 +87,57 @@ const PlantCard = memo(function PlantCard({
         borderRadius: "12px",
       }}
     >
-      <div className="plant-image-container">
-        {showAddButton !== false &&
-          (selected ? (
-            <IconButton
-              size="large"
-              className="add-plant-button"
-              onClick={togglePlant}
-            >
-              <Remove />
-            </IconButton>
-          ) : (
-            <IconButton
-              size="large"
-              className="add-plant-button"
-              onClick={togglePlant}
-            >
-              <Add />
-            </IconButton>
-          ))}
+      <Carousel
+        autoPlay={false}
+        animation="fade"
+        indicators={false}
+        navButtonsAlwaysVisible={true}
+        swipe={false}
+      >
+        {plant.images.map((image, i) => (
+          <div className="plant-image-container" key={i}>
+            {showAddButton !== false &&
+              (selected ? (
+                <IconButton
+                  size="large"
+                  className="add-plant-button"
+                  onClick={togglePlant}
+                >
+                  <Remove />
+                </IconButton>
+              ) : (
+                <IconButton
+                  size="large"
+                  className="add-plant-button"
+                  onClick={togglePlant}
+                >
+                  <Add />
+                </IconButton>
+              ))}
 
-        <CardMedia
-          component="img"
-          height="350"
-          image={plant.image ? plant.image.cardUrl : null}
-          alt={plant.image ? plant.common : null}
-        />
-        {plant.image ? (
-          <figcaption>
-            <AttributionPopover
-              caption={`© Photo by ${plant.image.author}`}
-              title={plant.image.title}
-              author={plant.image.author}
-              license={plant.image.license}
-              licenseUrl={plant.image.licenseUrl}
-              originalUrl={plant.image.originalUrl}
+            {/* <LazyLoadComponent> */}
+            <CardMedia
+              component="img"
+              height="350"
+              image={image ? image.cardUrl : null}
+              alt={image ? plant.common : null}
             />
-          </figcaption>
-        ) : null}
-      </div>
+            {/* </LazyLoadComponent> */}
+            {image ? (
+              <figcaption>
+                <AttributionPopover
+                  caption={`© Photo by ${image.author}`}
+                  title={image.title}
+                  author={image.author}
+                  license={image.license}
+                  licenseUrl={image.licenseUrl}
+                  originalUrl={image.originalUrl}
+                />
+              </figcaption>
+            ) : null}
+          </div>
+        ))}
+      </Carousel>
 
       <CardHeader
         title={plant.common}

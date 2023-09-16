@@ -57,13 +57,37 @@ impl Database {
         moisture: &Moisture,
         shade: &Shade,
     ) -> Vec<Plant> {
-        self.sql_runner
+        let result = self
+            .sql_runner
             .select_plants_by_zip_moisture_shade(zip, moisture, shade)
             .await
             .unwrap_or_else(|e| {
                 warn!("lookup_query_results query failed: {}", e);
                 vec![]
-            })
+            });
+
+        println!("Got {} plants", result.len());
+        let merged = Database::merge_plant_images(result);
+        println!("After merge got {} plants", merged.len());
+        for plant in &merged {
+            println!("{} has {} images", plant.scientific, plant.images.len());
+        }
+
+        merged
+    }
+
+    fn merge_plant_images(plants: Vec<Plant>) -> Vec<Plant> {
+        let mut merged: Vec<Plant> = vec![];
+
+        for plant in plants {
+            if merged.is_empty() || merged.last().unwrap().id != plant.id {
+                merged.push(plant);
+            } else {
+                merged.last_mut().unwrap().images.extend(plant.images);
+            }
+        }
+
+        merged
     }
 
     ///Saves a new Query and maps it to the plants referenced by plant_ids.
@@ -130,33 +154,34 @@ impl Database {
     /// Inserts or updates a single Plant, returning a new Plant with its
     /// id populated. Returns Err if it fails to save.
     pub async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
-        let mut img_id = None;
-        if let Some(image) = &plant.image {
-            img_id = image.id;
+        let plant_id = if let Some(id) = plant.id {
+            self.sql_runner.update_plant(plant).await?;
+            id
+        } else {
+            self.sql_runner.insert_plant(plant).await?
+        };
+
+        for image in &plant.images {
             if image.id.is_none() {
-                if let Ok(saved_image) = self.save_image(image).await {
-                    img_id = saved_image.id;
+                if let Err(e) = self.save_image(image, plant_id).await {
+                    warn!("save_plant could not save image: {e}")
                 }
             }
         }
 
-        let id = if let Some(id) = plant.id {
-            self.sql_runner.update_plant(plant, img_id).await?;
-            id
-        } else {
-            self.sql_runner.insert_plant(plant, img_id).await?
-        };
+        //TODO: Put plant id on images instead of image_id on plants in db since
+        //      this is 1 to many now
 
         Ok(Plant {
-            id: Some(id),
+            id: Some(plant_id),
             ..plant.clone()
         })
     }
 
     /// Saves an Image, returning a new Image with the database id populated.
     /// Returns Err if it fails to save.
-    pub async fn save_image(&self, image: &Image) -> anyhow::Result<Image> {
-        let id = self.sql_runner.insert_image(image).await;
+    pub async fn save_image(&self, image: &Image, plant_id: usize) -> anyhow::Result<Image> {
+        let id = self.sql_runner.insert_image(image, plant_id).await;
 
         id.map(|id| Image {
             id: Some(id),
@@ -318,6 +343,25 @@ impl Database {
             }
         }
     }
+
+    // async fn update_plant_with_images(&self, plant: Plant) -> Plant {
+    //     if plant.id.is_none() {
+    //         warn!("update_plant_with_images received plant without id");
+    //         return plant.clone();
+    //     }
+
+    //     match self
+    //         .sql_runner
+    //         .select_images_by_plant_id(plant.id.unwrap())
+    //         .await
+    //     {
+    //         Ok(images) => Plant { images, ..plant },
+    //         Err(e) => {
+    //             warn!("update_plant_with_images failed to find images: {e}");
+    //             plant.clone()
+    //         }
+    //     }
+    // }
 }
 
 fn generate_random_string(length: u8) -> String {

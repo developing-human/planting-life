@@ -61,6 +61,25 @@ impl Flickr {
         Self { api_key }
     }
 
+    pub async fn get_images(&self, scientific_name: &str, common_name: &str) -> Vec<Image> {
+        // Remove "spp." from the end if it exists, this is an abbreviation for "species".
+        let truncated_scientific_name = &scientific_name.replace(" spp.", "");
+
+        // Run searches for both blooming and non-blooming concurrently.
+        // This is a little aggressive since the latter won't be used if the former finds results
+        let search_term = format!("{} blooming", scientific_name);
+        let blooming_search = self.image_search(&search_term);
+        let non_blooming_search = self.image_search(scientific_name);
+        let (blooming_result, non_blooming_result) = join!(blooming_search, non_blooming_search);
+
+        find_best_photos(
+            blooming_result,
+            non_blooming_result,
+            truncated_scientific_name,
+            common_name,
+        )
+    }
+
     pub async fn get_image(&self, scientific_name: &str, common_name: &str) -> Option<Image> {
         // Remove "spp." from the end if it exists, this is an abbreviation for "species".
         let truncated_scientific_name = &scientific_name.replace(" spp.", "");
@@ -157,6 +176,7 @@ impl Flickr {
     }
 }
 
+//TODO: Remove
 fn find_best_photo(
     response: ImageSearchResponse,
     truncated_scientific_name: &str,
@@ -255,6 +275,141 @@ fn find_best_photo(
     });
 
     valid_photos.first().and_then(Image::from_photo)
+}
+
+fn find_best_photos(
+    blooming_response: Option<ImageSearchResponse>,
+    nonblooming_response: Option<ImageSearchResponse>,
+    truncated_scientific_name: &str,
+    common_name: &str,
+) -> Vec<Image> {
+    let scientific_name_lc = truncated_scientific_name.to_lowercase();
+    let common_name_lc = common_name.to_lowercase();
+
+    let mut all_photos = blooming_response.map_or(vec![], |r| r.photos.photo);
+    if let Some(nonblooming_response) = nonblooming_response {
+        all_photos.extend(nonblooming_response.photos.photo);
+    }
+
+    // Filter to valid photos, where valid means:
+    //   1. photo.views represents a valid integer
+    //   2. The photo id is not blocked (some photos are bad for this use case)
+    //   3. The description doesn't have any blocked words which hint at illustrations
+    let mut valid_photos = all_photos
+        .into_iter()
+        .filter(|photo| photo.url_z.is_some())
+        .filter(|photo| match photo.views.parse::<i32>() {
+            Ok(_) => true,
+            Err(_) => {
+                warn!("Could not parse {} as i32", photo.views);
+                false
+            }
+        })
+        .filter(|photo| {
+            // Filter out images that aren't useful in this context
+            // This is more of a stop gap until there's an interface to choose images
+            ![
+                "37831198204", // educational drawing of carex crinita
+                "17332010645", // field of apparently dead goldenrod?
+                "43826520262", // too close up of wild ginger
+                "41085999240", // too close up of wild ginger
+                "26596674001", // too close up of wild ginger
+                "37356079394", // too close up of black eyed susan
+            ]
+            .contains(&photo.id.as_str())
+        })
+        .filter(|photo| {
+            let description_lc = photo.description._content.to_lowercase();
+            let title_lc = photo.title.to_lowercase();
+
+            // Certain words in the description mean we should ignore this, usually because
+            // they are hand drawn rather than photos
+            for blocked_word in &vec!["drawn", "illustration", "dried wildflowers", "illustrated"] {
+                if description_lc.contains(blocked_word) {
+                    return false;
+                }
+                if title_lc.contains(blocked_word) {
+                    return false;
+                }
+            }
+
+            true
+        })
+        .collect::<Vec<ImageSearchPhoto>>();
+
+    // Sort such that the highest priority images come first.
+    // Priorities:
+    //   1. Title has plant name
+    //   2. Is landscape
+    //   3. Views
+    valid_photos.sort_unstable_by(|a, b| {
+        let a_title_lc = a.title.to_lowercase();
+        let a_has_name =
+            a_title_lc.contains(&scientific_name_lc) || a_title_lc.contains(&common_name_lc);
+        let b_title_lc = b.title.to_lowercase();
+        let b_has_name =
+            b_title_lc.contains(&scientific_name_lc) || b_title_lc.contains(&common_name_lc);
+
+        // Containing the name gives highest priority
+        if a_has_name && !b_has_name {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_has_name && b_has_name {
+            return std::cmp::Ordering::Greater;
+        }
+
+        let a_has_bloom = a_title_lc.contains("bloom");
+        let b_has_bloom = b_title_lc.contains("bloom");
+
+        // Containing the word bloom gives next highest priority
+        if a_has_bloom && !b_has_bloom {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_has_bloom && b_has_bloom {
+            return std::cmp::Ordering::Greater;
+        }
+
+        // Being landscape is next highest priority
+        // Unwraps are ok because photos without _z are filtered earlier
+        let a_is_landscape = a.width_z.unwrap() >= a.height_z.unwrap();
+        let b_is_landscape = b.width_z.unwrap() >= b.height_z.unwrap();
+        if a_is_landscape && !b_is_landscape {
+            return std::cmp::Ordering::Less;
+        }
+        if !a_is_landscape && b_is_landscape {
+            return std::cmp::Ordering::Greater;
+        }
+
+        // Unwrap is ok, invalid views strings are filtered above
+        let a_views = a.views.parse::<i32>().unwrap();
+        let b_views = b.views.parse::<i32>().unwrap();
+
+        // This is flipped because more views gives higher priority
+        // and the highest priority is at the beginning of the list
+        b_views.cmp(&a_views)
+    });
+
+    //TODO: This is not quite working... because some photographers upload the
+    //      same picture multiple times.  And both are popular.  So I think I
+    //      need to limit to 1 per photographer.
+
+    // Filter to the top 5 images from unique owners.  Only one per photographer
+    // because sometimes we'll get the same photo in both blooming and non-
+    // blooming lists, but also some photographers will upload the same picture
+    // multiple times (sometimes cropped slightly diff).
+    let mut photos_to_use: Vec<ImageSearchPhoto> = vec![];
+    for valid_photo in valid_photos {
+        if !photos_to_use.iter().any(|p| p.owner == valid_photo.owner) {
+            photos_to_use.push(valid_photo)
+        }
+
+        if photos_to_use.len() == 5 {
+            break;
+        }
+    }
+
+    // Take the top 5, then convert from flickr photos to Images
+    photos_to_use.iter().filter_map(Image::from_photo).collect()
 }
 
 fn get_license_name(license_id: &str) -> Option<&str> {

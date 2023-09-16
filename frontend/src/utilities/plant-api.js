@@ -33,6 +33,9 @@ export default async function openPlantsStream(
       queryingByName ||
       selectedPlants.some((sp) => sp.scientific === newPlant.scientific);
 
+    //TODO: Temporary, until I move everything else to images.
+    newPlant.image = newPlant.images ? newPlant.images[0] : newPlant.image;
+
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
         (p) => p.scientific === newPlant.scientific

@@ -165,7 +165,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
 
     /// Updates one plant.
     /// Returns Err if it fails.
-    pub async fn update_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<()> {
+    pub async fn update_plant(&self, plant: &Plant) -> anyhow::Result<()> {
         let mut conn = self.get_connection().await?;
 
         r"UPDATE plants
@@ -183,9 +183,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
                   spread = :spread,
 
                   moistures = :moistures,
-                  shades = :shades,
-
-                  image_id = :image_id
+                  shades = :shades
               WHERE id = :id"
             .with(params! {
                 "id" => plant.id,
@@ -205,8 +203,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
 
                 "moistures" => to_comma_separated_string(&plant.moistures),
                 "shades" => to_comma_separated_string(&plant.shades),
-
-                "image_id" => img_id
             })
             .ignore(&mut conn)
             .await
@@ -215,11 +211,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
 
     /// Inserts one plant.
     /// Returns Err if it fails.
-    pub async fn insert_plant(
-        &self,
-        plant: &Plant,
-        img_id: Option<usize>,
-    ) -> anyhow::Result<usize> {
+    pub async fn insert_plant(&self, plant: &Plant) -> anyhow::Result<usize> {
         let mut conn = self.get_connection().await?;
 
         r"INSERT INTO plants
@@ -229,8 +221,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
          pollinator_rating,
          bird_rating,
          spread_rating, deer_resistance_rating,
-         usda_source, wiki_source,
-         image_id)
+         usda_source, wiki_source)
       VALUES
         (:scientific_name, :common_name,
          :bloom, :height, :spread,
@@ -238,8 +229,7 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
          :pollinator_rating,
          :bird_rating,
          :spread_rating, :deer_resistance_rating,
-         :usda_source, :wiki_source,
-         :image_id)
+         :usda_source, :wiki_source)
             RETURNING id"
             .with(params! {
                 "scientific_name" => &plant.scientific,
@@ -260,8 +250,6 @@ AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
 
                 "moistures" => to_comma_separated_string(&plant.moistures),
                 "shades" => to_comma_separated_string(&plant.shades),
-
-                "image_id" => img_id
             })
             .fetch(&mut conn)
             .await
@@ -293,14 +281,14 @@ FROM plants p
 
 INNER JOIN regions_plants rp on rp.plant_id = p.id
 INNER JOIN zipcodes z ON z.region_id = rp.region_id
-LEFT JOIN images i ON i.id = p.image_id
+LEFT JOIN images i ON i.plant_id = p.id
 WHERE z.zipcode = :zipcode
   AND (p.moistures is NULL OR FIND_IN_SET(:moisture, p.moistures))
   AND (p.shades is NULL OR FIND_IN_SET(:shade, p.shades))
 ORDER BY
   p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
-  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) desc
-
+  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) desc,
+  p.scientific_name asc
 "
         .with(params! {
             "zipcode" => zip,
@@ -331,7 +319,7 @@ SELECT
   p.usda_source, p.wiki_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
-LEFT JOIN images i ON i.id = p.image_id
+LEFT JOIN images i ON i.plant_id = p.id
 WHERE scientific_name = :scientific_name"
             .with(params! {
                 "scientific_name" => scientific_name,
@@ -341,14 +329,35 @@ WHERE scientific_name = :scientific_name"
             .map_err(|e| anyhow!(e))
     }
 
+    //     pub async fn select_images_by_plant_ids(
+    //         &self,
+    //         plant_ids: Vec<usize>,
+    //     ) -> anyhow::Result<Vec<(usize, Image)>> {
+    //         let mut conn = self.get_connection().await?;
+
+    //         r"
+    // SELECT plant_id, id, title, card_url, original_url, author, license
+    // FROM images
+    // WHERE plant_id in :plant_ids"
+    //             .with(params! {
+    //                 "plant_ids" => plant_ids,
+    //             })
+    //             .map(&mut conn, |(plant_id, image): (usize, Image)| {
+    //                 (plant_id, image)
+    //             })
+    //             .await
+    //             .map_err(|e| anyhow!(e))
+    //     }
+
     /// Inserts one image.
     /// Returns Err if it fails.
-    pub async fn insert_image(&self, image: &Image) -> anyhow::Result<usize> {
+    pub async fn insert_image(&self, image: &Image, plant_id: usize) -> anyhow::Result<usize> {
         let mut conn = self.get_connection().await?;
-        r"INSERT INTO images (title, card_url, original_url, author, license)
-            VALUES (:title, :card_url, :original_url, :author, :license)
+        r"INSERT INTO images (plant_id, title, card_url, original_url, author, license)
+            VALUES (:plant_id, :title, :card_url, :original_url, :author, :license)
             RETURNING id"
             .with(params! {
+                "plant_id" => plant_id,
                 "title" => &image.title,
                 "card_url" => &image.card_url,
                 "original_url" => &image.original_url,

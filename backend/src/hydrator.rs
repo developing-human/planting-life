@@ -113,7 +113,11 @@ impl Hydrator {
             Pin<Box<dyn Future<Output = Option<HydratedPlant>>>>,
         > = FuturesUnordered::new();
 
-        if plant.image.is_none() {
+        //TODO: For images which have nothing on flickr, how can I tell the
+        //      difference between "we haven't searched yet" and "we searched
+        //      but didn't find anything"?  and should we search again at some
+        //      point?
+        if plant.images.len() <= 1 {
             futures_unordered.push(Box::pin(self.hydrate_image(&plant)));
         }
         futures_unordered.push(Box::pin(self.hydrate_ratings(&plant)));
@@ -136,16 +140,22 @@ impl Hydrator {
     /// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
     /// with the image populated.
     async fn hydrate_image(&self, plant: &Plant) -> Option<HydratedPlant> {
-        self.flickr
-            .get_image(&plant.scientific, &plant.common)
-            .await
-            .map(|image| HydratedPlant {
-                updated: true,
-                plant: Plant {
-                    image: Some(image),
-                    ..plant.clone()
-                },
-            })
+        let images = self
+            .flickr
+            .get_images(&plant.scientific, &plant.common)
+            .await;
+
+        if images.is_empty() {
+            return None;
+        }
+
+        Some(HydratedPlant {
+            updated: true,
+            plant: Plant {
+                images,
+                ..plant.clone()
+            },
+        })
     }
 
     /// Hydrates all "details", which includes things like height,
