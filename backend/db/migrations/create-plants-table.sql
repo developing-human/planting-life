@@ -20,6 +20,3 @@ CREATE TABLE IF NOT EXISTS plants (
   CONSTRAINT FK_PlantsImage FOREIGN KEY (image_id)  REFERENCES images(id),
   FULLTEXT (scientific_name, common_name)
 );
-
---changeset doug:8
-ALTER TABLE plants ADD CONSTRAINT UC_Plants UNIQUE (scientific_name);
