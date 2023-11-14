@@ -191,6 +191,13 @@ fn find_best_photo(
                 "41085999240", // too close up of wild ginger
                 "26596674001", // too close up of wild ginger
                 "37356079394", // too close up of black eyed susan
+                "19817220273", // bad picture of wrinkleleaf goldenrod
+                "17144457240", // bad picture of wrinkleleaf goldenrod
+                "17144275828", // bad picture of wrinkleleaf goldenrod
+                "17144477490", // bad picture of wrinkleleaf goldenrod
+                "48940139232", // bad picture of wrinkleleaf goldenrod
+                "20251416029", // ok picture of wrinkleleaf goldenrod...
+                "53192849063", // ok picture of wrinkleleaf goldenrod...
             ]
             .contains(&photo.id.as_str())
         })
