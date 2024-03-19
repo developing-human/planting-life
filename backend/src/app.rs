@@ -13,8 +13,8 @@ use crate::{
         },
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{
-            plants_by_name_handler, plants_stream_by_scientific_name_handler,
-            plants_stream_handler, PlantController,
+            find_plants_handler, plants_stream_by_scientific_name_handler, plants_stream_handler,
+            PlantController,
         },
     },
     flickr::Flickr,
@@ -43,12 +43,10 @@ impl PlantingLifeApp {
         let ai = live_forever(Ai::new(open_ai));
 
         let citations = Citations {};
-        let highlights = Highlights {};
+        let highlights = live_forever(Highlights {});
 
         let hydrator = Hydrator::new(ai, flickr, citations, highlights);
         let selector = Selector::new(db, ai);
-
-        let highlights = Highlights {};
 
         Self {
             gardens_controller: GardensController { db, highlights },
@@ -56,6 +54,7 @@ impl PlantingLifeApp {
                 db,
                 hydrator,
                 selector,
+                highlights,
             },
             nursery_controller: NurseriesController { db },
         }
@@ -82,7 +81,7 @@ impl PlantingLifeApp {
                 .app_data(web::Data::new(self))
                 .service(plants_stream_handler)
                 .service(plants_stream_by_scientific_name_handler)
-                .service(plants_by_name_handler)
+                .service(find_plants_handler)
                 .service(fetch_nurseries_handler)
                 .service(read_garden_handler)
                 .service(create_garden_handler)

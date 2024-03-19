@@ -26,7 +26,7 @@ pub struct Hydrator {
     ai: &'static Ai,
     flickr: Flickr,
     citations: Citations,
-    highlights: Highlights,
+    highlights: &'static Highlights,
 }
 
 impl Hydrator {
@@ -34,7 +34,7 @@ impl Hydrator {
         ai: &'static Ai,
         flickr: Flickr,
         citations: Citations,
-        highlights: Highlights,
+        highlights: &'static Highlights,
     ) -> Self {
         Self {
             ai,

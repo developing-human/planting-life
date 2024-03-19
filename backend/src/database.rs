@@ -305,6 +305,10 @@ impl Database {
     }
 
     pub async fn find_plants_by_word_prefix(&self, word_prefix: &str) -> Vec<Plant> {
+        if word_prefix.len() < 3 {
+            return vec![];
+        }
+
         let search_expression = build_word_prefix_expression(word_prefix);
         match self
             .sql_runner

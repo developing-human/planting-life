@@ -1,3 +1,16 @@
+export async function getPlants(searchParams, setPlants, setLoading) {
+  const { zip, shade, moisture } = searchParams;
+  fetch(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`)
+    .then((response) => response.json())
+    .then((plants) => {
+      setPlants(plants);
+      setLoading(false);
+    })
+    .catch((error) => console.error("Error: ", error));
+
+  return () => { };
+}
+
 export default async function openPlantsStream(
   searchParams,
   setPlants,

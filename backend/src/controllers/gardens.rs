@@ -36,11 +36,11 @@ struct GardensPutRequest {
 
 pub struct GardensController {
     pub db: &'static Database,
-    pub highlights: Highlights,
+    pub highlights: &'static Highlights,
 }
 
 impl GardensController {
-    pub fn new(db: &'static Database, highlights: Highlights) -> Self {
+    pub fn new(db: &'static Database, highlights: &'static Highlights) -> Self {
         Self { db, highlights }
     }
 
