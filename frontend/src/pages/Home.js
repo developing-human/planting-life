@@ -17,7 +17,7 @@ import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
 import Box from "@mui/material/Box";
 import "./Home.css";
-import openPlantsStream from "../utilities/plant-api";
+import { getPlants } from "../utilities/plant-api";
 import { getNurseries } from "../utilities/nursery-api";
 import { Alert, Button, Paper, Snackbar } from "@mui/material";
 
@@ -76,12 +76,11 @@ const Home = () => {
         setLastSearchedCriteria(gardenSearchCriteria);
 
         // Populate the discover tab based on those criteria, too
-        openPlantsStream(
+        getPlants(
           gardenSearchCriteria,
           setPlants,
           setError,
-          setEventSource,
-          fetchedGarden.plants
+          fetchedGarden.plants //TODO: Not handled yet after refactor
         );
 
         // Populate the Nurseries tab using the zipcode from the garden

@@ -99,6 +99,18 @@ impl PlantController {
         actix_web::HttpResponse::Ok().json(plants)
     }
 
+    async fn find_plant(&'static self, id: usize) -> impl Responder {
+        info!("find_plant {id}");
+
+        if let Some(mut plant) = self.db.get_plant_by_id(id).await {
+            plant.done_loading = true;
+            plant.highlights = self.highlights.generate(&plant);
+            actix_web::HttpResponse::Ok().json(plant)
+        } else {
+            actix_web::HttpResponse::NotFound().body("plant not found")
+        }
+    }
+
     async fn get_closest_valid_zip(&self, zip: &str) -> Result<String, actix_web::Error> {
         let valid_zip = self.db.lookup_closest_valid_zip(zip).await.map_err(|e| {
             warn!("Cannot find valid zipcode: {e}");
@@ -228,9 +240,18 @@ async fn plants_stream_by_scientific_name_handler(
     id: web::Path<String>,
     app: web::Data<&'static PlantingLifeApp>,
 ) -> Result<impl Responder, actix_web::Error> {
+    panic!("shouldn't use");
     app.plant_controller
         .stream_by_scientific_name(id.to_string())
         .await
+}
+
+#[get("/plants/{id}")]
+async fn find_plant_handler(
+    id: web::Path<usize>,
+    app: web::Data<&'static PlantingLifeApp>,
+) -> impl Responder {
+    app.plant_controller.find_plant(*id).await
 }
 
 #[get("/plants")]

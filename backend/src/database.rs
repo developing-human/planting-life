@@ -181,6 +181,19 @@ impl Database {
         }
     }
 
+    /// Fetches one Plant by id.  Returns None if it is not
+    /// found or if there is a database error.
+    pub async fn get_plant_by_id(&self, id: usize) -> Option<Plant> {
+        match self.sql_runner.select_plant_by_id(id).await {
+            Ok(Some(plant)) => Some(plant),
+            Ok(None) => None,
+            Err(e) => {
+                warn!("get_plant_by_id failed to select: {e}");
+                None
+            }
+        }
+    }
+
     /// Fetches a garden by id.  The id may be the read_id or write_id.
     pub async fn get_garden(&self, id: &str) -> Option<Garden> {
         let mut garden = match self.sql_runner.select_garden_by_id(id, true).await {

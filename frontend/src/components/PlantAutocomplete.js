@@ -2,7 +2,7 @@ import { useEffect, useState, Fragment } from "react";
 import TextField from "@mui/material/TextField";
 import Autocomplete from "@mui/material/Autocomplete";
 import CircularProgress from "@mui/material/CircularProgress";
-import openPlantsStream, { fetchPlantsByName } from "../utilities/plant-api";
+import { fetchPlantsByName, getPlant } from "../utilities/plant-api";
 
 export default function PlantAutocomplete({
   setPlants,
@@ -70,7 +70,11 @@ export default function PlantAutocomplete({
       return newPlants;
     });
 
-    openPlantsStream({ scientificName: option.scientific }, setPlants);
+    getPlant(option.id, (newPlant) => {
+      setPlants((prevPlants) => {
+        return prevPlants.concat(newPlant);
+      })
+    });
   };
 
   // Clears options when the autocomplete is closed

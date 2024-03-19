@@ -101,7 +101,7 @@ function ConditionsForm({
       eventSource.close();
     }
 
-    getPlants(formData, setPlants, setLoading, setError);
+    getPlants(formData, setPlants, setError, [], setLoading);
     getNurseries(searchCriteria.zip, setNurseries);
   };
 

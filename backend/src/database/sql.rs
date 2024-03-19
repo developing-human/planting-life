@@ -341,6 +341,32 @@ WHERE scientific_name = :scientific_name"
             .map_err(|e| anyhow!(e))
     }
 
+    /// Selects one plant by id.
+    /// Returns Err if it fails, Ok(None) if not found.
+    pub async fn select_plant_by_id(&self, id: usize) -> anyhow::Result<Option<Plant>> {
+        let mut conn = self.get_connection().await?;
+
+        r"
+SELECT
+  p.id, p.scientific_name, p.common_name,
+  p.bloom, p.height, p.spread,
+  p.moistures, p.shades,
+  p.pollinator_rating,
+  p.bird_rating,
+  p.spread_rating, p.deer_resistance_rating,
+  p.usda_source, p.wiki_source,
+  i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
+FROM plants p
+LEFT JOIN images i ON i.id = p.image_id
+WHERE p.id = :id"
+            .with(params! {
+                "id" => id,
+            })
+            .first(&mut conn)
+            .await
+            .map_err(|e| anyhow!(e))
+    }
+
     /// Inserts one image.
     /// Returns Err if it fails.
     pub async fn insert_image(&self, image: &Image) -> anyhow::Result<usize> {
