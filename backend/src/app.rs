@@ -1,12 +1,7 @@
 #[double]
-use crate::ai::Ai;
-
-#[double]
 use crate::database::Database;
 
 use crate::{
-    ai::openai::OpenAI,
-    citations::Citations,
     controllers::{
         gardens::{
             create_garden_handler, read_garden_handler, update_garden_handler, GardensController,
@@ -14,10 +9,7 @@ use crate::{
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{find_plant_handler, find_plants_handler, PlantController},
     },
-    flickr::Flickr,
     highlights::Highlights,
-    hydrator::Hydrator,
-    selector::Selector,
 };
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
@@ -30,29 +22,14 @@ pub struct PlantingLifeApp {
 }
 
 impl PlantingLifeApp {
-    pub fn new(db_url: &str, openai_api_key: &str, flickr_api_key: &str) -> Self {
+    pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
         let db = live_forever(Database::new(db_url));
-        let open_ai = OpenAI::new(openai_api_key.into());
-        let flickr = Flickr::new(flickr_api_key.into());
-
-        let ai = live_forever(Ai::new(open_ai));
-
-        let citations = Citations {};
         let highlights = live_forever(Highlights {});
-
-        let hydrator = Hydrator::new(ai, flickr, citations, highlights);
-        let selector = Selector::new(db, ai);
-
         Self {
             gardens_controller: GardensController { db, highlights },
-            plant_controller: PlantController {
-                db,
-                hydrator,
-                selector,
-                highlights,
-            },
+            plant_controller: PlantController { db, highlights },
             nursery_controller: NurseriesController { db },
         }
     }

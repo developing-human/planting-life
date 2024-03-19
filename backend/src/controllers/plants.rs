@@ -5,9 +5,7 @@ use tracing::log::{info, warn};
 
 #[double]
 use crate::database::Database;
-use crate::{
-    app::PlantingLifeApp, domain::*, highlights::Highlights, hydrator::Hydrator, selector::Selector,
-};
+use crate::{app::PlantingLifeApp, domain::*, highlights::Highlights};
 
 #[derive(Serialize, Deserialize, Debug)]
 struct PlantsStreamRequest {
@@ -26,24 +24,12 @@ struct PlantSearchRequest {
 
 pub struct PlantController {
     pub db: &'static Database,
-    pub hydrator: Hydrator,
-    pub selector: Selector,
     pub highlights: &'static Highlights,
 }
 
 impl PlantController {
-    pub fn new(
-        db: &'static Database,
-        hydrator: Hydrator,
-        selector: Selector,
-        highlights: &'static Highlights,
-    ) -> Self {
-        Self {
-            db,
-            hydrator,
-            selector,
-            highlights,
-        }
+    pub fn new(db: &'static Database, highlights: &'static Highlights) -> Self {
+        Self { db, highlights }
     }
 
     async fn find_plants(&'static self, payload: PlantSearchRequest) -> impl Responder {

@@ -9,10 +9,7 @@ async fn main() -> std::io::Result<()> {
         warn!("Configure valid PLANTING_LIFE_DB_URL to use database");
         "".to_string()
     });
-    let openai_api_key = env::var("OPENAI_API_KEY").expect("Must define $OPENAI_API_KEY");
-    let flickr_api_key = env::var("FLICKR_API_KEY").expect("Must define $OPENAI_API_KEY");
-
-    let app = PlantingLifeApp::new(&db_url, &openai_api_key, &flickr_api_key);
+    let app = PlantingLifeApp::new(&db_url);
 
     // Leak it to get a 'static lifetime, by definition it lives for
     // the entirety of the program
