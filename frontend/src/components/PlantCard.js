@@ -11,7 +11,6 @@ import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Grid from "@mui/material/Grid";
-import CircularProgress from "@mui/material/CircularProgress";
 import IconButton from "@mui/material/IconButton";
 import Add from "@mui/icons-material/Add";
 import Remove from "@mui/icons-material/Remove";
@@ -141,14 +140,14 @@ const PlantCard = memo(function PlantCard({
               <Typography variant="body2" color="text.secondary">
                 {plant.highlights
                   ? plant.highlights.map((highlight) => (
-                      <span key={plant.id + "-" + highlight.label}>
-                        <Highlight
-                          label={highlight.label}
-                          category={highlight.category}
-                        />
-                        <br />
-                      </span>
-                    ))
+                    <span key={plant.id + "-" + highlight.label}>
+                      <Highlight
+                        label={highlight.label}
+                        category={highlight.category}
+                      />
+                      <br />
+                    </span>
+                  ))
                   : null}
               </Typography>
             </div>
@@ -179,12 +178,6 @@ const PlantCard = memo(function PlantCard({
               {plant.spread ? <span>Spread: {plant.spread}</span> : null}
               <br />
               <br />
-
-              {plant.doneLoading ? null : (
-                <span className="card-loading">
-                  <CircularProgress size={20} color="success" />
-                </span>
-              )}
             </Typography>
           </Grid>
         </Grid>

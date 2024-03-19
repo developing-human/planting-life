@@ -51,8 +51,6 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub highlights: Vec<Highlight>,
-
-    pub done_loading: bool,
 }
 
 impl Plant {
@@ -73,7 +71,6 @@ impl Plant {
             image: None,
             usda_source: None,
             wiki_source: None,
-            done_loading: false,
             highlights: vec![],
         }
     }
@@ -97,7 +94,6 @@ impl Plant {
             height: other.height.clone().or(self.height.clone()),
             spread: other.spread.clone().or(self.spread.clone()),
             highlights: other.highlights.clone(),
-            done_loading: false,
         }
     }
 }

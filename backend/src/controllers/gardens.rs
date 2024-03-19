@@ -102,7 +102,6 @@ impl GardensController {
                 .into_iter()
                 .map(|p| Plant {
                     highlights: self.highlights.generate(&p),
-                    done_loading: true,
                     ..p
                 })
                 .collect(),

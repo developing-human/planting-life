@@ -79,7 +79,6 @@ impl Hydrator {
             &Some(sender.clone()),
             &Plant::new(ALL_PLANTS_HYDRATING_MARKER, ALL_PLANTS_HYDRATING_MARKER),
             false,
-            false,
         )
         .await;
 
@@ -100,7 +99,7 @@ impl Hydrator {
         plant: Plant,
         sender: Option<UnboundedSender<HydratedPlant>>,
     ) {
-        send_plant(&sender, &plant, false, false).await;
+        send_plant(&sender, &plant, false).await;
 
         // At this point I have a plant from the gpt list + database query
         // Some parts could be missing (not in db, db is missing parts)
@@ -126,11 +125,11 @@ impl Hydrator {
             if let Some(hydrated_plant) = hydrated_plant {
                 updated = true;
                 merged_plant = merged_plant.merge(&hydrated_plant.plant);
-                send_plant(&sender, &hydrated_plant.plant, false, true).await;
+                send_plant(&sender, &hydrated_plant.plant, true).await;
             }
         }
 
-        send_plant(&sender, &merged_plant, true, updated).await;
+        send_plant(&sender, &merged_plant, updated).await;
     }
 
     /// Looks up an image for this plant.  If one is found, it returns a HydratedPlant
@@ -393,19 +392,11 @@ async fn merge_hydrated_plants(
 }
 
 /// Sends a HydratedPlant to the sender, if the sender is populated.
-async fn send_plant(
-    sender: &Option<UnboundedSender<HydratedPlant>>,
-    plant: &Plant,
-    done: bool,
-    updated: bool,
-) {
+async fn send_plant(sender: &Option<UnboundedSender<HydratedPlant>>, plant: &Plant, updated: bool) {
     if let Some(mut sender) = sender.clone() {
         sender
             .start_send(HydratedPlant {
-                plant: Plant {
-                    done_loading: done,
-                    ..plant.clone()
-                },
+                plant: Plant { ..plant.clone() },
                 updated,
             })
             // This should only fail in the receiver is closed

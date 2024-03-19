@@ -69,7 +69,6 @@ impl PlantController {
             .into_iter()
             .map(|p| Plant {
                 highlights: self.highlights.generate(&p),
-                done_loading: true,
                 ..p
             })
             .collect();
@@ -81,7 +80,6 @@ impl PlantController {
         info!("find_plant {id}");
 
         if let Some(mut plant) = self.db.get_plant_by_id(id).await {
-            plant.done_loading = true;
             plant.highlights = self.highlights.generate(&plant);
             actix_web::HttpResponse::Ok().json(plant)
         } else {
