@@ -4,7 +4,7 @@ import { useRef, useEffect } from "react";
 import DropdownSelect from "./DropdownSelect";
 
 // utilities
-import openPlantsStream, { getPlants } from "../utilities/plant-api";
+import { getPlants } from "../utilities/plant-api";
 
 // material ui
 import TextField from "@mui/material/TextField";
@@ -101,7 +101,7 @@ function ConditionsForm({
       eventSource.close();
     }
 
-    getPlants(formData, setPlants, setLoading);
+    getPlants(formData, setPlants, setLoading, setError);
     getNurseries(searchCriteria.zip, setNurseries);
   };
 

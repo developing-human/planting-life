@@ -1,4 +1,4 @@
-export async function getPlants(searchParams, setPlants, setLoading) {
+export async function getPlants(searchParams, setPlants, setLoading, setError) {
   const { zip, shade, moisture } = searchParams;
   fetch(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`)
     .then((response) => response.json())
@@ -6,7 +6,13 @@ export async function getPlants(searchParams, setPlants, setLoading) {
       setPlants(plants);
       setLoading(false);
     })
-    .catch((error) => console.error("Error: ", error));
+    .catch((error) => {
+      if (setLoading) {
+        setLoading(false);
+      }
+      console.error("Error: ", error);
+      setError("Well that's embarassing... please try again.");
+    });
 
   return () => { };
 }

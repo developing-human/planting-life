@@ -65,7 +65,13 @@ impl PlantController {
                 zip: Some(zip),
                 moisture: Some(moisture),
                 shade: Some(shade),
-            } => self.db.lookup_query_results(&zip, &moisture, &shade).await,
+            } => {
+                // adjust zip codes which aren't in the database to the closest
+                // one that is, because not every zip is in the db
+                let zip = self.get_closest_valid_zip(&zip).await.unwrap_or(zip);
+
+                self.db.lookup_query_results(&zip, &moisture, &shade).await
+            }
             PlantSearchRequest {
                 name: Some(name),
                 zip: None,
@@ -91,57 +97,6 @@ impl PlantController {
             .collect();
 
         actix_web::HttpResponse::Ok().json(plants)
-    }
-
-    async fn stream(
-        &'static self,
-        payload: PlantsStreamRequest,
-    ) -> Result<impl Responder, actix_web::Error> {
-        info!("{payload:?}");
-
-        let valid_zip = self.get_closest_valid_zip(&payload.zip).await?;
-        let valid_payload = PlantsStreamRequest {
-            zip: valid_zip,
-            ..payload
-        };
-        drop(payload); // Don't use the unvalidated payload by mistake
-
-        let (frontend_sender, stream): (Sender, Sse<ChannelStream>) = sse::channel(10);
-
-        // The real work is done in a new thread so the connection to the front end can stay open.
-        actix_web::rt::spawn(async move {
-            let plant_stream = self
-                .selector
-                .stream_plants(
-                    &valid_payload.zip,
-                    &valid_payload.moisture,
-                    &valid_payload.shade,
-                )
-                .await;
-
-            match plant_stream {
-                Ok(plant_stream) => {
-                    self.hydrate_and_send_plants(
-                        Some(valid_payload),
-                        plant_stream.stream,
-                        &frontend_sender,
-                        plant_stream.from_db,
-                    )
-                    .await
-                }
-                Err(e) => {
-                    warn!("error getting plant stream: {e}");
-                    send_event(&frontend_sender, "error", "").await
-                }
-            };
-
-            send_event(&frontend_sender, "close", "").await;
-        });
-
-        Ok(stream
-            .with_keep_alive(Duration::from_secs(1))
-            .customize()
-            .insert_header(("X-Accel-Buffering", "no")))
     }
 
     async fn get_closest_valid_zip(&self, zip: &str) -> Result<String, actix_web::Error> {
@@ -266,14 +221,6 @@ async fn send_event(sender: &Sender, event: &str, message: &str) {
         Ok(_) => {}
         Err(_) => warn!("Error sending [{}] with message [{}]", event, message),
     }
-}
-
-#[get("/plants/stream")]
-async fn plants_stream_handler(
-    web::Query(payload): web::Query<PlantsStreamRequest>,
-    app: web::Data<&'static PlantingLifeApp>,
-) -> Result<impl Responder, actix_web::Error> {
-    app.plant_controller.stream(payload).await
 }
 
 #[get("/plants/stream/{scientific_name}")]
