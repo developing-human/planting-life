@@ -9,16 +9,15 @@ export async function getPlants(searchParams, setPlants, setError, selectedPlant
         }
       }
       setPlants(plants);
-      if (setLoading) {
-        setLoading(false);
-      }
     })
     .catch((error) => {
+      console.error("Error: ", error);
+      setError("Well that's embarassing... please try again.");
+    })
+    .finally(() => {
       if (setLoading) {
         setLoading(false);
       }
-      console.error("Error: ", error);
-      setError("Well that's embarassing... please try again.");
     });
 
   return () => { };
