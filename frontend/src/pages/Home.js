@@ -32,7 +32,6 @@ const Home = () => {
   const [selectedTab, setSelectedTab] = useState(DISCOVER_TAB_INDEX);
   const [error, setError] = useState(null);
   const [garden, setGarden] = useState({ plants: [], name: "" });
-  const [eventSource, setEventSource] = useState(null);
   const [isCopyGardenMessageOpen, setIsCopyGardenMessageOpen] = useState(false);
   const [nurserySearchZip, setNurserySearchZip] = useState("");
   const location = useLocation();
@@ -266,8 +265,6 @@ const Home = () => {
             setLastSearchedCriteria={setLastSearchedCriteria}
             error={error}
             setError={setError}
-            eventSource={eventSource}
-            setEventSource={setEventSource}
           />
         </CustomTabPanel>
         <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>

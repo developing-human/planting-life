@@ -34,8 +34,6 @@ export async function getPlant(id, onSuccess) {
   return () => { };
 }
 
-//TODO: Can getPlants take fewer params?  Maybe an onSuccess instead?
-//TODO: Cleanup refs to eventSource
 export async function fetchPlantsByName(name) {
   return fetch(`${process.env.REACT_APP_URL_PREFIX}/plants?name=${name}`, {
     method: "GET",

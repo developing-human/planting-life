@@ -26,9 +26,6 @@ function ConditionsForm({
   setLastSearchedCriteria,
   searchCriteria,
   setSearchCriteria,
-  selectedPlants,
-  eventSource,
-  setEventSource,
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -94,12 +91,6 @@ function ConditionsForm({
     };
 
     setLastSearchedCriteria(formData);
-
-    // Try to close an existing eventSource, loading behaves weird if
-    // two EventSources are open at the same time.
-    if (eventSource) {
-      eventSource.close();
-    }
 
     getPlants(formData, setPlants, setError, [], setLoading);
     getNurseries(searchCriteria.zip, setNurseries);
