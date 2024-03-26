@@ -27,3 +27,8 @@ mockall = "0.11"
 mockall_double = "0.3"
 
 rand = "0.8.5"
+
+
+# TODO: Remove these once streaming interfaces are removed
+futures = "0.3.28"
+actix-web-lab = "0.19.1"

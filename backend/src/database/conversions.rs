@@ -92,6 +92,7 @@ impl FromRow for Plant {
                 }
             }),
             highlights: vec![],
+            done_loading: true,
         })
     }
 }

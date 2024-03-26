@@ -51,6 +51,8 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub highlights: Vec<Highlight>,
+
+    pub done_loading: bool,
 }
 
 impl Plant {
@@ -72,6 +74,7 @@ impl Plant {
             usda_source: None,
             wiki_source: None,
             highlights: vec![],
+            done_loading: true,
         }
     }
     // Merges two plants, prioritizing "other" but never overriding Some with None
@@ -94,6 +97,7 @@ impl Plant {
             height: other.height.clone().or(self.height.clone()),
             spread: other.spread.clone().or(self.spread.clone()),
             highlights: other.highlights.clone(),
+            done_loading: true,
         }
     }
 }
