@@ -38,6 +38,7 @@ impl PlantController {
         // find_plants can be used in two ways:
         // 1. searching by zip/shade/moisture
         // 2. search by partial name match
+        info!("{payload:?}");
 
         let plants = match payload {
             PlantSearchRequest {
