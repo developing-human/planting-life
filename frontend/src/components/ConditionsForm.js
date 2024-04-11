@@ -26,6 +26,7 @@ function ConditionsForm({
   setLastSearchedCriteria,
   searchCriteria,
   setSearchCriteria,
+  selectedPlants
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -92,7 +93,7 @@ function ConditionsForm({
 
     setLastSearchedCriteria(formData);
 
-    getPlants(formData, setPlants, setError, [], setLoading);
+    getPlants(formData, setPlants, setError, selectedPlants, setLoading);
     getNurseries(searchCriteria.zip, setNurseries);
   };
 
