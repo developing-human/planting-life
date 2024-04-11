@@ -529,6 +529,11 @@ ORDER BY gp.ordering
         write_id: &str,
         plant_ids: Vec<usize>,
     ) -> anyhow::Result<()> {
+        // Remove duplicates - they cause issues w/ unique constraints
+        let mut plant_ids = plant_ids.clone();
+        let mut seen_plant_ids = HashSet::new();
+        plant_ids.retain(|p| seen_plant_ids.insert(*p));
+
         let mut conn = self.get_connection().await?;
         let mut transaction = conn
             .start_transaction(mysql_async::TxOpts::default())
