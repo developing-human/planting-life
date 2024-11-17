@@ -19,6 +19,8 @@ function App() {
           <Route path="/gardens" element={<Home />} />
           <Route path="/gardens/:id" element={<Home />} />
           <Route path="/g/:id" element={<Home />} />
+          <Route path="/wcc" element={<Home />} />
+          <Route path="/huber" element={<Home />} />
         </Routes>
       </main>
 

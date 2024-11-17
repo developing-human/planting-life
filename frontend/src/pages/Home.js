@@ -144,6 +144,14 @@ const Home = () => {
         tab = GARDEN_TAB_INDEX;
         loadGarden(id);
         break;
+      case "/wcc":
+        tab = GARDEN_TAB_INDEX;
+        loadGarden("wcc");
+        break;
+      case "/huber":
+        tab = GARDEN_TAB_INDEX;
+        loadGarden("huber");
+        break;
       default:
         tab = DISCOVER_TAB_INDEX;
     }
