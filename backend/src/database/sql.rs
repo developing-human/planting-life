@@ -605,6 +605,43 @@ ORDER BY gp.ordering
         }
     }
     */
+    pub async fn upsert_request_count(&self, uri: &str) -> anyhow::Result<usize> {
+        let mut conn = self.get_connection().await?;
+        let count_result: Result<Option<usize>, mysql_async::Error> =
+            r"INSERT INTO request_counts (uri, date, count) VALUES
+            (?, CURRENT_DATE(), 1)
+            ON DUPLICATE KEY UPDATE count = count + 1
+            RETURNING count
+            "
+            .with((uri.to_string(),))
+            .first(&mut conn)
+            .await;
+
+        match count_result {
+            Ok(Some(count)) => Ok(count),
+            Ok(None) => Ok(0),
+            Err(e) => Err(anyhow!("insert into queries failed: {}", e)),
+        }
+    }
+
+    pub async fn select_monthly_request_count(&self, uri: &str) -> anyhow::Result<usize> {
+        let mut conn = self.get_connection().await?;
+        let count_result: Result<Option<usize>, mysql_async::Error> =
+            r"SELECT SUM(count) FROM request_counts
+            WHERE YEAR(date) = YEAR(CURRENT_DATE())
+            AND MONTH(date) = MONTH(CURRENT_DATE())
+            AND uri = ?
+            "
+            .with((uri.to_string(),))
+            .first(&mut conn)
+            .await;
+
+        match count_result {
+            Ok(Some(count)) => Ok(count),
+            Ok(None) => Ok(0),
+            Err(e) => Err(anyhow!("select monthly request count failed: {}", e)),
+        }
+    }
 }
 
 fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {

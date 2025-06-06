@@ -335,6 +335,25 @@ impl Database {
             }
         }
     }
+
+    pub async fn update_request_count(&self, uri: &str) {
+        match self.sql_runner.upsert_request_count(uri).await {
+            Ok(_) => (),
+            Err(e) => {
+                warn!("upsert_request_count failed: {e}");
+            }
+        }
+    }
+
+    pub async fn get_monthly_request_count(&self, uri: &str) -> usize {
+        match self.sql_runner.select_monthly_request_count(uri).await {
+            Ok(count) => count,
+            Err(e) => {
+                warn!("select_monthly_request_count failed: {e}");
+                std::usize::MAX
+            }
+        }
+    }
 }
 
 fn generate_random_string(length: u8) -> String {

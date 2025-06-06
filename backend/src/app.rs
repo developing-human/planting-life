@@ -6,6 +6,7 @@ use crate::{
         gardens::{
             create_garden_handler, read_garden_handler, update_garden_handler, GardensController,
         },
+        maps::{maps_api_key_handler, MapsController},
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{
             find_plant_handler, find_plants_handler, plants_stream_by_scientific_name_handler,
@@ -22,6 +23,7 @@ pub struct PlantingLifeApp {
     pub gardens_controller: GardensController,
     pub plant_controller: PlantController,
     pub nursery_controller: NurseriesController,
+    pub maps_controller: MapsController,
 }
 
 impl PlantingLifeApp {
@@ -34,6 +36,7 @@ impl PlantingLifeApp {
             gardens_controller: GardensController { db, highlights },
             plant_controller: PlantController { db, highlights },
             nursery_controller: NurseriesController { db },
+            maps_controller: MapsController { db },
         }
     }
 
@@ -65,6 +68,7 @@ impl PlantingLifeApp {
                 .service(read_garden_handler)
                 .service(create_garden_handler)
                 .service(update_garden_handler)
+                .service(maps_api_key_handler)
         })
         .bind("0.0.0.0:8080")?
         .run()
