@@ -46,6 +46,7 @@ impl PlantingLifeApp {
             let mut cors = Cors::default()
                 .allowed_origin("https://www.planting.life")
                 .allowed_origin("https://planting.life")
+                .allowed_origin("https://maps.planting.life")
                 .allowed_header(http::header::CONTENT_TYPE)
                 .allowed_header(http::header::ACCEPT)
                 .allowed_methods(vec!["GET", "POST", "PUT"]);
