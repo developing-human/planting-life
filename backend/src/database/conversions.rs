@@ -102,7 +102,7 @@ impl FromRow for Garden {
     where
         Self: Sized,
     {
-        let (name, zipcode, region_name, shade, moisture, read_id) =
+        let (name, zipcode, region_name, shade, moisture, read_id, latitude, longitude) =
             mysql_async::from_row_opt(row)?;
 
         let zipcode: usize = zipcode;
@@ -123,6 +123,8 @@ impl FromRow for Garden {
             read_id,
             write_id: None,
             plants: vec![],
+            latitude,
+            longitude,
         })
     }
 }

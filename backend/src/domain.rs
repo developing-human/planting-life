@@ -265,6 +265,12 @@ pub struct Garden {
 
     /// An identifier which allows this Garden to be updated
     pub write_id: Option<String>,
+
+    /// The Garden's latitude, if known
+    pub latitude: Option<f64>,
+
+    /// The Garden's longitude, if known
+    pub longitude: Option<f64>,
 }
 
 impl Garden {
@@ -279,6 +285,8 @@ impl Garden {
             region_name: None,
             read_id: None,
             write_id: None,
+            latitude: None,
+            longitude: None,
         }
     }
 }

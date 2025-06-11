@@ -34,6 +34,12 @@ struct GardensPutRequest {
     name: String,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+struct GardensListRequest {
+    #[serde(default)]
+    require_precise_location: bool,
+}
+
 pub struct GardensController {
     pub db: &'static Database,
     pub highlights: &'static Highlights,
@@ -113,6 +119,21 @@ impl GardensController {
             None => actix_web::HttpResponse::NotFound().body(""),
         }
     }
+
+    async fn list(&self, payload: GardensListRequest) -> impl Responder {
+        info!("GardensListRequest: {payload:?}");
+
+        // Nobody needs to request all gardens with no filters.
+        if !payload.require_precise_location {
+            warn!("Attempt to list all gardens with no filters, returning nothing");
+            return actix_web::HttpResponse::Ok().body("[]");
+        }
+
+        // Fetch the garden, then populate the highlights on each plant
+        let gardens = self.db.list_gardens(payload.require_precise_location).await;
+
+        actix_web::HttpResponse::Ok().json(gardens)
+    }
 }
 
 #[get("/gardens/{id}")]
@@ -121,6 +142,14 @@ async fn read_garden_handler(
     app: web::Data<&'static PlantingLifeApp>,
 ) -> impl Responder {
     app.gardens_controller.read(&id).await
+}
+
+#[get("/gardens")]
+async fn list_garden_handler(
+    web::Query(payload): web::Query<GardensListRequest>,
+    app: web::Data<&'static PlantingLifeApp>,
+) -> impl Responder {
+    app.gardens_controller.list(payload).await
 }
 
 #[post("/gardens")]

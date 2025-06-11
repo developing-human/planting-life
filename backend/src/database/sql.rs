@@ -433,7 +433,7 @@ WHERE z.zipcode = ?"
 
         format!(
             "
-SELECT g.name, g.zipcode, r.name, shade, moisture, g.read_id
+SELECT g.name, g.zipcode, r.name, shade, moisture, g.read_id, g.latitude, g.longitude
 FROM gardens g
 INNER JOIN zipcodes z ON z.zipcode = g.zipcode
 INNER JOIN regions r ON r.id = z.region_id
@@ -443,6 +443,30 @@ WHERE {id_field_name} = ?"
         .first(&mut conn)
         .await
         .map_err(|e| anyhow!(e))
+    }
+
+    pub async fn select_gardens(
+        &self,
+        require_precise_location: bool,
+    ) -> anyhow::Result<Vec<Garden>> {
+        let mut conn = self.get_connection().await?;
+
+        let mut query = format!(
+            "
+SELECT g.name, g.zipcode, r.name, shade, moisture, g.read_id, g.latitude, g.longitude
+FROM gardens g
+INNER JOIN zipcodes z ON z.zipcode = g.zipcode
+INNER JOIN regions r ON r.id = z.region_id"
+        );
+
+        if require_precise_location {
+            query.push_str("\nWHERE g.latitude IS NOT NULL and g.longitude IS NOT NULL");
+        }
+
+        query
+            .map(&mut conn, |garden: Garden| garden)
+            .await
+            .map_err(|e| anyhow!(e))
     }
 
     pub async fn select_plants_by_garden_id(

@@ -20,5 +20,6 @@
 
   <include file="migrations/add-plant-details.sql"/>
   <include file="migrations/add-moistures-shades.sql"/>
+  <include file="migrations/add-garden-lat-lng.sql"/>
 
 </databaseChangeLog>

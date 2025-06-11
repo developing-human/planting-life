@@ -238,6 +238,21 @@ impl Database {
         Some(Garden { plants, ..garden })
     }
 
+    pub async fn list_gardens(&self, require_precise_locations: bool) -> Vec<Garden> {
+        let gardens = self
+            .sql_runner
+            .select_gardens(require_precise_locations)
+            .await;
+
+        match gardens {
+            Ok(gardens) => gardens,
+            Err(e) => {
+                warn!("get_gardens failed to list gardens: {e}");
+                vec![]
+            }
+        }
+    }
+
     /// Saves a new garden, returning the read_id and write_id.
     pub async fn save_new_garden(
         &self,

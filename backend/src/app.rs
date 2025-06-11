@@ -4,7 +4,8 @@ use crate::database::Database;
 use crate::{
     controllers::{
         gardens::{
-            create_garden_handler, read_garden_handler, update_garden_handler, GardensController,
+            create_garden_handler, list_garden_handler, read_garden_handler, update_garden_handler,
+            GardensController,
         },
         maps::{maps_api_key_handler, MapsController},
         nurseries::{fetch_nurseries_handler, NurseriesController},
@@ -67,6 +68,7 @@ impl PlantingLifeApp {
                 .service(find_plant_handler)
                 .service(fetch_nurseries_handler)
                 .service(read_garden_handler)
+                .service(list_garden_handler)
                 .service(create_garden_handler)
                 .service(update_garden_handler)
                 .service(maps_api_key_handler)
