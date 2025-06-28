@@ -54,7 +54,7 @@ async function initMap() {
       strokeOpacity: 0.8,
       strokeWeight: 1,
       fillColor: "#00AA00",
-      fillOpacity: 0.25,
+      fillOpacity: 0.15,
       map,
       center: { lat: garden.latitude, lng: garden.longitude },
       radius: 200, // meters
