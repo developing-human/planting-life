@@ -3,6 +3,7 @@
 /backend/vendor
 /backend/.cargo
 /backend/db/data
+/backend/db/backup*
 /frontend/www/node_modules
 /frontend/www/build
 
