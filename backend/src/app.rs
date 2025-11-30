@@ -48,7 +48,7 @@ impl PlantingLifeApp {
 
         let app_env = env::var("APP_ENV").expect("APP_ENV must be set");
 
-        if !vec!["local", "staging", "prod"].contains(&app_env.as_str()) {
+        if !["local", "staging", "prod"].contains(&app_env.as_str()) {
             panic!("APP_ENV must be one of local/staging/prod")
         }
 
