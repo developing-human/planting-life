@@ -1,10 +1,10 @@
+/backend/.cargo
+/backend/.env
 /backend/Cargo.lock
+/backend/db/backup*
+/backend/db/data
 /backend/target
 /backend/vendor
-/backend/.cargo
-/backend/db/data
-/backend/db/backup*
-/frontend/www/node_modules
+/frontend/www/.env*
 /frontend/www/build
-
-
+/frontend/www/node_modules
