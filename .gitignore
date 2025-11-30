@@ -5,6 +5,8 @@
 /backend/db/data
 /backend/target
 /backend/vendor
+/frontend/maps/*.sql
+/frontend/maps/*.txt
 /frontend/www/.env*
 /frontend/www/build
 /frontend/www/node_modules
