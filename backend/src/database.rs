@@ -365,7 +365,7 @@ impl Database {
             Ok(count) => count,
             Err(e) => {
                 warn!("select_monthly_request_count failed: {e}");
-                std::usize::MAX
+                usize::MAX
             }
         }
     }

@@ -451,13 +451,12 @@ WHERE {id_field_name} = ?"
     ) -> anyhow::Result<Vec<Garden>> {
         let mut conn = self.get_connection().await?;
 
-        let mut query = format!(
-            "
+        let mut query = "
 SELECT g.name, g.zipcode, r.name, shade, moisture, g.read_id, g.latitude, g.longitude
 FROM gardens g
 INNER JOIN zipcodes z ON z.zipcode = g.zipcode
 INNER JOIN regions r ON r.id = z.region_id"
-        );
+            .to_string();
 
         if require_precise_location {
             query.push_str("\nWHERE g.latitude IS NOT NULL and g.longitude IS NOT NULL");
