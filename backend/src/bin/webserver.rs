@@ -5,6 +5,8 @@ use tracing::log::warn;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    dotenv::dotenv().ok();
+
     let db_url = env::var("PLANTING_LIFE_DB_URL").unwrap_or_else(|_| {
         warn!("Configure valid PLANTING_LIFE_DB_URL to use database");
         "".to_string()

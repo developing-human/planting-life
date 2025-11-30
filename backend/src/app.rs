@@ -43,6 +43,13 @@ impl PlantingLifeApp {
 
     pub async fn start(&'static self) -> std::io::Result<()> {
         println!("Starting!");
+
+        let app_env = env::var("APP_ENV").expect("APP_ENV must be set");
+
+        if !vec!["local", "staging", "prod"].contains(&app_env.as_str()) {
+            panic!("APP_ENV must be one of local/staging/prod")
+        }
+
         HttpServer::new(move || {
             let mut cors = Cors::default()
                 .allowed_origin("https://www.planting.life")
@@ -52,10 +59,10 @@ impl PlantingLifeApp {
                 .allowed_header(http::header::ACCEPT)
                 .allowed_methods(vec!["GET", "POST", "PUT"]);
 
-            // In local (debug build, not release), don't restrict origin
+            // In non-prod environments, don't restrict origin.
             // This allows localhost, but also networked locations (ex: access
             // from phone on local network)
-            if cfg!(debug_assertions) {
+            if app_env != "prod" {
                 cors = cors.allow_any_origin()
             }
 
