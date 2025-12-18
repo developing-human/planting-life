@@ -52,21 +52,11 @@ function ConditionsForm({
       return { ...prev, moisture: newValue };
     });
 
-  // load the zipcode from a previous search
-  useEffect(() => {
-    const previousZip = localStorage.getItem("zip");
-    if (previousZip) {
-      setSearchCriteria((prev) => {
-        return { ...prev, zip: previousZip };
-      });
-    }
-  }, []);
-
   // On page load, set the default values in the search criteria
   useEffect(() => {
     setSearchCriteria((prev) => {
       return {
-        zip: prev.zip || "",
+        zip: prev.zip || localStorage.getItem("zip"),
         shade: prev.shade || defaultShade,
         moisture: prev.moisture || defaultMoisture,
       };
