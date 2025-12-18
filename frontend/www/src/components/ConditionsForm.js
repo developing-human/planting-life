@@ -26,7 +26,7 @@ function ConditionsForm({
   setLastSearchedCriteria,
   searchCriteria,
   setSearchCriteria,
-  selectedPlants
+  selectedPlants,
 }) {
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
@@ -52,6 +52,16 @@ function ConditionsForm({
       return { ...prev, moisture: newValue };
     });
 
+  // load the zipcode from a previous search
+  useEffect(() => {
+    const previousZip = localStorage.getItem("zip");
+    if (previousZip) {
+      setSearchCriteria((prev) => {
+        return { ...prev, zip: previousZip };
+      });
+    }
+  }, []);
+
   // On page load, set the default values in the search criteria
   useEffect(() => {
     setSearchCriteria((prev) => {
@@ -71,6 +81,9 @@ function ConditionsForm({
     setLoading(true);
     setError(null);
     setInfoMessage(null);
+
+    // remember the zip for later visits
+    localStorage.setItem("zip", searchCriteria.zip);
 
     // A brief delay on this helps it scroll nicely, since the accordion will
     // have collapsed.
