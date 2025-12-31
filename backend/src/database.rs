@@ -65,43 +65,6 @@ impl Database {
             })
     }
 
-    /// Inserts or updates a single Plant, returning a new Plant with its
-    /// id populated. Returns Err if it fails to save.
-    pub async fn save_plant(&self, plant: &Plant) -> anyhow::Result<Plant> {
-        let mut img_id = None;
-        if let Some(image) = &plant.image {
-            img_id = image.id;
-            if image.id.is_none() {
-                if let Ok(saved_image) = self.save_image(image).await {
-                    img_id = saved_image.id;
-                }
-            }
-        }
-
-        let id = if let Some(id) = plant.id {
-            self.sql_runner.update_plant(plant, img_id).await?;
-            id
-        } else {
-            self.sql_runner.insert_plant(plant, img_id).await?
-        };
-
-        Ok(Plant {
-            id: Some(id),
-            ..plant.clone()
-        })
-    }
-
-    /// Saves an Image, returning a new Image with the database id populated.
-    /// Returns Err if it fails to save.
-    pub async fn save_image(&self, image: &Image) -> anyhow::Result<Image> {
-        let id = self.sql_runner.insert_image(image).await;
-
-        id.map(|id| Image {
-            id: Some(id),
-            ..image.clone()
-        })
-    }
-
     /// Fetches one Plant by scientific name.  Returns None if it is not
     /// found or if there is a database error.
     pub async fn get_plant_by_scientific_name(&self, scientific_name: &str) -> Option<Plant> {

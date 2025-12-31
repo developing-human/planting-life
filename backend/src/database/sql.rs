@@ -2,7 +2,7 @@ use crate::domain::*;
 use anyhow::anyhow;
 use mockall::automock;
 use mysql_async::{prelude::*, Conn, Opts, Pool};
-use std::{collections::HashSet, fmt::Display};
+use std::collections::HashSet;
 use tracing::log::warn;
 
 // Looks for the closest neighboring zip code to the one provided on both sides,
@@ -85,112 +85,6 @@ impl SqlRunner {
             Ok(None) => Err(anyhow!("select_closest_zip closest zip not found")),
             Err(e) => Err(anyhow!("select_closest_zip error finding closest zip: {e}")),
         }
-    }
-
-    /// Updates one plant.
-    /// Returns Err if it fails.
-    pub async fn update_plant(&self, plant: &Plant, img_id: Option<usize>) -> anyhow::Result<()> {
-        let mut conn = self.get_connection().await?;
-
-        r"UPDATE plants
-              SET pollinator_rating = :pollinator_rating,
-                  bird_rating = :bird_rating,
-
-                  spread_rating = :spread_rating,
-                  deer_resistance_rating = :deer_resistance_rating,
-
-                  usda_source = :usda_source,
-                  wiki_source = :wiki_source,
-
-                  bloom = :bloom,
-                  height = :height,
-                  spread = :spread,
-
-                  moistures = :moistures,
-                  shades = :shades,
-
-                  image_id = :image_id
-              WHERE id = :id"
-            .with(params! {
-                "id" => plant.id,
-
-                "pollinator_rating" => plant.pollinator_rating,
-                "bird_rating" => plant.bird_rating,
-
-                "spread_rating" => plant.spread_rating,
-                "deer_resistance_rating" => plant.deer_resistance_rating,
-
-                "usda_source" => &plant.usda_source,
-                "wiki_source" => &plant.wiki_source,
-
-                "bloom" => &plant.bloom,
-                "height" => &plant.height,
-                "spread" => &plant.spread,
-
-                "moistures" => to_comma_separated_string(&plant.moistures),
-                "shades" => to_comma_separated_string(&plant.shades),
-
-                "image_id" => img_id
-            })
-            .ignore(&mut conn)
-            .await
-            .map_err(|e| anyhow!("update_plant failed to update: {}", e))
-    }
-
-    /// Inserts one plant.
-    /// Returns Err if it fails.
-    pub async fn insert_plant(
-        &self,
-        plant: &Plant,
-        img_id: Option<usize>,
-    ) -> anyhow::Result<usize> {
-        let mut conn = self.get_connection().await?;
-
-        r"INSERT INTO plants
-        (scientific_name, common_name,
-         bloom, height, spread,
-         moistures, shades,
-         pollinator_rating,
-         bird_rating,
-         spread_rating, deer_resistance_rating,
-         usda_source, wiki_source,
-         image_id)
-      VALUES
-        (:scientific_name, :common_name,
-         :bloom, :height, :spread,
-         :moistures, :shades,
-         :pollinator_rating,
-         :bird_rating,
-         :spread_rating, :deer_resistance_rating,
-         :usda_source, :wiki_source,
-         :image_id)
-            RETURNING id"
-            .with(params! {
-                "scientific_name" => &plant.scientific,
-                "common_name" => &plant.common,
-
-                "bloom" => &plant.bloom,
-                "height" => &plant.height,
-                "spread" => &plant.spread,
-
-                "pollinator_rating" => plant.pollinator_rating,
-                "bird_rating" => plant.bird_rating,
-
-                "spread_rating" => plant.spread_rating,
-                "deer_resistance_rating" => plant.deer_resistance_rating,
-
-                "usda_source" => &plant.usda_source,
-                "wiki_source" => &plant.wiki_source,
-
-                "moistures" => to_comma_separated_string(&plant.moistures),
-                "shades" => to_comma_separated_string(&plant.shades),
-
-                "image_id" => img_id
-            })
-            .fetch(&mut conn)
-            .await
-            .map(|ids| ids[0])
-            .map_err(|e| anyhow!("save_plant failed to insert: {}", e))
     }
 
     /// Selects multiple plants by zip/moisture/shade.
@@ -588,19 +482,4 @@ ORDER BY gp.ordering
             Err(e) => Err(anyhow!("select monthly request count failed: {}", e)),
         }
     }
-}
-
-fn to_comma_separated_string<T: Display>(vec: &[T]) -> Option<String> {
-    // If the vector is empty, we want to keep these as null in the db
-    // A null value indicates we should try to populate it again next time
-    if vec.is_empty() {
-        return None;
-    }
-
-    Some(
-        vec.iter()
-            .map(|m| m.to_string())
-            .collect::<Vec<String>>()
-            .join(","),
-    )
 }
