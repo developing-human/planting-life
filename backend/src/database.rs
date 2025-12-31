@@ -3,7 +3,6 @@ use anyhow::anyhow;
 use mockall::automock;
 use mockall_double::double;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use std::collections::HashSet;
 use tracing::log::warn;
 
 #[double]
@@ -64,67 +63,6 @@ impl Database {
                 warn!("lookup_query_results query failed: {}", e);
                 vec![]
             })
-    }
-
-    ///Saves a new Query and maps it to the plants referenced by plant_ids.
-    ///
-    ///Failures are logged, but are otherwise ignored.
-    pub async fn save_query_results(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-        all_plants: Vec<Plant>,
-        saved_plants: Vec<Plant>,
-    ) {
-        if let Err(e) = self.sql_runner.upsert_query(zip, moisture, shade).await {
-            // Log this failure, but continue on
-            warn!("save_query_results failed to upsert query: {e}")
-        }
-
-        // Some plants in plants_with_images may be missing ids.  Merging with
-        // saved_plants will find all of them.
-        let plant_ids: HashSet<usize> = all_plants
-            .iter()
-            .chain(saved_plants.iter())
-            .filter_map(|p| p.id)
-            .collect();
-
-        if let Err(e) = self.sql_runner.insert_region_plants(zip, plant_ids).await {
-            warn!("save_query_results failed to insert region plants: {}", e);
-        }
-    }
-
-    pub async fn save_plant_region(&self, plant: &Plant, zip: &str) {
-        if plant.id.is_none() {
-            warn!("save_plant_region requires plant.id");
-            return;
-        }
-
-        // I don't love this, maybe make a better interface to insert_region_plants.
-        let mut plant_ids = HashSet::new();
-        plant_ids.insert(plant.id.unwrap());
-
-        if let Err(e) = self.sql_runner.insert_region_plants(zip, plant_ids).await {
-            warn!("save_query_results failed to insert region plants: {}", e);
-        }
-    }
-
-    /// Returns how many times the query for these parameters has been executed
-    ///
-    /// Failures are logged, but are otherwise ignored.
-    pub async fn get_query_count(&self, zip: &str, moisture: &Moisture, shade: &Shade) -> usize {
-        match self
-            .sql_runner
-            .select_query_count(zip, moisture, shade)
-            .await
-        {
-            Ok(count) => count,
-            Err(e) => {
-                warn!("get_query_count failed to select count, returning zero: {e}");
-                0
-            }
-        }
     }
 
     /// Inserts or updates a single Plant, returning a new Plant with its

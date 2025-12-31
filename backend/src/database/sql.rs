@@ -52,30 +52,6 @@ impl SqlRunner {
         }
     }
 
-    /// Inserts a new Query into the database.
-    /// Returns Err if it fails.
-    pub async fn upsert_query(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<()> {
-        let mut conn = self.get_connection().await?;
-        let queries_result: Result<Option<usize>, mysql_async::Error> =
-            r"INSERT INTO queries (moisture, shade, region_id, count) VALUES
-            (?, ?, (SELECT region_id from zipcodes where zipcode = ?), 1)
-            ON DUPLICATE KEY UPDATE count = count + 1
-            "
-            .with((moisture.to_string(), shade.to_string(), zip))
-            .first(&mut conn)
-            .await;
-
-        match queries_result {
-            Ok(_) => Ok(()),
-            Err(e) => Err(anyhow!("insert into queries failed: {}", e)),
-        }
-    }
-
     pub async fn check_zip_exists(&self, zip: &str) -> anyhow::Result<bool> {
         let mut conn = self.get_connection().await?;
         let query_result: Result<Option<u8>, mysql_async::Error> =
@@ -109,58 +85,6 @@ impl SqlRunner {
             Ok(None) => Err(anyhow!("select_closest_zip closest zip not found")),
             Err(e) => Err(anyhow!("select_closest_zip error finding closest zip: {e}")),
         }
-    }
-
-    /// Selects one plant by scientific name.
-    /// Returns Err if it fails, Ok(None) if not found.
-    pub async fn select_query_count(
-        &self,
-        zip: &str,
-        moisture: &Moisture,
-        shade: &Shade,
-    ) -> anyhow::Result<usize> {
-        let mut conn = self.get_connection().await?;
-
-        r"
-SELECT count
-FROM queries
-WHERE moisture = :moisture
-AND shade = :shade
-AND region_id = (SELECT region_id from zipcodes where zipcode = :zip)"
-            .with(params! {
-                "moisture" => moisture.to_string(),
-                "shade" => shade.to_string(),
-                "zip" => zip,
-            })
-            .first(&mut conn)
-            .await
-            .map(|count| count.unwrap_or(0)) // Not found, count as 0
-            .map_err(|e| anyhow!("select_query_count failed: {e}"))
-    }
-
-    /// Inserts into regions_plants.
-    /// Returns Err if it fails.
-    pub async fn insert_region_plants(
-        &self,
-        zip: &str,
-        plant_ids: HashSet<usize>,
-    ) -> anyhow::Result<()> {
-        let mut conn = self.get_connection().await?;
-
-        // Some rows could already exist, this ignores duplicate key errors
-        // The "dummy update" is required to make this statement valid.
-        r"INSERT INTO regions_plants (region_id, plant_id)
-            VALUES ((SELECT region_id from zipcodes where zipcode = :zip), :plant_id)
-            ON DUPLICATE KEY UPDATE region_id=region_id, plant_id=plant_id"
-            .with(plant_ids.iter().map(|id| {
-                params! {
-                    "zip" => zip,
-                    "plant_id" => id
-                }
-            }))
-            .batch(&mut conn)
-            .await
-            .map_err(|e| anyhow!(e))
     }
 
     /// Updates one plant.
