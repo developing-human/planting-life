@@ -291,10 +291,9 @@ SELECT
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 
-INNER JOIN regions_plants rp on rp.plant_id = p.id
-INNER JOIN zipcodes z ON z.region_id = rp.region_id
+INNER JOIN zipcodes_plants zp on zp.plant_id = p.id
 LEFT JOIN images i ON i.id = p.image_id
-WHERE z.zipcode = :zipcode
+WHERE zp.zipcode = :zipcode
   AND (p.moistures is NULL OR FIND_IN_SET(:moisture, p.moistures))
   AND (p.shades is NULL OR FIND_IN_SET(:shade, p.shades))
 ORDER BY
