@@ -58,6 +58,9 @@ impl FromRow for Plant {
         let shades: Vec<Shade> = take_lenient(&mut row, "shades")
             .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
             .unwrap_or_else(Vec::new);
+        let habits: Vec<Habit> = take_lenient(&mut row, "habits")
+            .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
+            .unwrap_or_else(Vec::new);
 
         Ok(Plant {
             id: Some(id),
@@ -68,6 +71,7 @@ impl FromRow for Plant {
             spread,
             moistures,
             shades,
+            habits,
             pollinator_rating,
             bird_rating,
             spread_rating,

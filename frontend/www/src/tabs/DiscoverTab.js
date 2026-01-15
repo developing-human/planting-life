@@ -26,7 +26,7 @@ const DiscoverTab = ({
   const lastPlantRef = useRef(null);
 
   const showSpinner = loading && plants.length < maxPlantsToDisplay;
-  const showSurvey = loading || plants.length > 0;
+  const showAlerts = loading || plants.length > 0;
 
   const plantsWithImages = plants.filter((plant) => plant.image);
 
@@ -72,7 +72,7 @@ const DiscoverTab = ({
       ) : null}
 
       <div className="alert-container" id="top-survey-alert">
-        {showSurvey ? (
+        {showAlerts ? (
           <Alert severity="info">
             Help decide how Planting Life grows by{" "}
             <a
@@ -83,6 +83,12 @@ const DiscoverTab = ({
               sharing your thoughts
             </a>
             .
+          </Alert>
+        ) : null}
+        {showAlerts && ["Tree", "Shrub"].includes(searchCriteria.habit) ? (
+          <Alert severity="warning">
+            Classifiction of shrubs and trees still needs some work, please bear
+            with me! 🙏
           </Alert>
         ) : null}
       </div>

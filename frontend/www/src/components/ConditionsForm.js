@@ -31,8 +31,17 @@ function ConditionsForm({
   // set drop down options
   const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
   const moistureOptions = ["Low", "Medium", "High"];
+  const habitOptions = {
+    Anything: "Anything",
+    "Flowers & Herbs": "FlowerOrHerb",
+    Trees: "Tree",
+    Shrubs: "Shrub",
+    Vines: "Vine",
+    Grasses: "Grass",
+  };
   const defaultShade = shadeOptions[1];
   const defaultMoisture = moistureOptions[1];
+  const defaultHabit = "FlowerOrHerb";
 
   const plantsRef = useRef(plants);
   plantsRef.current = plants;
@@ -51,6 +60,10 @@ function ConditionsForm({
     setSearchCriteria((prev) => {
       return { ...prev, moisture: newValue };
     });
+  const handleHabitChange = (newValue) =>
+    setSearchCriteria((prev) => {
+      return { ...prev, habit: newValue };
+    });
 
   // On page load, set the default values in the search criteria
   useEffect(() => {
@@ -59,9 +72,10 @@ function ConditionsForm({
         zip: prev.zip || localStorage.getItem("zip"),
         shade: prev.shade || defaultShade,
         moisture: prev.moisture || defaultMoisture,
+        habit: prev.habit || defaultHabit,
       };
     });
-  }, [setSearchCriteria, defaultShade, defaultMoisture]);
+  }, [setSearchCriteria, defaultShade, defaultMoisture, defaultHabit]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -92,6 +106,7 @@ function ConditionsForm({
       zip: searchCriteria.zip,
       shade: searchCriteria.shade || defaultShade,
       moisture: searchCriteria.moisture || defaultMoisture,
+      habit: searchCriteria.habit || defaultHabit,
     };
 
     setLastSearchedCriteria(formData);
@@ -107,7 +122,7 @@ function ConditionsForm({
         spacing={3}
         style={{ display: "flex", justifyContent: "center" }}
       >
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={2}>
           <TextField
             id="zip"
             label="Zip Code"
@@ -130,7 +145,16 @@ function ConditionsForm({
             }}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={4}>
+          <DropdownSelect
+            id="habit"
+            label="I'm looking for..."
+            options={habitOptions}
+            onChange={handleHabitChange}
+            value={searchCriteria.habit || defaultHabit}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             id="shade"
             label="Shade"
@@ -139,7 +163,7 @@ function ConditionsForm({
             value={searchCriteria.shade || defaultShade}
           />
         </Grid>
-        <Grid item xs={12} sm={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <DropdownSelect
             id="moisture"
             label="Moisture"

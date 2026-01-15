@@ -22,6 +22,7 @@ struct PlantSearchRequest {
     zip: Option<String>,
     shade: Option<Shade>,
     moisture: Option<Moisture>,
+    habit: Option<Habit>,
 }
 
 pub struct PlantController {
@@ -46,18 +47,22 @@ impl PlantController {
                 zip: Some(zip),
                 moisture: Some(moisture),
                 shade: Some(shade),
+                habit,
             } => {
                 // adjust zip codes which aren't in the database to the closest
                 // one that is, because not every zip is in the db
                 let zip = self.get_closest_valid_zip(&zip).await.unwrap_or(zip);
 
-                self.db.lookup_query_results(&zip, &moisture, &shade).await
+                self.db
+                    .lookup_query_results(&zip, &moisture, &shade, &habit)
+                    .await
             }
             PlantSearchRequest {
                 name: Some(name),
                 zip: None,
                 moisture: None,
                 shade: None,
+                habit: None,
             } => self.db.find_plants_by_word_prefix(&name).await,
             _ => {
                 return HttpResponse::BadRequest()
@@ -113,7 +118,7 @@ impl PlantController {
         let valid_zip = self.get_closest_valid_zip(&payload.zip).await?;
         let plants = self
             .db
-            .lookup_query_results(&valid_zip, &payload.moisture, &payload.shade)
+            .lookup_query_results(&valid_zip, &payload.moisture, &payload.shade, &None)
             .await;
 
         let plants: Vec<Plant> = plants

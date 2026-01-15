@@ -1,6 +1,18 @@
-export async function getPlants(searchParams, setPlants, setError, selectedPlants, setLoading) {
-  const { zip, shade, moisture } = searchParams;
-  fetch(`${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`)
+export async function getPlants(
+  searchParams,
+  setPlants,
+  setError,
+  selectedPlants,
+  setLoading,
+) {
+  const { zip, shade, moisture, habit } = searchParams;
+
+  let url = `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`;
+  if (habit !== "Anything") {
+    url += `&habit=${habit}`;
+  }
+
+  fetch(url)
     .then((response) => response.json())
     .then((plants) => {
       if (selectedPlants !== undefined) {
@@ -20,7 +32,7 @@ export async function getPlants(searchParams, setPlants, setError, selectedPlant
       }
     });
 
-  return () => { };
+  return () => {};
 }
 
 export async function getPlant(id, onSuccess) {
@@ -31,7 +43,7 @@ export async function getPlant(id, onSuccess) {
       console.error("Error: ", error);
     });
 
-  return () => { };
+  return () => {};
 }
 
 export async function fetchPlantsByName(name) {
@@ -43,7 +55,7 @@ export async function fetchPlantsByName(name) {
   }).then((response) => {
     if (!response.ok) {
       throw new Error(
-        `Error fetching plants by name, status: ${response.status}`
+        `Error fetching plants by name, status: ${response.status}`,
       );
     }
     return response.json();

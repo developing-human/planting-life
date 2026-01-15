@@ -19,6 +19,9 @@ pub struct Plant {
     #[serde(skip_serializing)]
     pub moistures: Vec<Moisture>,
 
+    #[serde(skip_serializing)]
+    pub habits: Vec<Habit>,
+
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
 
@@ -63,6 +66,7 @@ impl Plant {
             scientific: scientific_name.to_string(),
             shades: vec![],
             moistures: vec![],
+            habits: vec![],
             bloom: None,
             height: None,
             spread: None,
@@ -86,6 +90,7 @@ impl Plant {
             scientific: self.scientific.clone(),
             moistures: other.moistures.clone(),
             shades: other.shades.clone(),
+            habits: other.habits.clone(),
             bloom: other.bloom.clone().or(self.bloom.clone()),
             image: other.image.clone().or(self.image.clone()),
             pollinator_rating: other.pollinator_rating.or(self.pollinator_rating),
@@ -150,16 +155,6 @@ pub enum Shade {
     Lots,
 }
 
-impl Shade {
-    pub fn description(&self) -> &str {
-        match self {
-            Shade::None => "full sun",
-            Shade::Some => "partial shade",
-            Shade::Lots => "full shade",
-        }
-    }
-}
-
 impl Display for Shade {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -189,16 +184,6 @@ pub enum Moisture {
     Lots,
 }
 
-impl Moisture {
-    pub fn description(&self) -> &str {
-        match self {
-            Moisture::None => "low moisture",
-            Moisture::Some => "medium moisture",
-            Moisture::Lots => "high moisture",
-        }
-    }
-}
-
 impl Display for Moisture {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
@@ -214,6 +199,36 @@ impl FromStr for Moisture {
             "Some" => Ok(Moisture::Some),
             "Lots" => Ok(Moisture::Lots),
             _ => Err(anyhow!("can't create Moisture from {s}")),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+pub enum Habit {
+    FlowerOrHerb,
+    Grass,
+    Shrub,
+    Tree,
+    Vine,
+}
+
+impl Display for Habit {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl FromStr for Habit {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "FlowerOrHerb" => Ok(Habit::FlowerOrHerb),
+            "Grass" => Ok(Habit::Grass),
+            "Shrub" => Ok(Habit::Shrub),
+            "Tree" => Ok(Habit::Tree),
+            "Vine" => Ok(Habit::Vine),
+            _ => Err(anyhow!("can't create Habit from {s}")),
         }
     }
 }

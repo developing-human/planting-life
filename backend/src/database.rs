@@ -55,9 +55,10 @@ impl Database {
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
+        habit: &Option<Habit>,
     ) -> Vec<Plant> {
         self.sql_runner
-            .select_plants_by_zip_moisture_shade(zip, moisture, shade)
+            .select_plants_by_zip_moisture_shade(zip, moisture, shade, habit)
             .await
             .unwrap_or_else(|e| {
                 warn!("lookup_query_results query failed: {}", e);

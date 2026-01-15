@@ -94,6 +94,7 @@ impl SqlRunner {
         zip: &str,
         moisture: &Moisture,
         shade: &Shade,
+        habit: &Option<Habit>,
     ) -> anyhow::Result<Vec<Plant>> {
         let mut conn = self.get_connection().await?;
 
@@ -114,6 +115,7 @@ LEFT JOIN images i ON i.id = p.image_id
 WHERE zp.zipcode = :zipcode
   AND (p.moistures is NULL OR FIND_IN_SET(:moisture, p.moistures))
   AND (p.shades is NULL OR FIND_IN_SET(:shade, p.shades))
+  AND (:habit is NULL OR FIND_IN_SET(:habit, p.habits))
 ORDER BY
   p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
   POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) desc
@@ -123,6 +125,7 @@ ORDER BY
             "zipcode" => zip,
             "moisture" => moisture.to_string(),
             "shade" => shade.to_string(),
+            "habit" => habit.map(|h| h.to_string())
         })
         .map(&mut conn, |plant: Plant| plant)
         .await

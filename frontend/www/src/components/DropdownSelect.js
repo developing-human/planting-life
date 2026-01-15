@@ -33,13 +33,17 @@ function DropdownSelect({ id, label, options, onChange, value }) {
           label={`${label}`}
           onChange={handleChange}
         >
-          {options.map((option) => {
-            return (
-              <MenuItem key={option.toLowerCase()} value={option}>
-                {option}
-              </MenuItem>
-            );
-          })}
+          {Array.isArray(options)
+            ? options.map((option) => (
+                <MenuItem key={option.toLowerCase()} value={option}>
+                  {option}
+                </MenuItem>
+              ))
+            : Object.entries(options).map(([key, value]) => (
+                <MenuItem key={value.toLowerCase()} value={value}>
+                  {key}
+                </MenuItem>
+              ))}
         </Select>
       </FormControl>
     </Box>
