@@ -2,7 +2,7 @@
   background-image: linear-gradient(#c5ffc7, lightgreen);
   background-color: lightgreen;
   color: black;
-  padding: 30px 15px;
+  padding: 60px 15px;
   margin: auto;
   margin-bottom: 20px;
   display: grid;
@@ -38,11 +38,11 @@
 #hero-container h5 {
   font-size: 0.8rem;
   line-height: 1.4rem;
-  font-weight:300;
+  font-weight: 300;
 }
 
 #hero-container h5 b {
-  font-weight:900;
+  font-weight: 900;
 }
 
 #hero-container button {

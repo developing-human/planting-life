@@ -85,12 +85,6 @@ const DiscoverTab = ({
             .
           </Alert>
         ) : null}
-        {showAlerts && ["Tree", "Shrub"].includes(searchCriteria.habit) ? (
-          <Alert severity="warning">
-            Classifiction of shrubs and trees still needs some work, please bear
-            with me! 🙏
-          </Alert>
-        ) : null}
       </div>
 
       <section className="card-container" id="discover-cards">
