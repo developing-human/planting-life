@@ -34,10 +34,10 @@ function ConditionsForm({
   const habitOptions = {
     Anything: "Anything",
     "Flowers & Herbs": "FlowerOrHerb",
-    Trees: "Tree",
-    Shrubs: "Shrub",
-    Vines: "Vine",
     Grasses: "Grass",
+    Shrubs: "Shrub",
+    Trees: "Tree",
+    Vines: "Vine",
   };
   const defaultShade = shadeOptions[1];
   const defaultMoisture = moistureOptions[1];
@@ -119,10 +119,10 @@ function ConditionsForm({
     <form id="conditions-form" onSubmit={handleSubmit}>
       <Grid
         container
-        spacing={3}
+        spacing={2.5}
         style={{ display: "flex", justifyContent: "center" }}
       >
-        <Grid item xs={12} sm={6} md={2}>
+        <Grid item xs={4} sm={6} md={2}>
           <TextField
             id="zip"
             label="Zip Code"
@@ -145,7 +145,7 @@ function ConditionsForm({
             }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={8} sm={6} md={4}>
           <DropdownSelect
             id="habit"
             label="I'm looking for..."
