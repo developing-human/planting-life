@@ -6,6 +6,7 @@ import InputLabel from "@mui/material/InputLabel";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
+import { ListItemText } from "@mui/material";
 
 function DropdownSelect({ id, label, options, onChange, value }) {
   // use state to handle selected option
@@ -32,18 +33,16 @@ function DropdownSelect({ id, label, options, onChange, value }) {
           value={option}
           label={`${label}`}
           onChange={handleChange}
+          renderValue={(selected) => options[selected].display || ""}
         >
-          {Array.isArray(options)
-            ? options.map((option) => (
-                <MenuItem key={option.toLowerCase()} value={option}>
-                  {option}
-                </MenuItem>
-              ))
-            : Object.entries(options).map(([key, value]) => (
-                <MenuItem key={value.toLowerCase()} value={value}>
-                  {key}
-                </MenuItem>
-              ))}
+          {Object.entries(options).map(([key, value]) => (
+            <MenuItem key={key} value={key}>
+              <ListItemText
+                primary={value.display}
+                secondary={value.description}
+              />
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
     </Box>

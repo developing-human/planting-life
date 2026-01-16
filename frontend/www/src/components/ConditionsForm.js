@@ -29,19 +29,54 @@ function ConditionsForm({
   selectedPlants,
 }) {
   // set drop down options
-  const shadeOptions = ["Full Shade", "Partial Shade", "Full Sun"];
-  const moistureOptions = ["Low", "Medium", "High"];
-  const habitOptions = {
-    Anything: "Anything",
-    "Flowers & Herbs": "FlowerOrHerb",
-    Grasses: "Grass",
-    Shrubs: "Shrub",
-    Trees: "Tree",
-    Vines: "Vine",
+  const shadeOptions = {
+    "Full Shade": {
+      key: "Full Shade",
+      display: "Full Shade",
+      description: "full shade description",
+    },
+    "Partial Shade": {
+      key: "Partial Shade",
+      display: "Partial Shade",
+      description: "partial shade description",
+    },
+    "Full Sun": {
+      key: "Full Sun",
+      display: "Full Sun",
+      description: "full sun description",
+    },
   };
-  const defaultShade = shadeOptions[1];
-  const defaultMoisture = moistureOptions[1];
-  const defaultHabit = "FlowerOrHerb";
+  const moistureOptions = {
+    Low: {
+      key: "Low",
+      display: "Low",
+      description: "low moisture description",
+    },
+    Medium: {
+      key: "Medium",
+      display: "Medium",
+      description: "medium moisture description",
+    },
+    High: {
+      key: "High",
+      display: "High",
+      description: "high moisture description",
+    },
+  };
+  const habitOptions = {
+    Anything: { key: "Anything", display: "Anything" },
+    FlowerOrHerb: {
+      key: "FlowerOrHerb",
+      display: "Flowers & Herbs",
+    },
+    Grass: { key: "Grass", display: "Grasses" },
+    Shrub: { key: "Shrub", display: "Shrubs" },
+    Tree: { key: "Tree", display: "Trees" },
+    Vine: { key: "Vine", display: "Vines" },
+  };
+  const defaultShade = shadeOptions["Partial Shade"].key;
+  const defaultMoisture = moistureOptions["Medium"].key;
+  const defaultHabit = habitOptions["FlowerOrHerb"].key;
 
   const plantsRef = useRef(plants);
   plantsRef.current = plants;
