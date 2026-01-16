@@ -118,8 +118,11 @@ WHERE zp.zipcode = :zipcode
   AND (:habit is NULL OR FIND_IN_SET(:habit, p.habits))
 ORDER BY
   p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
-  POW(p.pollinator_rating, 3) + POW(p.bird_rating, 3) desc
-
+  (
+    POW(p.pollinator_rating, 3)
+    + POW(p.bird_rating, 3)
+    - CASE WHEN p.spread_rating >= 6 THEN POW(p.spread_rating, 3) ELSE 0 END
+    ) desc
 "
         .with(params! {
             "zipcode" => zip,
