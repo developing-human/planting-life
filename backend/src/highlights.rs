@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 
 use lazy_static::lazy_static;
 
-use crate::domain::{Highlight, HighlightCategory, Moisture, Plant, Shade};
+use crate::domain::{Highlight, HighlightCategory, Plant};
 
 lazy_static! {
     static ref POLLINATOR_GREAT: Highlight = Highlight {
@@ -10,20 +10,10 @@ lazy_static! {
         priority: 1003,
         category: HighlightCategory::Great
     };
-    static ref POLLINATOR_GOOD: Highlight = Highlight {
-        label: "Good for pollinators".to_string(),
-        priority: 503,
-        category: HighlightCategory::Good
-    };
     static ref BIRD_GREAT: Highlight = Highlight {
         label: "Great for birds".to_string(),
         priority: 1002,
         category: HighlightCategory::Great
-    };
-    static ref BIRD_GOOD: Highlight = Highlight {
-        label: "Good for birds".to_string(),
-        priority: 502,
-        category: HighlightCategory::Good
     };
     static ref VERY_DEER_RESISTANT: Highlight = Highlight {
         label: "Deer resistant".to_string(),
@@ -39,21 +29,6 @@ lazy_static! {
         label: "Spreads aggressively".to_string(),
         priority: 3000,
         category: HighlightCategory::Worse
-    };
-    static ref GROWS_IN_SHADE: Highlight = Highlight {
-        label: "Grows in shade".to_string(),
-        priority: 3,
-        category: HighlightCategory::Good
-    };
-    static ref GROWS_IN_PART_SHADE: Highlight = Highlight {
-        label: "Grows in part shade".to_string(),
-        priority: 2,
-        category: HighlightCategory::Good
-    };
-    static ref GROWS_IN_DRY_SOIL: Highlight = Highlight {
-        label: "Grows in dry soil".to_string(),
-        priority: 1,
-        category: HighlightCategory::Good
     };
 }
 
@@ -86,11 +61,6 @@ impl Highlights {
     pub fn generate(&self, plant: &Plant) -> Vec<Highlight> {
         let mut highlights = list_highlights(plant);
 
-        // If there are no main highlights, try to generate some fillers.
-        if highlights.is_empty() {
-            highlights.extend(list_fillers(plant));
-        }
-
         // Sort the list by priority, with highest priority first.
         highlights.sort_by(|lhs, rhs| rhs.priority.cmp(&lhs.priority));
 
@@ -115,13 +85,11 @@ fn list_highlights(plant: &Plant) -> Vec<Highlight> {
     let mut highlights = vec![];
 
     match plant.pollinator_rating {
-        Some(rating) if rating >= 8 => highlights.push(POLLINATOR_GREAT.clone()),
-        Some(rating) if rating >= 6 => highlights.push(POLLINATOR_GOOD.clone()),
+        Some(rating) if rating >= 7 => highlights.push(POLLINATOR_GREAT.clone()),
         _ => (),
     }
     match plant.bird_rating {
-        Some(rating) if rating >= 8 => highlights.push(BIRD_GREAT.clone()),
-        Some(rating) if rating >= 6 => highlights.push(BIRD_GOOD.clone()),
+        Some(rating) if rating >= 7 => highlights.push(BIRD_GREAT.clone()),
         _ => (),
     }
     match plant.spread_rating {
@@ -135,20 +103,4 @@ fn list_highlights(plant: &Plant) -> Vec<Highlight> {
     }
 
     highlights
-}
-
-fn list_fillers(plant: &Plant) -> Vec<Highlight> {
-    let mut fillers = vec![];
-
-    if plant.shades.contains(&Shade::Lots) {
-        fillers.push(GROWS_IN_SHADE.clone())
-    } else if plant.shades.contains(&Shade::Some) {
-        fillers.push(GROWS_IN_PART_SHADE.clone())
-    }
-
-    if plant.moistures.contains(&Moisture::None) {
-        fillers.push(GROWS_IN_DRY_SOIL.clone())
-    }
-
-    fillers
 }
