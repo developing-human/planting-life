@@ -42,7 +42,7 @@ const PlantCard = memo(function PlantCard({
         });
       } else {
         newSelectedPlants = prevGarden.plants.filter(
-          (existing) => existing.scientific !== plant.scientific
+          (existing) => existing.scientific !== plant.scientific,
         );
       }
 
@@ -53,7 +53,7 @@ const PlantCard = memo(function PlantCard({
     // back to Home from the Garden page.
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
-        (p) => p.scientific === plant.scientific
+        (p) => p.scientific === plant.scientific,
       );
       if (index === -1) {
         return prevPlants;
@@ -135,40 +135,6 @@ const PlantCard = memo(function PlantCard({
 
       <CardContent>
         <Grid container spacing={2}>
-          <Grid item xs={6.25}>
-            <div className="highlight-container">
-              <Typography variant="body2" color="text.secondary">
-                {plant.highlights
-                  ? plant.highlights.map((highlight) => (
-                    <span key={plant.id + "-" + highlight.label}>
-                      <Highlight
-                        label={highlight.label}
-                        category={highlight.category}
-                      />
-                      <br />
-                    </span>
-                  ))
-                  : null}
-              </Typography>
-            </div>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ marginTop: "-7px" }}
-            >
-              {plant.wikiSource ? (
-                <a href={plant.wikiSource} target="_blank" rel="noreferrer">
-                  Wikipedia
-                </a>
-              ) : null}
-              {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-              {plant.usdaSource ? (
-                <a href={plant.usdaSource} target="_blank" rel="noreferrer">
-                  USDA
-                </a>
-              ) : null}
-            </Typography>
-          </Grid>
           <Grid item xs={5.75}>
             <Typography variant="body2" color="text.secondary">
               {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}
@@ -180,7 +146,41 @@ const PlantCard = memo(function PlantCard({
               <br />
             </Typography>
           </Grid>
+          <Grid item xs={6.25}>
+            <div className="highlight-container">
+              <Typography variant="body2" color="text.secondary">
+                {plant.highlights
+                  ? plant.highlights.map((highlight) => (
+                      <span key={plant.id + "-" + highlight.label}>
+                        <Highlight
+                          label={highlight.label}
+                          category={highlight.category}
+                        />
+                        <br />
+                      </span>
+                    ))
+                  : null}
+              </Typography>
+            </div>
+          </Grid>
         </Grid>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ marginTop: "-12px" }}
+        >
+          {plant.wikiSource ? (
+            <a href={plant.wikiSource} target="_blank" rel="noreferrer">
+              Wikipedia
+            </a>
+          ) : null}
+          {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
+          {plant.usdaSource ? (
+            <a href={plant.usdaSource} target="_blank" rel="noreferrer">
+              USDA
+            </a>
+          ) : null}
+        </Typography>
       </CardContent>
     </Card>
   );
