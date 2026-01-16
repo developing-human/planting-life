@@ -33,11 +33,14 @@ function DropdownSelect({ id, label, options, onChange, value }) {
           value={option}
           label={`${label}`}
           onChange={handleChange}
-          renderValue={(selected) => options[selected].display || ""}
+          renderValue={(selected) =>
+            options.find((o) => o.key === selected).display || ""
+          }
         >
-          {Object.entries(options).map(([key, value]) => (
-            <MenuItem key={key} value={key}>
+          {options.map((value) => (
+            <MenuItem key={value.key} value={value.key}>
               <ListItemText
+                sx={{ whiteSpace: "normal", maxWidth: 275 }}
                 primary={value.display}
                 secondary={value.description}
               />
