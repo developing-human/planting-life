@@ -119,9 +119,10 @@ WHERE zp.zipcode = :zipcode
 ORDER BY
   p.moistures IS NOT NULL and p.shades IS NOT NULL desc,
   (
-    POW(p.pollinator_rating, 3)
-    + POW(p.bird_rating, 3)
-    - CASE WHEN p.spread_rating >= 6 THEN POW(p.spread_rating, 3) ELSE 0 END
+    (POW(p.pollinator_rating, 3)
+    + POW(p.bird_rating, 3))
+    -- reduces overall ranking by 10%, for each point spread rating is over 5
+    * CASE WHEN p.spread_rating >= 6 THEN 1.0 - 0.1 * (p.spread_rating - 5) ELSE 1 END
     ) desc
 "
         .with(params! {
