@@ -115,13 +115,11 @@ fn list_highlights(plant: &Plant) -> Vec<Highlight> {
     let mut highlights = vec![];
 
     match plant.pollinator_rating {
-        Some(rating) if rating >= 8 => highlights.push(POLLINATOR_GREAT.clone()),
-        Some(rating) if rating >= 6 => highlights.push(POLLINATOR_GOOD.clone()),
+        Some(rating) if rating >= 7 => highlights.push(POLLINATOR_GREAT.clone()),
         _ => (),
     }
     match plant.bird_rating {
-        Some(rating) if rating >= 8 => highlights.push(BIRD_GREAT.clone()),
-        Some(rating) if rating >= 6 => highlights.push(BIRD_GOOD.clone()),
+        Some(rating) if rating >= 7 => highlights.push(BIRD_GREAT.clone()),
         _ => (),
     }
     match plant.spread_rating {
@@ -140,14 +138,28 @@ fn list_highlights(plant: &Plant) -> Vec<Highlight> {
 fn list_fillers(plant: &Plant) -> Vec<Highlight> {
     let mut fillers = vec![];
 
-    if plant.shades.contains(&Shade::Lots) {
-        fillers.push(GROWS_IN_SHADE.clone())
-    } else if plant.shades.contains(&Shade::Some) {
-        fillers.push(GROWS_IN_PART_SHADE.clone())
+    if let Some(pollinator_rating) = plant.pollinator_rating {
+        if pollinator_rating >= 6 {
+            fillers.push(POLLINATOR_GOOD.clone())
+        }
+    }
+    if let Some(bird_rating) = plant.bird_rating {
+        if bird_rating >= 6 {
+            fillers.push(BIRD_GOOD.clone())
+        }
     }
 
-    if plant.moistures.contains(&Moisture::None) {
-        fillers.push(GROWS_IN_DRY_SOIL.clone())
+    // only include these last ditch fillers if absolutely necessary
+    if fillers.is_empty() {
+        if plant.shades.contains(&Shade::Lots) {
+            fillers.push(GROWS_IN_SHADE.clone())
+        } else if plant.shades.contains(&Shade::Some) {
+            fillers.push(GROWS_IN_PART_SHADE.clone())
+        }
+
+        if plant.moistures.contains(&Moisture::None) {
+            fillers.push(GROWS_IN_DRY_SOIL.clone())
+        }
     }
 
     fillers
