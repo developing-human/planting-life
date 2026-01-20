@@ -42,7 +42,7 @@ const PlantCard = memo(function PlantCard({
         });
       } else {
         newSelectedPlants = prevGarden.plants.filter(
-          (existing) => existing.scientific !== plant.scientific
+          (existing) => existing.scientific !== plant.scientific,
         );
       }
 
@@ -53,7 +53,7 @@ const PlantCard = memo(function PlantCard({
     // back to Home from the Garden page.
     setPlants((prevPlants) => {
       const index = prevPlants.findIndex(
-        (p) => p.scientific === plant.scientific
+        (p) => p.scientific === plant.scientific,
       );
       if (index === -1) {
         return prevPlants;
@@ -136,10 +136,9 @@ const PlantCard = memo(function PlantCard({
       <CardContent>
         <Grid container spacing={2}>
           <Grid item xs={6.25}>
-            <div className="highlight-container">
-              <Typography variant="body2" color="text.secondary">
-                {plant.highlights
-                  ? plant.highlights.map((highlight) => (
+            <Typography variant="body2" color="text.secondary">
+              {plant.highlights
+                ? plant.highlights.map((highlight) => (
                     <span key={plant.id + "-" + highlight.label}>
                       <Highlight
                         label={highlight.label}
@@ -148,25 +147,7 @@ const PlantCard = memo(function PlantCard({
                       <br />
                     </span>
                   ))
-                  : null}
-              </Typography>
-            </div>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ marginTop: "-7px" }}
-            >
-              {plant.wikiSource ? (
-                <a href={plant.wikiSource} target="_blank" rel="noreferrer">
-                  Wikipedia
-                </a>
-              ) : null}
-              {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-              {plant.usdaSource ? (
-                <a href={plant.usdaSource} target="_blank" rel="noreferrer">
-                  USDA
-                </a>
-              ) : null}
+                : null}
             </Typography>
           </Grid>
           <Grid item xs={5.75}>
@@ -176,8 +157,38 @@ const PlantCard = memo(function PlantCard({
               {plant.height ? <span>Height: {plant.height}</span> : null}
               <br />
               {plant.spread ? <span>Spread: {plant.spread}</span> : null}
-              <br />
-              <br />
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ marginTop: "-7px" }}
+            >
+              {plant.wildflowerSource ? (
+                <a
+                  href={plant.wildflowerSource}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Wildflower.org
+                </a>
+              ) : null}
+              {plant.wildflowerSource &&
+              (plant.wikiSource || plant.usdaSource) ? (
+                <span> | </span>
+              ) : null}
+              {plant.usdaSource ? (
+                <a href={plant.usdaSource} target="_blank" rel="noreferrer">
+                  USDA
+                </a>
+              ) : null}
+              {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
+              {plant.wikiSource ? (
+                <a href={plant.wikiSource} target="_blank" rel="noreferrer">
+                  Wikipedia
+                </a>
+              ) : null}
             </Typography>
           </Grid>
         </Grid>

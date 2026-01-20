@@ -106,7 +106,7 @@ SELECT
   p.pollinator_rating,
   p.bird_rating,
   p.spread_rating, p.deer_resistance_rating,
-  p.usda_source, p.wiki_source,
+  p.usda_source, p.wiki_source, p.wildflower_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 
@@ -152,7 +152,7 @@ SELECT
   p.pollinator_rating,
   p.bird_rating,
   p.spread_rating, p.deer_resistance_rating,
-  p.usda_source, p.wiki_source,
+  p.usda_source, p.wiki_source, p.wildflower_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 LEFT JOIN images i ON i.id = p.image_id
@@ -178,7 +178,7 @@ SELECT
   p.pollinator_rating,
   p.bird_rating,
   p.spread_rating, p.deer_resistance_rating,
-  p.usda_source, p.wiki_source,
+  p.usda_source, p.wiki_source, p.wildflower_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 LEFT JOIN images i ON i.id = p.image_id
@@ -310,7 +310,7 @@ SELECT
   p.pollinator_rating,
   p.bird_rating,
   p.spread_rating, p.deer_resistance_rating,
-  p.usda_source, p.wiki_source,
+  p.usda_source, p.wiki_source, p.wildflower_source,
   i.id as image_id, i.title, i.card_url, i.original_url, i.author, i.license
 FROM plants p
 INNER JOIN gardens_plants gp on gp.plant_id = p.id

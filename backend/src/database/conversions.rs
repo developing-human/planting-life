@@ -47,6 +47,7 @@ impl FromRow for Plant {
         let license = take_lenient(&mut row, "license");
         let usda_source: Option<String> = take_lenient(&mut row, "usda_source");
         let wiki_source: Option<String> = take_lenient(&mut row, "wiki_source");
+        let wildflower_source: Option<String> = take_lenient(&mut row, "wildflower_source");
         let height: Option<String> = take_lenient(&mut row, "height");
         let spread: Option<String> = take_lenient(&mut row, "spread");
 
@@ -78,6 +79,7 @@ impl FromRow for Plant {
             deer_resistance_rating,
             usda_source,
             wiki_source,
+            wildflower_source,
             image: img_id.map(|_| {
                 let license: String = license.unwrap();
                 let title: String = title.unwrap();

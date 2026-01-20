@@ -21,11 +21,6 @@ figcaption a {
   margin-right: -2px;
 }
 
-.highlight-container {
-  min-height: 75px;
-  min-width: 150px;
-}
-
 .plant-card .MuiCardHeader-title {
   max-width: 325px;
   white-space: nowrap;
@@ -45,7 +40,7 @@ figcaption a {
 
 .plant-card.selected {
   background-color: #a9ff89;
-  outline-style:solid ;
+  outline-style: solid;
   outline-color: #a9ff89;
   outline-width: 4px;
 }

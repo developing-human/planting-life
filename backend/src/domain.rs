@@ -47,6 +47,9 @@ pub struct Plant {
     pub wiki_source: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub wildflower_source: Option<String>,
+
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub height: Option<String>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -77,6 +80,7 @@ impl Plant {
             image: None,
             usda_source: None,
             wiki_source: None,
+            wildflower_source: None,
             highlights: vec![],
             done_loading: true,
         }
@@ -99,6 +103,7 @@ impl Plant {
             deer_resistance_rating: other.deer_resistance_rating.or(self.deer_resistance_rating),
             usda_source: other.usda_source.clone().or(self.usda_source.clone()),
             wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
+            wildflower_source: other.wiki_source.clone().or(self.wildflower_source.clone()),
             height: other.height.clone().or(self.height.clone()),
             spread: other.spread.clone().or(self.spread.clone()),
             highlights: other.highlights.clone(),
