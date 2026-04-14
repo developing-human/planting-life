@@ -12,6 +12,8 @@ import { getGarden, saveGarden } from "../utilities/garden-api";
 import YardIcon from "@mui/icons-material/Yard";
 import Search from "@mui/icons-material/Search";
 import StorefrontIcon from "@mui/icons-material/Storefront";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import ShareIcon from "@mui/icons-material/Share";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 import Badge from "@mui/material/Badge";
@@ -19,7 +21,19 @@ import Box from "@mui/material/Box";
 import "./Home.css";
 import { getPlants } from "../utilities/plant-api";
 import { getNurseries } from "../utilities/nursery-api";
-import { Alert, Button, Paper, Snackbar } from "@mui/material";
+import {
+  Alert,
+  Button,
+  Paper,
+  Snackbar,
+  Container,
+  Grid,
+  Typography,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+} from "@mui/material";
 
 const Home = () => {
   const DISCOVER_TAB_INDEX = 0;
@@ -79,7 +93,7 @@ const Home = () => {
           gardenSearchCriteria,
           setPlants,
           setError,
-          fetchedGarden.plants //TODO: Not handled yet after refactor
+          fetchedGarden.plants, //TODO: Not handled yet after refactor
         );
 
         // Populate the Nurseries tab using the zipcode from the garden
@@ -89,7 +103,7 @@ const Home = () => {
         console.error(error);
         setSelectedTab(DISCOVER_TAB_INDEX);
         setError(`Couldn't find the garden you're looking for 😞`);
-      }
+      },
     );
   };
 
@@ -197,28 +211,169 @@ const Home = () => {
   return (
     <>
       {showHero ? (
-        <Paper id="hero-container">
-          <div id="hero-contents">
-            <h1>
-              Discover native plants
-              <br /> & plan your garden
-            </h1>
-            <h5>
-              <b>Search for native plants</b> by zipcode & growing conditions
-              <br />
-              <b>Plan your garden</b> to share with friends or a nursery <br />
-              <b>Find a nursery</b> near you which focuses on native plants
-            </h5>
-            <Button
-              variant="contained"
-              color="success"
-              onClick={handleStartGardenClicked}
+        <Box
+          id="hero-container"
+          sx={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1646597818159-0af61fe84a37?q=80&w=1035&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            minHeight: "90vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: { xs: 0.5, md: 8 },
+
+            position: "absolute",
+            width: "100%",
+            zIndex: 5,
+          }}
+        >
+          <Container maxWidth="md" sx={{ px: { xs: 2, md: 0 } }}>
+            <Box
+              sx={{
+                backgroundColor: "rgba(255, 255, 255, 0.15)",
+                backdropFilter: "blur(12px)",
+                WebkitBackdropFilter: "blur(12px)",
+                borderRadius: "24px",
+                padding: { xs: 2, sm: 4, md: 8 },
+                textAlign: "center",
+                color: "white",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                boxShadow: "0 8px 32px 0 rgba(0, 0, 0, 0.37)",
+              }}
             >
-              Start Your Garden
-            </Button>
-            <div id="free-no-signup">(Free, no signup)</div>
-          </div>
-        </Paper>
+              <Typography
+                variant="h2"
+                component="h1"
+                sx={{
+                  fontWeight: "bold",
+                  fontSize: { xs: "1.8rem", sm: "2.2rem", md: "3.5rem" },
+                  lineHeight: 1.2,
+                  mb: 2,
+                  textShadow: "0 2px 4px rgba(0,0,0,0.3)",
+                  color: "white",
+                }}
+              >
+                Discover native plants <br /> & plan your garden
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontSize: { xs: "1rem", sm: "1.1rem", md: "1.3rem" },
+                  mb: 0,
+                  fontWeight: 300,
+                  textShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                  color: "rgba(255, 255, 255, 0.9)",
+                }}
+              >
+                Build a sustainable landscape that supports local wildlife and
+                thrives in your environment.
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  mb: 1,
+                }}
+              >
+                <List
+                  sx={{
+                    mb: 1,
+                    textAlign: "left",
+                    display: "inline-block",
+                    color: "white",
+                  }}
+                >
+                  <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40, color: "#c8e6c9" }}>
+                      <Search />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Search for native plants by zipcode & conditions"
+                      primaryTypographyProps={{
+                        variant: "body1",
+                        style: {
+                          color: "white",
+                          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                        },
+                      }}
+                    />
+                  </ListItem>
+                  <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40, color: "#c8e6c9" }}>
+                      <ShareIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Plan your garden to share with friends or nurseries"
+                      primaryTypographyProps={{
+                        variant: "body1",
+                        style: {
+                          color: "white",
+                          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                        },
+                      }}
+                    />
+                  </ListItem>
+                  <ListItem disableGutters sx={{ py: 1 }}>
+                    <ListItemIcon sx={{ minWidth: 40, color: "#c8e6c9" }}>
+                      <LocationOnIcon />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary="Find local nurseries focusing on native plants"
+                      primaryTypographyProps={{
+                        variant: "body1",
+                        style: {
+                          color: "white",
+                          textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                        },
+                      }}
+                    />
+                  </ListItem>
+                </List>
+                <Box sx={{ textAlign: "center" }}>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    size="large"
+                    onClick={handleStartGardenClicked}
+                    sx={{
+                      px: 6,
+                      py: 2,
+                      fontSize: "1.2rem",
+                      fontWeight: "bold",
+                      borderRadius: "30px",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+                      transition: "transform 0.2s",
+                      paddingY: 2,
+                      paddingX: 3,
+                      "&:hover": {
+                        transform: "scale(1.05)",
+                        backgroundColor: "#388e3c",
+                      },
+                    }}
+                  >
+                    Start Your Garden
+                  </Button>
+                  <Typography
+                    variant="caption"
+                    display="block"
+                    sx={{
+                      mt: 1,
+                      color: "rgba(255, 255, 255, 0.8)",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    (Free, no signup)
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Container>
+        </Box>
       ) : null}
       <div id="tab-container">
         {showTabs ? (
