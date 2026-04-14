@@ -137,7 +137,9 @@ const Home = () => {
 
   const handleStartGardenClicked = () => {
     setShowHero(false);
-    document.getElementById("zip").focus();
+    setTimeout(() => {
+      document.getElementById("zip")?.focus();
+    }, 0);
   };
 
   // When the page is loaded, process the URL path and load data / switch tabs
@@ -224,7 +226,7 @@ const Home = () => {
             justifyContent: "center",
             padding: { xs: 0.5, md: 8 },
 
-            position: "absolute",
+            position: "relative",
             width: "100%",
             zIndex: 5,
           }}
@@ -374,79 +376,80 @@ const Home = () => {
             </Box>
           </Container>
         </Box>
-      ) : null}
-      <div id="tab-container">
-        {showTabs ? (
-          <Box
-            sx={{
-              position: "sticky",
-              top: 0,
-              backgroundColor: "white",
-              paddingTop: "2px",
-              borderBottom: 1,
-              borderColor: "divider",
-              zIndex: 5,
-            }}
-          >
-            <Tabs
-              value={selectedTab}
-              onChange={handleTabChange}
-              aria-label="icon label tabs example"
-              centered
-              sx={{ maxWidth: "1000px", margin: "auto" }}
-              variant="fullWidth"
+      ) : (
+        <div id="tab-container">
+          {showTabs ? (
+            <Box
+              sx={{
+                position: "sticky",
+                top: 0,
+                backgroundColor: "white",
+                paddingTop: "2px",
+                borderBottom: 1,
+                borderColor: "divider",
+                zIndex: 5,
+              }}
             >
-              <Tab icon={<Search />} label="DISCOVER" />
-              <Tab
-                icon={
-                  <Badge badgeContent={garden.plants.length} color="success">
-                    <YardIcon />
-                  </Badge>
-                }
-                label="MY GARDEN"
-              />
-              <Tab
-                icon={
-                  <Badge badgeContent={nurseries.length} color="success">
-                    <StorefrontIcon />
-                  </Badge>
-                }
-                label="Nurseries"
-              />
-            </Tabs>
-          </Box>
-        ) : null}
-        <CustomTabPanel value={selectedTab} index={DISCOVER_TAB_INDEX}>
-          <DiscoverTab
-            plants={plants}
-            setPlants={setPlants}
-            setNurseries={setNurseries}
-            garden={garden}
-            setGarden={setGarden}
-            searchCriteria={searchCriteria}
-            setSearchCriteria={setSearchCriteria}
-            setLastSearchedCriteria={setLastSearchedCriteria}
-            error={error}
-            setError={setError}
-          />
-        </CustomTabPanel>
-        <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>
-          <GardenTab
-            garden={garden}
-            setGarden={setGarden}
-            onNewGarden={onNewGarden}
-            setPlants={setPlants}
-          />
-        </CustomTabPanel>
-        <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
-          <NurseryTab
-            nurseries={nurseries}
-            setNurseries={setNurseries}
-            zip={nurserySearchZip}
-            setZip={setNurserySearchZip}
-          />
-        </CustomTabPanel>
-      </div>
+              <Tabs
+                value={selectedTab}
+                onChange={handleTabChange}
+                aria-label="icon label tabs example"
+                centered
+                sx={{ maxWidth: "1000px", margin: "auto" }}
+                variant="fullWidth"
+              >
+                <Tab icon={<Search />} label="DISCOVER" />
+                <Tab
+                  icon={
+                    <Badge badgeContent={garden.plants.length} color="success">
+                      <YardIcon />
+                    </Badge>
+                  }
+                  label="MY GARDEN"
+                />
+                <Tab
+                  icon={
+                    <Badge badgeContent={nurseries.length} color="success">
+                      <StorefrontIcon />
+                    </Badge>
+                  }
+                  label="Nurseries"
+                />
+              </Tabs>
+            </Box>
+          ) : null}
+          <CustomTabPanel value={selectedTab} index={DISCOVER_TAB_INDEX}>
+            <DiscoverTab
+              plants={plants}
+              setPlants={setPlants}
+              setNurseries={setNurseries}
+              garden={garden}
+              setGarden={setGarden}
+              searchCriteria={searchCriteria}
+              setSearchCriteria={setSearchCriteria}
+              setLastSearchedCriteria={setLastSearchedCriteria}
+              error={error}
+              setError={setError}
+            />
+          </CustomTabPanel>
+          <CustomTabPanel value={selectedTab} index={GARDEN_TAB_INDEX}>
+            <GardenTab
+              garden={garden}
+              setGarden={setGarden}
+              onNewGarden={onNewGarden}
+              setPlants={setPlants}
+            />
+          </CustomTabPanel>
+          <CustomTabPanel value={selectedTab} index={NURSERY_TAB_INDEX}>
+            <NurseryTab
+              nurseries={nurseries}
+              setNurseries={setNurseries}
+              zip={nurserySearchZip}
+              setZip={setNurserySearchZip}
+            />
+          </CustomTabPanel>
+        </div>
+      )}
       <Snackbar
         open={isCopyGardenMessageOpen}
         autoHideDuration={4000}
