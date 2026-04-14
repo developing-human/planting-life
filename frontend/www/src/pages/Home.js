@@ -217,7 +217,7 @@ const Home = () => {
           id="hero-container"
           sx={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1646597818159-0af61fe84a37?q=80&w=1035&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
+              "linear-gradient(to bottom, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 7%), url('https://images.unsplash.com/photo-1646597818159-0af61fe84a37?q=80&w=1035&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')",
             backgroundSize: "cover",
             backgroundPosition: "center",
             minHeight: "90vh",
@@ -343,12 +343,12 @@ const Home = () => {
                     sx={{
                       px: 6,
                       py: 2,
-                      fontSize: "1.2rem",
+                      fontSize: "1.1rem",
                       fontWeight: "bold",
                       borderRadius: "30px",
                       boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
                       transition: "transform 0.2s",
-                      paddingY: 2,
+                      paddingY: 1.5,
                       paddingX: 3,
                       "&:hover": {
                         transform: "scale(1.05)",

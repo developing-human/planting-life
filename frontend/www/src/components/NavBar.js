@@ -12,7 +12,7 @@ function NavBar() {
       <AppBar
         position="static"
         sx={{
-          backgroundColor: "#45a049",
+          background: "linear-gradient(to bottom, #66bb6a, #2e7d32)",
           paddingInline: 0,
           height: "50px",
         }}
