@@ -44,11 +44,11 @@ const LandingPage = ({ onStartGarden }) => {
           backgroundImage: "url('/hero-caterpillar.jpg')",
           backgroundSize: "cover",
           backgroundPosition: "center",
-          minHeight: "85vh",
+          minHeight: "75vh",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          padding: { xs: 1, md: 8 },
+          paddingY: { xs: 1, md: 8 },
           position: "relative",
           width: "100%",
           zIndex: 5,
@@ -56,7 +56,7 @@ const LandingPage = ({ onStartGarden }) => {
       >
         <Container
           maxWidth="md"
-          sx={{ px: { xs: 2, md: 0 }, position: "relative", zIndex: 2 }}
+          sx={{ px: 3, position: "relative", zIndex: 2 }}
         >
           <Box
             sx={{
@@ -153,7 +153,8 @@ const LandingPage = ({ onStartGarden }) => {
                   onClick={onStartGarden}
                   sx={{
                     px: { xs: 3, md: 6 },
-                    py: { xs: 1, md: 2 },
+                    pt: { xs: 1, md: 2 },
+                    pb: { xs: 1, md: 1.25 },
                     fontSize: "1.2rem",
                     whiteSpace: "nowrap",
                   }}
@@ -234,7 +235,7 @@ const LandingPage = ({ onStartGarden }) => {
               {
                 title: "Restore the Balance",
                 text: "Even a small garden can act as a vital stepping stone for wildlife, helping to bring nature back into our neighborhoods.",
-                img: "https://images.unsplash.com/photo-1562262560-d5c98204f981?q=80&w=987&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                img: "https://images.unsplash.com/photo-1599063906749-e3c28e0d5a13?q=80&w=1480&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
                 reverse: false,
               },
             ].map((item, index) => (

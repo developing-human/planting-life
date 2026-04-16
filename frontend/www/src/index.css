@@ -1,19 +1,64 @@
-* {
-  box-sizing: border-box;
-  padding: none;
-  margin: none;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
+
+:root {
+  --color-forest: #1b4332;
+  --color-sage: #b7b7a4;
+  --color-ochre: #d4a373;
+  --color-terracotta: #bc6c25;
+  --color-cream: #fdfcf0;
+  --color-deep-green: #081c15;
+  --color-soft-green: #e8f5e9;
+  
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Outfit', sans-serif;
 }
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-cream);
+  color: var(--color-deep-green);
+  font-family: var(--font-body);
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+.bg-light {
+  background-color: var(--color-soft-green);
+}
+
+/* Organic Shape Utility */
+.organic-shape {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+}
+
+.organic-shape-alt {
+  border-radius: 30% 70% 70% 30% / 50% 60% 40% 50%;
+}
+
+/* Animations */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease-out;
+}
+
+.reveal.active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+#hero-container {
+  background-size: cover;
+  background-position: center;
+}
+
+.btn-organic {
+  background-color: var(--color-terracotta) !important;
+  color: white !important;
+  border-radius: 50px !important;
+  transition: all 0.3s ease !important;
+  text-transform: none !important;
+  font-weight: 600 !important;
+}
+
+.btn-organic:hover {
+  transform: scale(1.05) translateY(-2px) !important;
+  box-shadow: 0 10px 20px rgba(188, 108, 37, 0.3) !important;
 }
