@@ -9,7 +9,6 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Paper,
 } from "@mui/material";
 import Search from "@mui/icons-material/Search";
 import ShareIcon from "@mui/icons-material/Share";
@@ -118,7 +117,7 @@ const LandingPage = ({ onStartGarden }) => {
                 {[
                   {
                     icon: <Search />,
-                    text: "Find plants that fit your zip code & growing conditions",
+                    text: "Find plants for your zip code & growing conditions",
                   },
                   {
                     icon: <ShareIcon />,
@@ -223,19 +222,19 @@ const LandingPage = ({ onStartGarden }) => {
               {
                 title: "Support Pollinators",
                 text: "Native plants provide the exact nectar and host leaves that local butterflies and bees need to survive.",
-                img: "https://images.unsplash.com/photo-1565041222041-db9ebdda950a?q=80&w=1473&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                img: "/why-milkweed.jpg",
                 reverse: false,
               },
               {
                 title: "Built for Your Backyard",
                 text: "Because they evolved in your region, native plants are naturally adapted to your climate, which means they generally need less water and fewer fertilizers.",
-                img: "https://images.unsplash.com/photo-1707021970546-abd3380f5a8f?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                img: "/why-coneflowers.jpg",
                 reverse: true,
               },
               {
                 title: "Restore the Balance",
                 text: "Even a small garden can act as a vital stepping stone for wildlife, helping to bring nature back into our neighborhoods.",
-                img: "https://images.unsplash.com/photo-1599063906749-e3c28e0d5a13?q=80&w=1480&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+                img: "/why-cardinalflower.jpg",
                 reverse: false,
               },
             ].map((item, index) => (
@@ -350,19 +349,19 @@ const LandingPage = ({ onStartGarden }) => {
                   bgcolor: "white",
                   boxShadow: "0 10px 30px rgba(0,0,0,0.03)",
                   border: "1px solid rgba(0,0,0,0.05)",
-                  flexDirection: { xs: "column", sm: "row" },
-                  textAlign: { xs: "center", sm: "left" },
+                  flexDirection: "row",
+                  textAlign: "left",
                 }}
               >
                 <Typography
                   variant="h2"
                   sx={{
                     fontWeight: "bold",
-                    fontSize: "4rem",
-                    opacity: 0.2,
+                    fontSize: { xs: "1.5rem", sm: "4rem" },
+                    opacity: { xs: 1, sm: 0.2 },
                     color: item.color,
                     lineHeight: 1,
-                    minWidth: "80px",
+                    minWidth: { xs: "30px", sm: "80px" },
                   }}
                 >
                   {item.step}
