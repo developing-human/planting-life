@@ -121,7 +121,7 @@ const LandingPage = ({ onStartGarden }) => {
                   },
                   {
                     icon: <ShareIcon />,
-                    text: "Create a garden plan to share with friends or nurseries",
+                    text: "Plan a garden to share with friends or nurseries",
                   },
                   {
                     icon: <LocationOnIcon />,
@@ -333,7 +333,7 @@ const LandingPage = ({ onStartGarden }) => {
               {
                 step: "04",
                 title: "Bring it to life",
-                text: "Save your favorites to a garden plan that you can keep or share with a local nursery.",
+                text: "Save your favorites to a garden that you can keep or share with a local nursery.",
                 color: "var(--color-forest)",
               },
             ].map((item, index) => (
