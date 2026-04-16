@@ -253,7 +253,9 @@ const LandingPage = ({ onStartGarden }) => {
                   <Box
                     className="organic-shape"
                     sx={{
+                      mx: "auto",
                       width: "100%",
+                      maxWidth: "300px",
                       height: "300px",
                       backgroundImage: `url(${item.img})`,
                       backgroundSize: "cover",
