@@ -537,6 +537,57 @@ const LandingPage = ({ onStartGarden }) => {
           </Box>
         </Container>
       </Box>
+      {/* Final CTA Section */}
+      <Box
+        sx={{
+          py: { xs: 8, md: 12 },
+          bgcolor: "var(--color-deep-green)",
+          color: "var(--color-cream)",
+          textAlign: "center",
+        }}
+      >
+        <Container maxWidth="md">
+          <Box className="reveal">
+            <Typography
+              variant="h3"
+              component="h2"
+              sx={{
+                fontFamily: "var(--font-heading)",
+                fontWeight: "bold",
+                mb: 3,
+                fontSize: { xs: "2rem", md: "3rem" },
+                color: "var(--color-sage)",
+              }}
+            >
+              Ready to Grow?
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontFamily: "var(--font-body)",
+                mb: 5,
+                color: "rgba(253, 252, 240, 0.8)",
+                fontWeight: 300,
+              }}
+            >
+              Help rebuild our local ecosystems, one plant at a time.
+            </Typography>
+            <Button
+              className="btn-organic"
+              variant="contained"
+              size="large"
+              onClick={onStartGarden}
+              sx={{
+                px: { xs: 3, md: 6 },
+                py: { xs: 1, md: 2 },
+                fontSize: "1.2rem",
+              }}
+            >
+              Start Your Garden Now
+            </Button>
+          </Box>
+        </Container>
+      </Box>
     </Box>
   );
 };
