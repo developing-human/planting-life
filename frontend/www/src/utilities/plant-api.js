@@ -8,7 +8,7 @@ export async function getPlants(
   const { zip, shade, moisture, habit } = searchParams;
 
   let url = `${process.env.REACT_APP_URL_PREFIX}/plants?zip=${zip}&shade=${shade}&moisture=${moisture}`;
-  if (habit !== "Anything") {
+  if (habit && habit !== "Anything") {
     url += `&habit=${habit}`;
   }
 
