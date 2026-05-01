@@ -1,4 +1,4 @@
-use std::{env, sync::Arc};
+use std::env;
 
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
@@ -32,12 +32,9 @@ async fn main() -> std::io::Result<()> {
         panic!("APP_ENV must be one of local/staging/prod")
     }
 
-    let db = Arc::new(Database::new(&db_url));
-    let highlights = Arc::new(Highlights {});
-
     let state = web::Data::new(AppState {
-        db: db.clone(),
-        highlights: highlights.clone(),
+        db: Database::new(&db_url),
+        highlights: Highlights {},
     });
 
     HttpServer::new(move || {
