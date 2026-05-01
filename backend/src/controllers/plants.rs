@@ -2,7 +2,7 @@ use actix_web::{get, web, HttpResponse, Responder};
 use actix_web_lab::sse::{self, ChannelStream, Sender, Sse};
 use mockall_double::double;
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 use tracing::log::{info, warn};
 
 #[double]
@@ -26,12 +26,12 @@ struct PlantSearchRequest {
 }
 
 pub struct PlantController {
-    pub db: &'static Database,
-    pub highlights: &'static Highlights,
+    pub db: Arc<Database>,
+    pub highlights: Arc<Highlights>,
 }
 
 impl PlantController {
-    pub fn new(db: &'static Database, highlights: &'static Highlights) -> Self {
+    pub fn new(db: Arc<Database>, highlights: Arc<Highlights>) -> Self {
         Self { db, highlights }
     }
 

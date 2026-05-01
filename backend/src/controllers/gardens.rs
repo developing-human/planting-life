@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_web::{get, post, put, web, Responder};
 use mockall_double::double;
 use serde::{Deserialize, Serialize};
@@ -41,12 +43,12 @@ struct GardensListRequest {
 }
 
 pub struct GardensController {
-    pub db: &'static Database,
-    pub highlights: &'static Highlights,
+    pub db: Arc<Database>,
+    pub highlights: Arc<Highlights>,
 }
 
 impl GardensController {
-    pub fn new(db: &'static Database, highlights: &'static Highlights) -> Self {
+    pub fn new(db: Arc<Database>, highlights: Arc<Highlights>) -> Self {
         Self { db, highlights }
     }
 

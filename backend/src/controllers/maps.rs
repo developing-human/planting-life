@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, sync::Arc};
 
 use actix_web::{get, web, Responder};
 use mockall_double::double;
@@ -10,11 +10,11 @@ use crate::app::PlantingLifeApp;
 use crate::database::Database;
 
 pub struct MapsController {
-    pub db: &'static Database,
+    pub db: Arc<Database>,
 }
 
 impl MapsController {
-    pub fn new(db: &'static Database) -> Self {
+    pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
 

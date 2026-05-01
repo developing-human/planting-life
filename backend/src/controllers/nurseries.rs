@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use actix_web::{get, web, Responder};
 use mockall_double::double;
 use serde::{Deserialize, Serialize};
@@ -13,11 +15,11 @@ struct NurseriesRequest {
 }
 
 pub struct NurseriesController {
-    pub db: &'static Database,
+    pub db: Arc<Database>,
 }
 
 impl NurseriesController {
-    pub fn new(db: &'static Database) -> Self {
+    pub fn new(db: Arc<Database>) -> Self {
         Self { db }
     }
 

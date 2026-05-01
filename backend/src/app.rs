@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, sync::Arc};
 
 #[double]
 use crate::database::Database;
@@ -33,13 +33,19 @@ impl PlantingLifeApp {
     pub fn new(db_url: &str) -> Self {
         tracing_subscriber::fmt::init();
 
-        let db = live_forever(Database::new(db_url));
-        let highlights = live_forever(Highlights {});
+        let db = Arc::new(Database::new(db_url));
+        let highlights = Arc::new(Highlights {});
         Self {
-            gardens_controller: GardensController { db, highlights },
-            plant_controller: PlantController { db, highlights },
-            nursery_controller: NurseriesController { db },
-            maps_controller: MapsController { db },
+            gardens_controller: GardensController {
+                db: db.clone(),
+                highlights: highlights.clone(),
+            },
+            plant_controller: PlantController {
+                db: db.clone(),
+                highlights: highlights.clone(),
+            },
+            nursery_controller: NurseriesController { db: db.clone() },
+            maps_controller: MapsController { db: db.clone() },
         }
     }
 
@@ -86,11 +92,4 @@ impl PlantingLifeApp {
         .run()
         .await
     }
-}
-
-// When building the app its often necessary for Rust to know
-// components will live for the duration of the application.
-// The "leaks" them to get a static reference.
-fn live_forever<T>(to_leak: T) -> &'static T {
-    Box::leak(Box::new(to_leak))
 }
