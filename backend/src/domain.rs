@@ -85,31 +85,6 @@ impl Plant {
             done_loading: true,
         }
     }
-    // Merges two plants, prioritizing "other" but never overriding Some with None
-    pub fn merge(&self, other: &Plant) -> Plant {
-        //TODO: Can I write this concisely with fewer clones?
-        Plant {
-            id: other.id.or(self.id),
-            common: self.common.clone(),
-            scientific: self.scientific.clone(),
-            moistures: other.moistures.clone(),
-            shades: other.shades.clone(),
-            habits: other.habits.clone(),
-            bloom: other.bloom.clone().or(self.bloom.clone()),
-            image: other.image.clone().or(self.image.clone()),
-            pollinator_rating: other.pollinator_rating.or(self.pollinator_rating),
-            bird_rating: other.bird_rating.or(self.bird_rating),
-            spread_rating: other.spread_rating.or(self.spread_rating),
-            deer_resistance_rating: other.deer_resistance_rating.or(self.deer_resistance_rating),
-            usda_source: other.usda_source.clone().or(self.usda_source.clone()),
-            wiki_source: other.wiki_source.clone().or(self.wiki_source.clone()),
-            wildflower_source: other.wiki_source.clone().or(self.wildflower_source.clone()),
-            height: other.height.clone().or(self.height.clone()),
-            spread: other.spread.clone().or(self.spread.clone()),
-            highlights: other.highlights.clone(),
-            done_loading: true,
-        }
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
