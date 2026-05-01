@@ -5,10 +5,6 @@ use crate::database::Database;
 
 use crate::{
     controllers::{
-        gardens::{
-            create_garden_handler, list_garden_handler, read_garden_handler, update_garden_handler,
-            GardensController,
-        },
         maps::{maps_api_key_handler, MapsController},
         nurseries::{fetch_nurseries_handler, NurseriesController},
         plants::{
@@ -17,13 +13,17 @@ use crate::{
         },
     },
     highlights::Highlights,
+    routes::gardens::{
+        create_garden_handler, list_garden_handler, read_garden_handler, update_garden_handler,
+    },
+    services::gardens::GardenService,
 };
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
 use mockall_double::double;
 
 pub struct PlantingLifeApp {
-    pub gardens_controller: GardensController,
+    pub garden_service: GardenService,
     pub plant_controller: PlantController,
     pub nursery_controller: NurseriesController,
     pub maps_controller: MapsController,
@@ -36,7 +36,7 @@ impl PlantingLifeApp {
         let db = Arc::new(Database::new(db_url));
         let highlights = Arc::new(Highlights {});
         Self {
-            gardens_controller: GardensController {
+            garden_service: GardenService {
                 db: db.clone(),
                 highlights: highlights.clone(),
             },
@@ -77,6 +77,7 @@ impl PlantingLifeApp {
             App::new()
                 .wrap(cors)
                 .app_data(web::Data::new(self))
+                .app_data(web::Data::new(self.garden_service.clone()))
                 .service(plants_stream_by_scientific_name_handler)
                 .service(plants_stream_handler)
                 .service(find_plants_handler)
