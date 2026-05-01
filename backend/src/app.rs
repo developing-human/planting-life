@@ -7,10 +7,7 @@ use crate::{
     controllers::{
         maps::{maps_api_key_handler, MapsController},
         nurseries::{fetch_nurseries_handler, NurseriesController},
-        plants::{
-            find_plant_handler, find_plants_handler, plants_stream_by_scientific_name_handler,
-            plants_stream_handler, PlantController,
-        },
+        plants::{find_plant_handler, find_plants_handler, PlantController},
     },
     highlights::Highlights,
     routes::gardens::{
@@ -78,8 +75,6 @@ impl PlantingLifeApp {
                 .wrap(cors)
                 .app_data(web::Data::new(self))
                 .app_data(web::Data::new(self.garden_service.clone()))
-                .service(plants_stream_by_scientific_name_handler)
-                .service(plants_stream_handler)
                 .service(find_plants_handler)
                 .service(find_plant_handler)
                 .service(fetch_nurseries_handler)
