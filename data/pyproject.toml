@@ -1,0 +1,47 @@
+[project]
+name = "planting-life-data"
+version = "0.1.0"
+description = "Organizes data around native plants, exporting csv and sql."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    # helps parse html
+    "beautifulsoup4==4.12",
+    # for removing emojis from strings
+    "emoji==2.10.1",
+    # schedules & runs tasks
+    "luigi==3.6",
+    # calls chatgpt
+    "openai==2.7.2",
+    # loads images for image picker
+    "pillow==11.3.0",
+    # gui for image picker
+    "freesimplegui==5.2.0",
+    # runs unit tests
+    # TODO: Move me to a test section?
+    "pytest==7.4",
+    # executes http requests
+    "requests==2.31",
+    "pytest-watcher>=0.4.3",
+    "haversine>=2.9.0",
+    "mysql-connector-python>=9.5.0",
+    "python-dotenv>=1.2.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+ "."
+]
+
+filterwarnings = [
+    'ignore:datetime\.datetime\.utcfromtimestamp:DeprecationWarning'
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[tool.uv]
+python-preference = "only-system"
+
+
