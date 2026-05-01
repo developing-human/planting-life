@@ -5,7 +5,11 @@ use tracing::log::{info, warn};
 use crate::database::Database;
 use crate::{domain::*, highlights::Highlights};
 
-pub async fn find_plants(db: &Database, highlights: &Highlights, cmd: PlantSearchCommand) -> anyhow::Result<Vec<Plant>> {
+pub async fn find_plants(
+    db: &Database,
+    highlights: &Highlights,
+    cmd: PlantSearchCommand,
+) -> anyhow::Result<Vec<Plant>> {
     info!("{cmd:?}");
 
     let plants = match cmd {
@@ -17,8 +21,7 @@ pub async fn find_plants(db: &Database, highlights: &Highlights, cmd: PlantSearc
             habit,
         } => {
             let zip = get_closest_valid_zip(db, &zip).await?;
-            db
-                .lookup_query_results(&zip, &moisture, &shade, &habit)
+            db.lookup_query_results(&zip, &moisture, &shade, &habit)
                 .await
         }
         PlantSearchCommand {
@@ -64,9 +67,9 @@ async fn get_closest_valid_zip(db: &Database, zip: &str) -> anyhow::Result<Strin
 fn populate_highlights(highlights: &Highlights, plants: Vec<Plant>) -> Vec<Plant> {
     plants
         .into_iter()
-        .map(|p| Plant {
-            highlights: highlights.generate(&p),
-            ..p
+        .map(|mut p| {
+            p.highlights = highlights.generate(&p);
+            p
         })
         .collect()
 }
