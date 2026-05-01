@@ -13,10 +13,7 @@ use planting_life::{
         nurseries::fetch_nurseries_handler,
         plants::{find_plant_handler, find_plants_handler},
     },
-    services::{
-        gardens::GardenService, maps::MapsService, nurseries::NurseriesService,
-        plants::PlantService,
-    },
+    state::AppState,
 };
 use tracing::log::warn;
 
@@ -37,13 +34,11 @@ async fn main() -> std::io::Result<()> {
 
     let db = Arc::new(Database::new(&db_url));
     let highlights = Arc::new(Highlights {});
-    let garden_service = GardenService {
+
+    let state = web::Data::new(AppState {
         db: db.clone(),
         highlights: highlights.clone(),
-    };
-    let plant_service = PlantService::new(db.clone(), highlights.clone());
-    let nursery_service = NurseriesService::new(db.clone());
-    let maps_service = MapsService::new(db.clone());
+    });
 
     HttpServer::new(move || {
         let mut cors = Cors::default()
@@ -63,10 +58,7 @@ async fn main() -> std::io::Result<()> {
 
         App::new()
             .wrap(cors)
-            .app_data(web::Data::new(garden_service.clone()))
-            .app_data(web::Data::new(plant_service.clone()))
-            .app_data(web::Data::new(nursery_service.clone()))
-            .app_data(web::Data::new(maps_service.clone()))
+            .app_data(state.clone())
             .service(find_plants_handler)
             .service(find_plant_handler)
             .service(fetch_nurseries_handler)

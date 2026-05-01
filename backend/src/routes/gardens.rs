@@ -4,7 +4,11 @@ use tracing::warn;
 
 use crate::{
     domain::{Garden, Moisture, Shade},
-    services::gardens::{CreateGardenCommand, GardenService, UpdateGardenCommand},
+    services::{
+        self,
+        gardens::{CreateGardenCommand, UpdateGardenCommand},
+    },
+    state::AppState,
 };
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -67,11 +71,8 @@ struct GardensListRequest {
 }
 
 #[get("/gardens/{id}")]
-async fn read_garden_handler(
-    id: web::Path<String>,
-    service: web::Data<GardenService>,
-) -> impl Responder {
-    match service.read(&id).await {
+async fn read_garden_handler(id: web::Path<String>, state: web::Data<AppState>) -> impl Responder {
+    match services::gardens::read(&state.db, &state.highlights, &id).await {
         Some(garden) => actix_web::HttpResponse::Ok().json(garden),
         None => actix_web::HttpResponse::NotFound().body(""),
     }
@@ -80,9 +81,9 @@ async fn read_garden_handler(
 #[get("/gardens")]
 async fn list_garden_handler(
     web::Query(payload): web::Query<GardensListRequest>,
-    service: web::Data<GardenService>,
+    state: web::Data<AppState>,
 ) -> impl Responder {
-    let gardens = service.list(payload.require_precise_location).await;
+    let gardens = services::gardens::list(&state.db, payload.require_precise_location).await;
 
     actix_web::HttpResponse::Ok().json(gardens)
 }
@@ -90,9 +91,9 @@ async fn list_garden_handler(
 #[post("/gardens")]
 async fn create_garden_handler(
     web::Json(payload): web::Json<GardensPostRequest>,
-    service: web::Data<GardenService>,
+    state: web::Data<AppState>,
 ) -> impl Responder {
-    let garden = service.create(payload.into()).await;
+    let garden = services::gardens::create(&state.db, payload.into()).await;
 
     match garden {
         Ok(garden) => {
@@ -110,10 +111,10 @@ async fn create_garden_handler(
 async fn update_garden_handler(
     write_id: web::Path<String>,
     web::Json(payload): web::Json<GardensPutRequest>,
-    service: web::Data<GardenService>,
+    state: web::Data<AppState>,
 ) -> impl Responder {
     let command = (write_id.into_inner(), payload).into();
-    match service.update(command).await {
+    match services::gardens::update(&state.db, command).await {
         Ok(()) => actix_web::HttpResponse::Ok().body(""),
         Err(e) => {
             warn!("Error saving garden: {e}");

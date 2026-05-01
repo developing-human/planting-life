@@ -1,6 +1,7 @@
 use crate::{
     domain::{Habit, Moisture, Shade},
-    services::plants::{PlantSearchCommand, PlantService},
+    services::{self, plants::PlantSearchCommand},
+    state::AppState,
 };
 use actix_web::{get, web, Responder};
 
@@ -26,11 +27,8 @@ impl From<PlantSearchRequest> for PlantSearchCommand {
 }
 
 #[get("/plants/{id}")]
-async fn find_plant_handler(
-    id: web::Path<usize>,
-    service: web::Data<PlantService>,
-) -> impl Responder {
-    match service.find_plant(*id).await {
+async fn find_plant_handler(id: web::Path<usize>, state: web::Data<AppState>) -> impl Responder {
+    match services::plants::find_plant(&state.db, &state.highlights, *id).await {
         Some(plant) => actix_web::HttpResponse::Ok().json(plant),
         None => actix_web::HttpResponse::NotFound().body("plant not found"),
     }
@@ -39,9 +37,9 @@ async fn find_plant_handler(
 #[get("/plants")]
 async fn find_plants_handler(
     web::Query(payload): web::Query<PlantSearchRequest>,
-    service: web::Data<PlantService>,
+    state: web::Data<AppState>,
 ) -> impl Responder {
-    match service.find_plants(payload.into()).await {
+    match services::plants::find_plants(&state.db, &state.highlights, payload.into()).await {
         Ok(plants) => actix_web::HttpResponse::Ok().json(plants),
         Err(e) => actix_web::HttpResponse::BadRequest().body(e.to_string()),
     }
