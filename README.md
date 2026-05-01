@@ -1,17 +1,15 @@
 # Planting Life
-Planting Life is a web application designed to make it simple to discover native plants that will thrive based on 
-location, sunlight, and moisture.  The project's mission is to make this simple in order to encourage decisions 
-which help the ecosystem.  It's hosted at https://planting.life.
+Planting Life is a tool which simplifies planning a native garden that will 
+thrive in your yard. It's hosted at https://planting.life.
 
-## Why?
-Native plants can be eaten by local insects, which can be eaten by local birds, which leads to a thriving ecosystem.  
-Non-native plants often (though not always) lack these benefits.
+The project has three main parts:
+1. Data gathering, which gathers information about plants via sources like 
+   USDA and wildflower.org. As a last resort, some information comes from LLMs.
+2. Frontend, the user facing React application.
+3. Backend, a Rust backend which connects the frontend to the gathered data.
 
+## Why is this important?
+Native plants can be eaten by local insects, which can be eaten by local birds, 
+which leads to a thriving ecosystem.  Non-native plants often lack these 
+benefits.
 
-## How does it work?
-The suggested plants and their images come from [planting-life-data](https://github.com/developing-human/planting-life-data), but in short
-it uses expert data (USDA & similar) as much as possible and fills in the blanks with LLM output.
-
-## TODO: How can you help?
-## TODO: Installation guide
-## TODO: License info
