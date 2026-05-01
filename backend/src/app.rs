@@ -4,16 +4,17 @@ use std::{env, sync::Arc};
 use crate::database::Database;
 
 use crate::{
-    controllers::{
-        maps::{maps_api_key_handler, MapsController},
-        nurseries::{fetch_nurseries_handler, NurseriesController},
-        plants::{find_plant_handler, find_plants_handler, PlantController},
-    },
     highlights::Highlights,
     routes::gardens::{
         create_garden_handler, list_garden_handler, read_garden_handler, update_garden_handler,
     },
+    routes::maps::maps_api_key_handler,
+    routes::nurseries::fetch_nurseries_handler,
+    routes::plants::{find_plant_handler, find_plants_handler},
     services::gardens::GardenService,
+    services::maps::MapsService,
+    services::nurseries::NurseriesService,
+    services::plants::PlantService,
 };
 use actix_cors::Cors;
 use actix_web::{http, web, App, HttpServer};
@@ -21,9 +22,9 @@ use mockall_double::double;
 
 pub struct PlantingLifeApp {
     pub garden_service: GardenService,
-    pub plant_controller: PlantController,
-    pub nursery_controller: NurseriesController,
-    pub maps_controller: MapsController,
+    pub plant_service: PlantService,
+    pub nursery_service: NurseriesService,
+    pub maps_service: MapsService,
 }
 
 impl PlantingLifeApp {
@@ -37,12 +38,9 @@ impl PlantingLifeApp {
                 db: db.clone(),
                 highlights: highlights.clone(),
             },
-            plant_controller: PlantController {
-                db: db.clone(),
-                highlights: highlights.clone(),
-            },
-            nursery_controller: NurseriesController { db: db.clone() },
-            maps_controller: MapsController { db: db.clone() },
+            plant_service: PlantService::new(db.clone(), highlights.clone()),
+            nursery_service: NurseriesService::new(db.clone()),
+            maps_service: MapsService::new(db.clone()),
         }
     }
 
@@ -75,6 +73,9 @@ impl PlantingLifeApp {
                 .wrap(cors)
                 .app_data(web::Data::new(self))
                 .app_data(web::Data::new(self.garden_service.clone()))
+                .app_data(web::Data::new(self.plant_service.clone()))
+                .app_data(web::Data::new(self.nursery_service.clone()))
+                .app_data(web::Data::new(self.maps_service.clone()))
                 .service(find_plants_handler)
                 .service(find_plant_handler)
                 .service(fetch_nurseries_handler)
