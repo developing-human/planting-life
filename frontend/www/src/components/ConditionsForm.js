@@ -67,7 +67,7 @@ function ConditionsForm({
     { key: "Anything", display: "Anything" },
     {
       key: "FlowerOrHerb",
-      display: "Flowers & Herbs",
+      display: "Flowers",
     },
     { key: "Grass", display: "Grasses" },
     { key: "Shrub", display: "Shrubs" },

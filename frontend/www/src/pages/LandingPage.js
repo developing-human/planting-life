@@ -227,7 +227,7 @@ const LandingPage = ({ onStartGarden }) => {
               },
               {
                 title: "Built for Your Backyard",
-                text: "Because they evolved in your region, native plants are naturally adapted to your climate, which means they generally need less water and fewer fertilizers.",
+                text: "Because they evolved in your region, native plants are naturally adapted to your climate, which means they generally need less water and no fertilizers.",
                 img: "/why-coneflowers.jpg",
                 reverse: true,
               },
