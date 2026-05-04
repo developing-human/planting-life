@@ -11,48 +11,53 @@ import tasks.datasources.wildflower as wildflower
 from tasks.datasources import plantinglife, wikipedia
 from tasks.datasources.plantinglife import ExtractPlants, TransformSpecificPlantIds
 
+CSV_COLUMNS = [
+    "scientific_name",
+    "common_name",
+    "full_shade",
+    "part_shade",
+    "full_sun",
+    "low_moisture",
+    "medium_moisture",
+    "high_moisture",
+    "bloom",
+    "height",
+    "width",
+    "habits",
+    "pollinator_rating",
+    "bird_rating",
+    "spread_rating",
+    "deer_resistance_rating",
+    "moisture_source",
+    "moisture_source_detail",
+    "shade_source",
+    "shade_source_detail",
+    "habit_source",
+    "habit_source_detail",
+    "usda_source",
+    "wiki_source",
+    "wildflower_source",
+]
 
-class GeneratePlantsCsv(luigi.Task):
+
+class GeneratePlantsWithoutHumanOverridesCsv(luigi.Task):
     plants_filename: str = luigi.Parameter()  # type: ignore
 
     def output(self):
         filename = os.path.basename(self.plants_filename)
         filename_no_ext = os.path.splitext(filename)[0]
-        return [luigi.LocalTarget(f"data/out/plants-{filename_no_ext}.csv")]
+        return [
+            luigi.LocalTarget(
+                f"data/out/plants-without-human-overrides-{filename_no_ext}.csv"
+            )
+        ]
 
     def run(self):
         with open(self.plants_filename) as plant_file:
             scientific_names = plant_file.read().splitlines()
 
-        fields = [
-            "scientific_name",
-            "common_name",
-            "full_shade",
-            "part_shade",
-            "full_sun",
-            "low_moisture",
-            "medium_moisture",
-            "high_moisture",
-            "bloom",
-            "height",
-            "width",
-            "habits",
-            "pollinator_rating",
-            "bird_rating",
-            "spread_rating",
-            "deer_resistance_rating",
-            "moisture_source",
-            "moisture_source_detail",
-            "shade_source",
-            "shade_source_detail",
-            "habit_source",
-            "habit_source_detail",
-            "usda_source",
-            "wiki_source",
-            "wildflower_source",
-        ]
         with self.output()[0].open("w") as out:
-            csv_out = csv.DictWriter(out, fields)
+            csv_out = csv.DictWriter(out, CSV_COLUMNS)
             csv_out.writeheader()
 
             for i, scientific_name in enumerate(scientific_names):
@@ -107,6 +112,49 @@ class GeneratePlantsCsv(luigi.Task):
                             row_out.update(parsed)
 
                 csv_out.writerow(row_out)
+
+
+class GeneratePlantsCsv(luigi.Task):
+    plants_filename: str = luigi.Parameter()  # type: ignore
+
+    def output(self):
+        filename = os.path.basename(self.plants_filename)
+        filename_no_ext = os.path.splitext(filename)[0]
+        return [luigi.LocalTarget(f"data/out/plants-{filename_no_ext}.csv")]
+
+    def requires(self):
+        return [
+            GeneratePlantsWithoutHumanOverridesCsv(plants_filename=self.plants_filename)
+        ]
+
+    def run(self):
+        # originals are data that was automatically gathered
+        with self.input()[0][0].open() as csvfile:
+            reader = csv.DictReader(csvfile)
+            originals = list(reader)
+
+        # human overrides are data that a human defined to override
+        # the automatically generated data.  convert to dict for fast lookups.
+        human_overrides_filename = "data/in/human-choices/plants.csv"
+        with open(human_overrides_filename, "r", newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            overrides = {item["scientific_name"]: item for item in reader}
+
+        with self.output()[0].open("w") as out:
+            csv_out = csv.DictWriter(out, CSV_COLUMNS)
+            csv_out.writeheader()
+
+            for original in originals:
+                scientific_name = original["scientific_name"]
+                override = overrides.get(scientific_name, None)
+
+                row_to_write = original
+                if override:
+                    for override_key, override_value in override.items():
+                        if override_value:
+                            row_to_write[override_key] = override_value
+
+                csv_out.writerow(row_to_write)
 
 
 PLANT_DB_FIELDS = [
