@@ -205,6 +205,8 @@ class GenerateImagesSql(luigi.Task):
 
             next_generated_id = (
                 max([image["id"] for image in name_to_image.values()]) + 1
+                if name_to_image
+                else 1
             )
 
             for row in reader:

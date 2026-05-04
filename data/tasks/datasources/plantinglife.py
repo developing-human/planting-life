@@ -88,7 +88,9 @@ class TransformSpecificPlantIds(LenientTask):
                 "new_name_to_id": {},
             }
 
-            next_generated_id = max(existing_name_to_id.values()) + 1
+            next_generated_id = (
+                max(existing_name_to_id.values()) + 1 if existing_name_to_id else 1
+            )
             for scientific_name in scientific_names:
                 existing_id = existing_name_to_id.get(scientific_name, None)
                 if existing_id is not None:
