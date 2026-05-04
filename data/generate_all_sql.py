@@ -21,7 +21,11 @@ from tasks.tables.plant_zipcodes.generate import (
     GeneratePlantsZipcodesCsv,
     GeneratePlantsZipcodesSqlDiff,
 )
-from tasks.tables.plants.generate import GeneratePlantsCsv, GeneratePlantsSql
+from tasks.tables.plants.generate import (
+    GeneratePlantsCsv,
+    GeneratePlantsSql,
+    GeneratePlantsWithoutHumanOverridesCsv,
+)
 
 logging.getLogger().setLevel(logging.WARN)
 
@@ -45,6 +49,7 @@ if __name__ == "__main__":
         # i currently need to run ulimit -n 2048 for this to work, but i can fix it with a small refactor, I think.
         GenerateImagesWithoutHumanOverridesCsv(plants_filename=plants_filename),
         GeneratePlantsCsv(plants_filename=plants_filename),
+        GeneratePlantsWithoutHumanOverridesCsv(plants_filename=plants_filename),
         GeneratePlantsSql(plants_filename=plants_filename),
         # location data takes a while to rebuild, is it worth rebuilding?
         GeneratePlantsZipcodesCsv(plants_filename=plants_filename),
