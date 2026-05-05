@@ -1,3 +1,5 @@
+# Planting Life Backend
+
 The backend implements APIs to search for native plants, plan gardens, and find local nurseries. It's implemented in Rust and uses a MariaDB database.
 
 # Setup

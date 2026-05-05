@@ -1,6 +1,5 @@
-**Planting Life Data** organizes information about native plants.
-
-The collected data answers questions like:
+# Planting Life Data
+Organizes information about native plants to answer questions like:
 - What plants are native near me?
 - Will it grow in the shade?
 - How tall is it?

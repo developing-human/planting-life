@@ -1,3 +1,4 @@
+# Planting Life Frontend
 This is the frontend for [Planting Life](https://planting.life). It defines the landing page and allows users to search for native plants, plan gardens, and find native-focused nurseries nearby.
 
 # Usage
