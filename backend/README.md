@@ -1,6 +1,13 @@
-# Planting Life
-Planting Life is a web application designed to make it simple to discover native plants that will thrive, based on location, sunlight, and moisture.  The project's mission is to make this simple in order to encourage decisions which help the ecosystem.  It's hosted at https://planting.life.
+The backend implements APIs to search for native plants, plan gardens, and find local nurseries. It's implemented in Rust and uses a MariaDB database.
 
-### Why?
-Native plants can be eaten by local insects, which can be eaten by local birds, which leads to a thriving ecosystem.  Non-native plants often (though not always) lack these benefits.
+# Setup
+Pre-requisites: Rust, docker, liquibase.
+
+Create a local copy of the database with `create_dev_db.sh`. This starts a MariaDB database via docker and populates the schema.
+
+Presently this leaves you with the correct schema but an otherwise empty database. I'm planning to add this shortly, but if you want to work on the project please reach out (developinghuman at protonmail dot com) and I'll get this sorted.
+# Usage
+Run with: `cargo run`
+Test with: `cargo test`
+Run migrations with: from `db/`, run `liquibase update`
 
