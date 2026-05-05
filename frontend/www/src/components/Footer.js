@@ -1,6 +1,6 @@
 import { Box, Link, Modal, Typography } from "@mui/material";
 import { useState } from "react";
-import GitHubIcon from '@mui/icons-material/GitHub';
+import GitHubIcon from "@mui/icons-material/GitHub";
 
 import "./Footer.css";
 
@@ -38,7 +38,11 @@ function Footer() {
             Friends of Planting Life
           </Link>
           <span> | </span>
-          <Link href="https://github.com/developing-human/planting-life-data" target="_blank" rel="noreferrer">
+          <Link
+            href="https://github.com/developing-human/planting-life"
+            target="_blank"
+            rel="noreferrer"
+          >
             <GitHubIcon fontSize="small" /> Contribute
           </Link>
         </footer>
@@ -111,10 +115,14 @@ function Footer() {
             </Link>
           </Typography>
           <Typography variant="body" sx={{ mt: 2 }}>
-            Encourages environmental, social, and economic sustainability in Westerville, OH.
+            Encourages environmental, social, and economic sustainability in
+            Westerville, OH.
           </Typography>
           <Typography variant="h6" sx={{ mt: 2 }}>
-            <Link target="_blank" href="http://www.experienceworthington.com/greenteam">
+            <Link
+              target="_blank"
+              href="http://www.experienceworthington.com/greenteam"
+            >
               Worthington Green Team
             </Link>
           </Typography>
