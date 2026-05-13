@@ -14,28 +14,14 @@ figcaption a {
   margin: 2px;
 }
 
-.card-loading {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -15px;
-  margin-right: -2px;
-}
-
-.plant-card .MuiCardHeader-title {
-  max-width: 325px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-left: 0px;
-}
-
 .plant-card .MuiCardHeader-root {
   padding-left: 10px;
   padding-bottom: 0px;
 }
 
 .plant-card .MuiCardContent-root {
-  padding-top: 10px;
+  /* Controls space above topmost divider */
+  padding-top: 14px;
 }
 
 .plant-card.selected {
@@ -47,6 +33,49 @@ figcaption a {
 
 .plant-image-container {
   position: relative;
+}
+
+.plant-name {
+  background: linear-gradient(to right, #00000055 50%, transparent 80%);
+  padding-left: 6px;
+  font-size: 12px;
+  width: 100%;
+  position: absolute;
+  text-shadow: 2px 2px 2px black;
+  color: white;
+}
+.plant-name .MuiCardHeader-title {
+  font-size: 1.45rem;
+  max-width: 265px;
+  /* white-space: nowrap; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: 0px;
+}
+
+.plant-name .MuiCardHeader-root {
+  padding-top: 10px;
+}
+
+.plant-name .MuiCardHeader-subheader {
+  color: white;
+}
+
+hr.MuiDivider-root {
+  margin-top: 7px;
+  margin-bottom: 5px;
+}
+.plant-card .MuiChip-root {
+  height: 20px;
+  width: 24px;
+  border-radius: 10px;
+  margin: 1px;
+}
+
+.plant-card .MuiChip-label {
+  margin-top: 1px;
+  padding: 0px 3px 0px 3px;
+  font-size: 0.5rem;
 }
 
 button.add-plant-button {

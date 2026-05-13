@@ -6,12 +6,18 @@ import Highlight from "./Highlight";
 
 // material ui
 import Card from "@mui/material/Card";
+import Chip from "@mui/material/Chip";
 import CardHeader from "@mui/material/CardHeader";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
+import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
+import OpacityIcon from "@mui/icons-material/Opacity";
+import Brightness5Icon from "@mui/icons-material/Brightness5";
+import Brightness6Icon from "@mui/icons-material/Brightness6";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
 import Add from "@mui/icons-material/Add";
 import Remove from "@mui/icons-material/Remove";
 
@@ -77,9 +83,10 @@ const PlantCard = memo(function PlantCard({
       sx={{
         width: 350,
         maxWidth: "90vw",
-        minHeight: 523,
-        maxHeight: 523,
+        minHeight: 565,
+        maxHeight: 565,
         borderRadius: "12px",
+        position: "relative",
       }}
     >
       <div className="plant-image-container">
@@ -102,6 +109,17 @@ const PlantCard = memo(function PlantCard({
             </IconButton>
           ))}
 
+        <div class="plant-name">
+          <CardHeader
+            title={plant.common}
+            subheader={plant.scientific}
+            subheaderTypographyProps={{
+              sx: {
+                paddingLeft: "4px",
+              },
+            }}
+          />
+        </div>
         <CardMedia
           component="img"
           height="350"
@@ -122,19 +140,109 @@ const PlantCard = memo(function PlantCard({
         ) : null}
       </div>
 
-      <CardHeader
-        title={plant.common}
-        subheader={plant.scientific}
-        subheaderTypographyProps={{
-          sx: {
-            paddingLeft: "4px",
-          },
-        }}
-      />
-      <Divider variant="middle" />
+      {/* <CardHeader */}
+      {/*   title={plant.common} */}
+      {/*   subheader={plant.scientific} */}
+      {/*   subheaderTypographyProps={{ */}
+      {/*     sx: { */}
+      {/*       paddingLeft: "4px", */}
+      {/*     }, */}
+      {/*   }} */}
+      {/* /> */}
 
-      <CardContent>
+      <CardContent sx={{ position: "relative" }}>
+        {/* <Divider /> */}
         <Grid container spacing={2}>
+          <Grid
+            item
+            xs={3.5}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Sunshine
+            </Typography>
+            <Box sx={{ display: "flex" }}>
+              <Brightness5Icon sx={{ color: "lightgrey" }} />
+              <Brightness6Icon sx={{ color: "lightgrey" }} />
+              <Brightness7Icon sx={{ color: "orange" }} />
+            </Box>
+          </Grid>
+          <Grid
+            item
+            xs={3.5}
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexDirection: "column",
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              Moisture
+            </Typography>
+            <Box sx={{ display: "flex" }}>
+              <OpacityIcon sx={{ color: "lightgrey" }} />
+              <OpacityIcon sx={{ color: "royalblue" }} />
+              <OpacityIcon sx={{ color: "lightgrey" }} />
+            </Box>
+          </Grid>
+          <Grid item xs={5}>
+            <Typography variant="body2" color="text.secondary">
+              {plant.height ? <span>Height: {plant.height}</span> : null}
+              <br />
+              {plant.spread ? <span>Spread: {plant.spread}</span> : null}
+            </Typography>
+          </Grid>
+        </Grid>
+        <Divider />
+
+        <Grid
+          item
+          xs={12}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexDirection: "column",
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Bloom Months
+          </Typography>
+          <Box sx={{ display: "flex" }}>
+            <Chip label="Jan" variant="outlined" />
+            <Chip label="Feb" variant="outlined" />
+            <Chip label="Mar" variant="outlined" />
+            <Chip
+              label="Apr"
+              variant="outlined"
+              sx={{ backgroundColor: "lightgreen" }}
+            />
+            <Chip
+              label="May"
+              variant="outlined"
+              sx={{ backgroundColor: "lightgreen" }}
+            />
+            <Chip
+              label="Jun"
+              variant="outlined"
+              sx={{ backgroundColor: "lightgreen" }}
+            />
+            <Chip label="Jul" variant="outlined" />
+            <Chip label="Aug" variant="outlined" />
+            <Chip label="Sep" variant="outlined" />
+            <Chip label="Oct" variant="outlined" />
+            <Chip label="Nov" variant="outlined" />
+            <Chip label="Dec" variant="outlined" />
+          </Box>
+        </Grid>
+        <Divider />
+        <Grid>
           <Grid item xs={6.25}>
             <Typography variant="body2" color="text.secondary">
               {plant.highlights
@@ -150,49 +258,44 @@ const PlantCard = memo(function PlantCard({
                 : null}
             </Typography>
           </Grid>
-          <Grid item xs={5.75}>
-            <Typography variant="body2" color="text.secondary">
-              {plant.bloom ? <span>Bloom: {plant.bloom}</span> : null}
-              <br />
-              {plant.height ? <span>Height: {plant.height}</span> : null}
-              <br />
-              {plant.spread ? <span>Spread: {plant.spread}</span> : null}
-            </Typography>
-          </Grid>
-          <Grid item xs={12}>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ marginTop: "-7px" }}
-            >
-              {plant.wildflowerSource ? (
-                <a
-                  href={plant.wildflowerSource}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Wildflower.org
-                </a>
-              ) : null}
-              {plant.wildflowerSource &&
-              (plant.wikiSource || plant.usdaSource) ? (
-                <span> | </span>
-              ) : null}
-              {plant.usdaSource ? (
-                <a href={plant.usdaSource} target="_blank" rel="noreferrer">
-                  USDA
-                </a>
-              ) : null}
-              {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-              {plant.wikiSource ? (
-                <a href={plant.wikiSource} target="_blank" rel="noreferrer">
-                  Wikipedia
-                </a>
-              ) : null}
-            </Typography>
-          </Grid>
         </Grid>
       </CardContent>
+      <Box
+        sx={{
+          position: "absolute",
+          bottom: "5px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "100%",
+        }}
+      >
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ justifyContent: "center" }}
+        >
+          {plant.wildflowerSource ? (
+            <a href={plant.wildflowerSource} target="_blank" rel="noreferrer">
+              Wildflower.org
+            </a>
+          ) : null}
+          {plant.wildflowerSource && (plant.wikiSource || plant.usdaSource) ? (
+            <span> | </span>
+          ) : null}
+          {plant.usdaSource ? (
+            <a href={plant.usdaSource} target="_blank" rel="noreferrer">
+              USDA
+            </a>
+          ) : null}
+          {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
+          {plant.wikiSource ? (
+            <a href={plant.wikiSource} target="_blank" rel="noreferrer">
+              Wikipedia
+            </a>
+          ) : null}
+        </Typography>
+      </Box>
     </Card>
   );
 });
