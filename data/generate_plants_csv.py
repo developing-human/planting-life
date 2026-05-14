@@ -21,6 +21,11 @@ if __name__ == "__main__":
     if os.path.exists(path):
         os.remove(path)
 
+    # Remove the "without-human-overrides" output file as well
+    path = task.requires()[0].output()[0].path
+    if os.path.exists(path):
+        os.remove(path)
+
     result = luigi.build(
         [task],
         workers=1,
