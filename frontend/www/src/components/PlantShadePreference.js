@@ -1,5 +1,4 @@
 import { memo } from "react";
-import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import Brightness5Icon from "@mui/icons-material/Brightness5";
 import Brightness6Icon from "@mui/icons-material/Brightness6";

@@ -1,5 +1,4 @@
 import { memo } from "react";
-import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
 import OpacityIcon from "@mui/icons-material/Opacity";
 import WaterDrop from "@mui/icons-material/WaterDrop";
@@ -23,22 +22,11 @@ const PlantMoisturePreference = memo(function PlantMoisturePreference({
   };
 
   return (
-    <Grid
-      item
-      xs={3.5}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexDirection: "column",
-      }}
-    >
-      <Box sx={{ display: "flex" }}>
-        <WaterDropOutlined sx={{ color: getMoistureColor("Low") }} />
-        <OpacityIcon sx={{ color: getMoistureColor("Medium") }} />
-        <WaterDrop sx={{ color: getMoistureColor("High") }} />
-      </Box>
-    </Grid>
+    <Box sx={{ display: "flex" }}>
+      <WaterDropOutlined sx={{ color: getMoistureColor("Low") }} />
+      <OpacityIcon sx={{ color: getMoistureColor("Medium") }} />
+      <WaterDrop sx={{ color: getMoistureColor("High") }} />
+    </Box>
   );
 });
 

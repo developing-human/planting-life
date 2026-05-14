@@ -91,28 +91,10 @@ const PlantCard = memo(function PlantCard({
 
       <CardContent sx={{ position: "relative" }}>
         <Grid container spacing={2}>
-          <Grid
-            item
-            xs={3.5}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-            }}
-          >
+          <Grid item xs={3.5} className="flex-center-column">
             <PlantShadePreference shade={["Full Sun"]} />
           </Grid>
-          <Grid
-            item
-            xs={3.5}
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexDirection: "column",
-            }}
-          >
+          <Grid item xs={3.5} className="flex-center-column">
             <PlantMoisturePreference moisture={["Medium", "High"]} />
           </Grid>
           <Grid item xs={5}>
@@ -134,18 +116,16 @@ const PlantCard = memo(function PlantCard({
           <Grid item xs={6.5}>
             <Highlights plant={plant} />
           </Grid>
-          <Grid item xs={5}>
+          <Grid item xs={5.5}>
             <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
           </Grid>
         </Grid>
       </CardContent>
       <Box
+        className="flex-center-column"
         sx={{
           position: "absolute",
           bottom: "5px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
           width: "100%",
         }}
       >
