@@ -258,3 +258,48 @@ class TransformHabit(LenientTask):
             # Write formatted JSON, for easier troubleshooting
             with self.output().open("w") as f:  # type: ignore
                 f.write(json.dumps(result, indent=4))
+
+
+class TransformBloomMonths(LenientTask):
+    """Parses plant bloom months out of wildflower.org HTML.
+
+    Input: scientific name of plant (genus + species)
+    Output: JSON object with:
+        bloom_months: List of months (Jan, Feb, etc)
+        bloom_months_source: Always set to "Wildflower"
+        bloom_months_source_detail: The wildflower.org url where this data was found
+
+    If file does not exist or parsing fails, writes a blank output file.
+    """
+
+    task_namespace = "wildflower"  # allows tasks of same name in diff packages
+    scientific_name: str = luigi.Parameter()  # type: ignore
+
+    def requires(self):
+        return ExtractWildflowerHtml(scientific_name=self.scientific_name)
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"data/transformed/wildflower/bloom-months/{self.scientific_name}.json"
+        )
+
+    def run_lenient(self):
+        with self.input()[0].open() as content, self.input()[1].open() as source_detail:
+            soup = BeautifulSoup(content, "html.parser")
+
+            # Find "Bloom Time:" in the html, bloom months are in next element
+            bloom_tag = soup.find("strong", string="Bloom Time:")
+
+            result = {}
+            if bloom_tag:
+                bloom_text = bloom_tag.next_sibling.strip()
+                months = [m.strip() for m in bloom_text.split(",")]
+
+                result["bloom_months"] = months
+                result["bloom_months_source"] = SOURCE_NAME
+                result["bloom_months_source_detail"] = source_detail.read()
+
+            # Write formatted JSON, for easier troubleshooting
+            with self.output().open("w") as f:
+                if result:
+                    f.write(json.dumps(result, indent=4))
