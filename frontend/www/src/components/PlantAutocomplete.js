@@ -72,7 +72,7 @@ export default function PlantAutocomplete({
 
     getPlant(option.id, (newPlant) => {
       setPlants((prevPlants) => {
-        return prevPlants.concat(newPlant);
+        return prevPlants.concat({ ...newPlant, selected: true });
       })
     });
   };
