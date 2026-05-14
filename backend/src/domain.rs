@@ -12,11 +12,7 @@ pub struct Plant {
     pub id: Option<usize>,
     pub common: String,
     pub scientific: String,
-
-    #[serde(skip_serializing)]
     pub shades: Vec<Shade>,
-
-    #[serde(skip_serializing)]
     pub moistures: Vec<Moisture>,
 
     #[serde(skip_serializing)]
@@ -24,6 +20,8 @@ pub struct Plant {
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bloom: Option<String>,
+
+    pub bloom_months: Vec<Month>,
 
     #[serde(skip_serializing_if = "Option::is_none")]
     pub image: Option<Image>,
@@ -82,6 +80,7 @@ impl Plant {
             wiki_source: None,
             wildflower_source: None,
             highlights: vec![],
+            bloom_months: vec![],
             done_loading: true,
         }
     }
@@ -209,6 +208,62 @@ impl FromStr for Habit {
             "Tree" => Ok(Habit::Tree),
             "Vine" => Ok(Habit::Vine),
             _ => Err(anyhow!("can't create Habit from {s}")),
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq)]
+pub enum Month {
+    #[serde(rename = "Jan")]
+    January,
+    #[serde(rename = "Feb")]
+    February,
+    #[serde(rename = "Mar")]
+    March,
+    #[serde(rename = "Apr")]
+    April,
+    #[serde(rename = "May")]
+    May,
+    #[serde(rename = "Jun")]
+    June,
+    #[serde(rename = "Jul")]
+    July,
+    #[serde(rename = "Aug")]
+    August,
+    #[serde(rename = "Sep")]
+    September,
+    #[serde(rename = "Oct")]
+    October,
+    #[serde(rename = "Nov")]
+    November,
+    #[serde(rename = "Dec")]
+    December,
+}
+
+impl Display for Month {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl FromStr for Month {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> anyhow::Result<Self> {
+        match s {
+            "Jan" => Ok(Month::January),
+            "Feb" => Ok(Month::February),
+            "Mar" => Ok(Month::March),
+            "Apr" => Ok(Month::April),
+            "May" => Ok(Month::May),
+            "Jun" => Ok(Month::June),
+            "Jul" => Ok(Month::July),
+            "Aug" => Ok(Month::August),
+            "Sep" => Ok(Month::September),
+            "Oct" => Ok(Month::October),
+            "Nov" => Ok(Month::November),
+            "Dec" => Ok(Month::December),
+            _ => Err(anyhow!("can't create Month from {s}")),
         }
     }
 }

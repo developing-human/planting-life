@@ -62,12 +62,22 @@ impl FromRow for Plant {
         let habits: Vec<Habit> = take_lenient(&mut row, "habits")
             .map(|s: String| s.split(',').map(str::parse).map(|r| r.unwrap()).collect())
             .unwrap_or_else(Vec::new);
+        let bloom_months: Vec<Month> = take_lenient(&mut row, "bloom_months")
+            .map(|s: String| {
+                s.split(',')
+                    .filter(|s| !s.is_empty())
+                    .map(str::parse)
+                    .map(|r| r.unwrap())
+                    .collect()
+            })
+            .unwrap_or_else(Vec::new);
 
         Ok(Plant {
             id: Some(id),
             scientific,
             common,
             bloom,
+            bloom_months,
             height,
             spread,
             moistures,

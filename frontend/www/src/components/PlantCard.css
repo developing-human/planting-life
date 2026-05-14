@@ -83,8 +83,9 @@ figcaption a {
 
 .plant-card .MuiChip-label {
   margin-top: 0px;
-  padding: 0px 3px 0px 3px;
-  font-size: 0.5rem;
+  padding: 1px 3px 0px 3px;
+  font-size: 0.7rem;
+  text-align: center;
 }
 
 button.add-plant-button {

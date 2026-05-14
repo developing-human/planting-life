@@ -97,7 +97,7 @@ const PlantCard = memo(function PlantCard({
             <Highlights plant={plant} />
           </Grid>
           <Grid item xs={5.5}>
-            <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
+            <BloomSchedule bloomMonths={plant.bloomMonths} />
           </Grid>
         </Grid>
 
@@ -105,10 +105,10 @@ const PlantCard = memo(function PlantCard({
 
         <Grid container spacing={2}>
           <Grid item xs={3.5} className="flex-center-column">
-            <PlantShadePreference shade={["Full Sun"]} />
+            <PlantShadePreference shade={plant.shades} />
           </Grid>
           <Grid item xs={3.5} className="flex-center-column">
-            <PlantMoisturePreference moisture={["Medium", "High"]} />
+            <PlantMoisturePreference moisture={plant.moistures} />
           </Grid>
           <Grid item xs={5}>
             <Typography variant="body2" color="text.secondary">

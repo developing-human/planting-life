@@ -101,7 +101,7 @@ impl SqlRunner {
         r"
 SELECT
   p.id, p.scientific_name, p.common_name,
-  p.bloom, p.height, p.spread,
+  p.bloom, p.bloom_months, p.height, p.spread,
   p.moistures, p.shades,
   p.pollinator_rating,
   p.bird_rating,
@@ -147,7 +147,7 @@ ORDER BY
         r"
 SELECT
   p.id, p.scientific_name, p.common_name,
-  p.bloom, p.height, p.spread,
+  p.bloom, p.bloom_months, p.height, p.spread,
   p.moistures, p.shades,
   p.pollinator_rating,
   p.bird_rating,
@@ -173,7 +173,7 @@ WHERE scientific_name = :scientific_name"
         r"
 SELECT
   p.id, p.scientific_name, p.common_name,
-  p.bloom, p.height, p.spread,
+  p.bloom, p.bloom_months, p.height, p.spread,
   p.moistures, p.shades,
   p.pollinator_rating,
   p.bird_rating,
@@ -305,7 +305,7 @@ INNER JOIN regions r ON r.id = z.region_id"
             r"
 SELECT
   p.id, p.scientific_name, p.common_name,
-  p.bloom, p.height, p.spread,
+  p.bloom, p.bloom_months, p.height, p.spread,
   p.moistures, p.shades,
   p.pollinator_rating,
   p.bird_rating,
