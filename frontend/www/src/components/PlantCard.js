@@ -2,12 +2,11 @@ import { useState, memo } from "react";
 
 // attribution popover component
 import AttributionPopover from "./AttributionPopover";
-import Highlight from "./Highlight";
 import BloomSchedule from "./BloomSchedule";
+import Highlights from "./Highlights";
 
 // material ui
 import Card from "@mui/material/Card";
-import Chip from "@mui/material/Chip";
 import CardHeader from "@mui/material/CardHeader";
 import CardMedia from "@mui/material/CardMedia";
 import CardContent from "@mui/material/CardContent";
@@ -192,26 +191,13 @@ const PlantCard = memo(function PlantCard({
           </Typography>
         </Divider>
 
-        <Grid container spacing={0}>
+        <Grid container>
           <Grid item xs={6.5}>
-            <Typography variant="body2" color="text.secondary">
-              {plant.highlights
-                ? plant.highlights.map((highlight) => (
-                    <span key={plant.id + "-" + highlight.label}>
-                      <Highlight
-                        label={highlight.label}
-                        category={highlight.category}
-                      />
-                      <br />
-                    </span>
-                  ))
-                : null}
-            </Typography>
+            <Highlights plant={plant} />
           </Grid>
-           <Grid item xs={5}>
-             <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
-           </Grid>
-
+          <Grid item xs={5}>
+            <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
+          </Grid>
         </Grid>
       </CardContent>
       <Box
