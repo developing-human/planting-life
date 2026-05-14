@@ -303,3 +303,51 @@ class TransformBloomMonths(LenientTask):
             with self.output().open("w") as f:
                 if result:
                     f.write(json.dumps(result, indent=4))
+
+
+# WARNING: This accurately pulls data from Wildflower.org, but it seems a lot
+#          of plants are just missing data (which could be no or unknown).
+class TransformCommerciallyAvailable(LenientTask):
+    """Parses commercial availability out of wildflower.org HTML.
+
+    Input: scientific name of plant (genus + species)
+    Output: JSON object with:
+        commercially_available: Value from "Commercially Avail:" label
+        commercially_available_source: Always set to "Wildflower"
+        commercially_available_source_detail: The wildflower.org url where this data was found
+
+    If file does not exist or parsing fails, writes a blank output file.
+    """
+
+    task_namespace = "wildflower"  # allows tasks of same name in diff packages
+    scientific_name: str = luigi.Parameter()  # type: ignore
+
+    def requires(self):
+        return ExtractWildflowerHtml(scientific_name=self.scientific_name)
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"data/transformed/wildflower/commercially-available/{self.scientific_name}.json"
+        )
+
+    def run_lenient(self):
+        with self.input()[0].open() as content, self.input()[1].open() as source_detail:
+            soup = BeautifulSoup(content, "html.parser")
+
+            # Find "Commercially Avail:" in the html, value is in next element
+            avail_tag = soup.find("strong", string="Commercially Avail:")
+
+            commercially_available = False
+            if avail_tag:
+                avail_text = avail_tag.next_sibling.strip()
+                commercially_available = avail_text.lower() == "yes"
+
+            result = {
+                "commercially_available": commercially_available,
+                "commercially_available_source": SOURCE_NAME,
+                "commercially_available_source_detail": source_detail.read(),
+            }
+
+            # Write formatted JSON, for easier troubleshooting
+            with self.output().open("w") as f:
+                f.write(json.dumps(result, indent=4))
