@@ -15,6 +15,8 @@ import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import IconButton from "@mui/material/IconButton";
 import OpacityIcon from "@mui/icons-material/Opacity";
+import WaterDrop from "@mui/icons-material/WaterDrop";
+import WaterDropOutlined from "@mui/icons-material/WaterDropOutlined";
 import Brightness5Icon from "@mui/icons-material/Brightness5";
 import Brightness6Icon from "@mui/icons-material/Brightness6";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
@@ -83,8 +85,8 @@ const PlantCard = memo(function PlantCard({
       sx={{
         width: 350,
         maxWidth: "90vw",
-        minHeight: 565,
-        maxHeight: 565,
+        minHeight: 523,
+        maxHeight: 523,
         borderRadius: "12px",
         position: "relative",
       }}
@@ -140,18 +142,7 @@ const PlantCard = memo(function PlantCard({
         ) : null}
       </div>
 
-      {/* <CardHeader */}
-      {/*   title={plant.common} */}
-      {/*   subheader={plant.scientific} */}
-      {/*   subheaderTypographyProps={{ */}
-      {/*     sx: { */}
-      {/*       paddingLeft: "4px", */}
-      {/*     }, */}
-      {/*   }} */}
-      {/* /> */}
-
       <CardContent sx={{ position: "relative" }}>
-        {/* <Divider /> */}
         <Grid container spacing={2}>
           <Grid
             item
@@ -163,9 +154,6 @@ const PlantCard = memo(function PlantCard({
               flexDirection: "column",
             }}
           >
-            <Typography variant="body2" color="text.secondary">
-              Sunshine
-            </Typography>
             <Box sx={{ display: "flex" }}>
               <Brightness5Icon sx={{ color: "lightgrey" }} />
               <Brightness6Icon sx={{ color: "lightgrey" }} />
@@ -182,13 +170,10 @@ const PlantCard = memo(function PlantCard({
               flexDirection: "column",
             }}
           >
-            <Typography variant="body2" color="text.secondary">
-              Moisture
-            </Typography>
             <Box sx={{ display: "flex" }}>
-              <OpacityIcon sx={{ color: "lightgrey" }} />
+              <WaterDropOutlined sx={{ color: "lightgrey" }} />
               <OpacityIcon sx={{ color: "royalblue" }} />
-              <OpacityIcon sx={{ color: "lightgrey" }} />
+              <WaterDrop sx={{ color: "royalblue" }} />
             </Box>
           </Grid>
           <Grid item xs={5}>
@@ -199,51 +184,15 @@ const PlantCard = memo(function PlantCard({
             </Typography>
           </Grid>
         </Grid>
-        <Divider />
 
-        <Grid
-          item
-          xs={12}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexDirection: "column",
-          }}
-        >
+        <Divider sx={{ paddingTop: "5px", paddingBottom: "3px" }}>
           <Typography variant="body2" color="text.secondary">
-            Bloom Months
+            Highlights &amp; Bloom Schedule
           </Typography>
-          <Box sx={{ display: "flex" }}>
-            <Chip label="Jan" variant="outlined" />
-            <Chip label="Feb" variant="outlined" />
-            <Chip label="Mar" variant="outlined" />
-            <Chip
-              label="Apr"
-              variant="outlined"
-              sx={{ backgroundColor: "lightgreen" }}
-            />
-            <Chip
-              label="May"
-              variant="outlined"
-              sx={{ backgroundColor: "lightgreen" }}
-            />
-            <Chip
-              label="Jun"
-              variant="outlined"
-              sx={{ backgroundColor: "lightgreen" }}
-            />
-            <Chip label="Jul" variant="outlined" />
-            <Chip label="Aug" variant="outlined" />
-            <Chip label="Sep" variant="outlined" />
-            <Chip label="Oct" variant="outlined" />
-            <Chip label="Nov" variant="outlined" />
-            <Chip label="Dec" variant="outlined" />
-          </Box>
-        </Grid>
-        <Divider />
-        <Grid>
-          <Grid item xs={6.25}>
+        </Divider>
+
+        <Grid container spacing={0}>
+          <Grid item xs={6.5}>
             <Typography variant="body2" color="text.secondary">
               {plant.highlights
                 ? plant.highlights.map((highlight) => (
@@ -257,6 +206,66 @@ const PlantCard = memo(function PlantCard({
                   ))
                 : null}
             </Typography>
+          </Grid>
+          <Grid item xs={5} container>
+            <Grid
+              item
+              xs={12}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexDirection: "column",
+              }}
+            ></Grid>
+            <Grid item xs={3}>
+              <Chip label="Jan" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Feb" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Mar" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip
+                label="Apr"
+                variant="outlined"
+                sx={{ backgroundColor: "lightgreen" }}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip
+                label="May"
+                variant="outlined"
+                sx={{ backgroundColor: "lightgreen" }}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip
+                label="Jun"
+                variant="outlined"
+                sx={{ backgroundColor: "lightgreen" }}
+              />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Jul" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Aug" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Sep" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Oct" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Nov" variant="outlined" />
+            </Grid>
+            <Grid item xs={3}>
+              <Chip label="Dec" variant="outlined" />
+            </Grid>
           </Grid>
         </Grid>
       </CardContent>

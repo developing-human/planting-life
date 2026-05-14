@@ -20,8 +20,8 @@ figcaption a {
 }
 
 .plant-card .MuiCardContent-root {
-  /* Controls space above topmost divider */
-  padding-top: 14px;
+  /* Controls space under image */
+  padding-top: 18px;
 }
 
 .plant-card.selected {
@@ -47,9 +47,6 @@ figcaption a {
 .plant-name .MuiCardHeader-title {
   font-size: 1.45rem;
   max-width: 265px;
-  /* white-space: nowrap; */
-  overflow: hidden;
-  text-overflow: ellipsis;
   margin-left: 0px;
 }
 
@@ -61,19 +58,16 @@ figcaption a {
   color: white;
 }
 
-hr.MuiDivider-root {
-  margin-top: 7px;
-  margin-bottom: 5px;
-}
 .plant-card .MuiChip-root {
-  height: 20px;
-  width: 24px;
-  border-radius: 10px;
-  margin: 1px;
+  height: 18px;
+  width: 31px;
+  border-radius: 6px;
+  margin: 0px;
+  padding: 0px;
 }
 
 .plant-card .MuiChip-label {
-  margin-top: 1px;
+  margin-top: 0px;
   padding: 0px 3px 0px 3px;
   font-size: 0.5rem;
 }
