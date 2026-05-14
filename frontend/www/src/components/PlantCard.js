@@ -3,6 +3,7 @@ import { useState, memo } from "react";
 // attribution popover component
 import AttributionPopover from "./AttributionPopover";
 import Highlight from "./Highlight";
+import BloomSchedule from "./BloomSchedule";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -207,66 +208,10 @@ const PlantCard = memo(function PlantCard({
                 : null}
             </Typography>
           </Grid>
-          <Grid item xs={5} container>
-            <Grid
-              item
-              xs={12}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexDirection: "column",
-              }}
-            ></Grid>
-            <Grid item xs={3}>
-              <Chip label="Jan" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Feb" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Mar" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip
-                label="Apr"
-                variant="outlined"
-                sx={{ backgroundColor: "lightgreen" }}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip
-                label="May"
-                variant="outlined"
-                sx={{ backgroundColor: "lightgreen" }}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip
-                label="Jun"
-                variant="outlined"
-                sx={{ backgroundColor: "lightgreen" }}
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Jul" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Aug" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Sep" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Oct" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Nov" variant="outlined" />
-            </Grid>
-            <Grid item xs={3}>
-              <Chip label="Dec" variant="outlined" />
-            </Grid>
-          </Grid>
+           <Grid item xs={5}>
+             <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
+           </Grid>
+
         </Grid>
       </CardContent>
       <Box
