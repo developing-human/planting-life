@@ -40,18 +40,20 @@ figcaption a {
   padding-left: 6px;
   font-size: 12px;
   width: 100%;
+  max-width: 275px;
   position: absolute;
   text-shadow: 2px 2px 2px black;
   color: white;
 }
 .plant-name .MuiCardHeader-title {
   font-size: 1.45rem;
-  max-width: 265px;
+  max-width: 275px;
   margin-left: 0px;
 }
 
 .plant-name .MuiCardHeader-root {
   padding-top: 10px;
+  padding-right: 0px;
 }
 
 .plant-name .MuiCardHeader-subheader {
