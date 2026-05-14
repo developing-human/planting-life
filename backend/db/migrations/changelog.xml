@@ -24,5 +24,6 @@
   <include file="migrations/add-garden-lat-lng.sql"/>
   <include file="migrations/add-habits.sql"/>
   <include file="migrations/add-wildflower-source.sql"/>
+  <include file="migrations/add-bloom-months.sql"/>
 
 </databaseChangeLog>
