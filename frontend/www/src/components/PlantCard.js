@@ -6,6 +6,7 @@ import Highlights from "./Highlights";
 import PlantCardImage from "./PlantCardImage";
 import PlantShadePreference from "./PlantShadePreference";
 import PlantMoisturePreference from "./PlantMoisturePreference";
+import LearnMore from "./LearnMore";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -119,32 +120,7 @@ const PlantCard = memo(function PlantCard({
         </Grid>
 
         <Box className="flex-center-column" sx={{ paddingTop: "5px" }}>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ justifyContent: "center" }}
-          >
-            {plant.wildflowerSource ? (
-              <a href={plant.wildflowerSource} target="_blank" rel="noreferrer">
-                Wildflower.org
-              </a>
-            ) : null}
-            {plant.wildflowerSource &&
-            (plant.wikiSource || plant.usdaSource) ? (
-              <span> | </span>
-            ) : null}
-            {plant.usdaSource ? (
-              <a href={plant.usdaSource} target="_blank" rel="noreferrer">
-                USDA
-              </a>
-            ) : null}
-            {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-            {plant.wikiSource ? (
-              <a href={plant.wikiSource} target="_blank" rel="noreferrer">
-                Wikipedia
-              </a>
-            ) : null}
-          </Typography>
+          <LearnMore plant={plant} />
         </Box>
       </CardContent>
     </Card>
