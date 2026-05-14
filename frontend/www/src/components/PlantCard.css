@@ -28,7 +28,13 @@ figcaption a {
 
 .plant-card .MuiCardContent-root {
   /* Controls space under image */
-  padding-top: 18px;
+  padding-top: 8px;
+}
+
+.plant-card .MuiDivider-root {
+  padding-top: 6px;
+  padding-bottom: 2px;
+  font-size: 0.75rem;
 }
 
 .plant-card.selected {

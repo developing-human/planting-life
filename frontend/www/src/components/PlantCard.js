@@ -76,8 +76,7 @@ const PlantCard = memo(function PlantCard({
       sx={{
         width: 350,
         maxWidth: "90vw",
-        minHeight: 523,
-        maxHeight: 523,
+        height: 527,
         borderRadius: "12px",
         position: "relative",
       }}
@@ -90,6 +89,19 @@ const PlantCard = memo(function PlantCard({
       />
 
       <CardContent sx={{ position: "relative" }}>
+        <Divider>Highlights &amp; Bloom Schedule</Divider>
+
+        <Grid container>
+          <Grid item xs={6.5}>
+            <Highlights plant={plant} />
+          </Grid>
+          <Grid item xs={5.5}>
+            <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
+          </Grid>
+        </Grid>
+
+        <Divider>Sun, Water, &amp; Size</Divider>
+
         <Grid container spacing={2}>
           <Grid item xs={3.5} className="flex-center-column">
             <PlantShadePreference shade={["Full Sun"]} />
@@ -106,55 +118,35 @@ const PlantCard = memo(function PlantCard({
           </Grid>
         </Grid>
 
-        <Divider sx={{ paddingTop: "5px", paddingBottom: "3px" }}>
-          <Typography variant="body2" color="text.secondary">
-            Highlights &amp; Bloom Schedule
+        <Box className="flex-center-column" sx={{ paddingTop: "5px" }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ justifyContent: "center" }}
+          >
+            {plant.wildflowerSource ? (
+              <a href={plant.wildflowerSource} target="_blank" rel="noreferrer">
+                Wildflower.org
+              </a>
+            ) : null}
+            {plant.wildflowerSource &&
+            (plant.wikiSource || plant.usdaSource) ? (
+              <span> | </span>
+            ) : null}
+            {plant.usdaSource ? (
+              <a href={plant.usdaSource} target="_blank" rel="noreferrer">
+                USDA
+              </a>
+            ) : null}
+            {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
+            {plant.wikiSource ? (
+              <a href={plant.wikiSource} target="_blank" rel="noreferrer">
+                Wikipedia
+              </a>
+            ) : null}
           </Typography>
-        </Divider>
-
-        <Grid container>
-          <Grid item xs={6.5}>
-            <Highlights plant={plant} />
-          </Grid>
-          <Grid item xs={5.5}>
-            <BloomSchedule bloomMonths={["Apr", "May", "Jun"]} />
-          </Grid>
-        </Grid>
+        </Box>
       </CardContent>
-      <Box
-        className="flex-center-column"
-        sx={{
-          position: "absolute",
-          bottom: "5px",
-          width: "100%",
-        }}
-      >
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{ justifyContent: "center" }}
-        >
-          {plant.wildflowerSource ? (
-            <a href={plant.wildflowerSource} target="_blank" rel="noreferrer">
-              Wildflower.org
-            </a>
-          ) : null}
-          {plant.wildflowerSource && (plant.wikiSource || plant.usdaSource) ? (
-            <span> | </span>
-          ) : null}
-          {plant.usdaSource ? (
-            <a href={plant.usdaSource} target="_blank" rel="noreferrer">
-              USDA
-            </a>
-          ) : null}
-          {plant.usdaSource && plant.wikiSource ? <span> | </span> : null}
-          {plant.wikiSource ? (
-            <a href={plant.wikiSource} target="_blank" rel="noreferrer">
-              Wikipedia
-            </a>
-          ) : null}
-        </Typography>
-      </Box>
     </Card>
   );
 });
