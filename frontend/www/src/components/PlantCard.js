@@ -4,6 +4,8 @@ import { useState, memo } from "react";
 import BloomSchedule from "./BloomSchedule";
 import Highlights from "./Highlights";
 import PlantCardImage from "./PlantCardImage";
+import PlantShadePreference from "./PlantShadePreference";
+import PlantMoisturePreference from "./PlantMoisturePreference";
 
 // material ui
 import Card from "@mui/material/Card";
@@ -11,12 +13,6 @@ import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
-import OpacityIcon from "@mui/icons-material/Opacity";
-import WaterDrop from "@mui/icons-material/WaterDrop";
-import WaterDropOutlined from "@mui/icons-material/WaterDropOutlined";
-import Brightness5Icon from "@mui/icons-material/Brightness5";
-import Brightness6Icon from "@mui/icons-material/Brightness6";
-import Brightness7Icon from "@mui/icons-material/Brightness7";
 
 // styling
 import "./PlantCard.css";
@@ -105,11 +101,7 @@ const PlantCard = memo(function PlantCard({
               flexDirection: "column",
             }}
           >
-            <Box sx={{ display: "flex" }}>
-              <Brightness5Icon sx={{ color: "lightgrey" }} />
-              <Brightness6Icon sx={{ color: "lightgrey" }} />
-              <Brightness7Icon sx={{ color: "orange" }} />
-            </Box>
+            <PlantShadePreference shade={["Full Sun"]} />
           </Grid>
           <Grid
             item
@@ -121,11 +113,7 @@ const PlantCard = memo(function PlantCard({
               flexDirection: "column",
             }}
           >
-            <Box sx={{ display: "flex" }}>
-              <WaterDropOutlined sx={{ color: "lightgrey" }} />
-              <OpacityIcon sx={{ color: "royalblue" }} />
-              <WaterDrop sx={{ color: "royalblue" }} />
-            </Box>
+            <PlantMoisturePreference moisture={["Medium", "High"]} />
           </Grid>
           <Grid item xs={5}>
             <Typography variant="body2" color="text.secondary">
