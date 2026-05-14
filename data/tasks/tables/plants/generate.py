@@ -166,6 +166,7 @@ PLANT_DB_FIELDS = [
     "scientific_name",
     "common_name",
     "bloom",
+    "bloom_months",
     "pollinator_rating",
     "bird_rating",
     "usda_source",
@@ -203,7 +204,7 @@ class GeneratePlantsSql(luigi.Task):
             if field_name not in PLANT_DB_FIELDS:
                 continue
 
-            old_value = old[field_name]
+            old_value = old.get(field_name, None)
 
             if new_value == "":
                 new_value = None
@@ -271,6 +272,16 @@ class GeneratePlantsSql(luigi.Task):
 
         return sanitized_habits
 
+    @staticmethod
+    def to_bloom_months(plant: dict) -> list[str]:
+        bloom_months = plant.get("bloom_months", [])
+        if not bloom_months or bloom_months == [""]:
+            return []
+
+        months = bloom_months.split(",")
+
+        return months
+
     def run(self):
         with (
             self.input()[0][0].open() as plant_csv,
@@ -292,6 +303,7 @@ class GeneratePlantsSql(luigi.Task):
                     updated_plant, "low_moisture", "medium_moisture", "high_moisture"
                 )
                 updated_plant["habits"] = self.to_habits(updated_plant)
+                updated_plant["bloom_months"] = self.to_bloom_months(updated_plant)
 
                 # TODO: These names aren't always consistent...
                 updated_plant["spread"] = updated_plant.pop("width")
