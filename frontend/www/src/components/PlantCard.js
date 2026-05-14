@@ -113,7 +113,8 @@ const PlantCard = memo(function PlantCard({
           <Grid item xs={5}>
             <Typography variant="body2" color="text.secondary">
               {plant.height ? <span>Height: {plant.height}</span> : null}
-              <br />
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               {plant.spread ? <span>Spread: {plant.spread}</span> : null}
             </Typography>
           </Grid>
