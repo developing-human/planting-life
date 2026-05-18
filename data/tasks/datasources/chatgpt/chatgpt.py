@@ -3,7 +3,7 @@ import openai
 from tasks.lenient import LenientTask
 
 MODEL_LOW_QUALITY = "gpt-5-nano"
-MODEL_HIGH_QUALITY = "gpt-5-mini"
+MODEL_HIGH_QUALITY = "gpt-5.4-mini"
 
 SOURCE_NAME = "ChatGPT"
 

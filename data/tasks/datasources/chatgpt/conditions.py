@@ -61,8 +61,8 @@ class TransformMoisture(LenientTask):
         low_moisture: Will this plant grow in low moisture?
         medium_moisture: Will this plant grow in medium moisture?
         high_moisture: Will this plant grow in high moisture?
-        moisture_source: Always set to "ChatGPT"
-        moisture_source_detail: The ChatGPT model which was used
+        moistures_source: Always set to "ChatGPT"
+        moistures_source_detail: The ChatGPT model which was used
     """
 
     task_namespace = "chatgpt"  # allows tasks of same name in diff packages
@@ -87,8 +87,8 @@ class TransformMoisture(LenientTask):
             result = build_condition_result(f.read(), question_to_field)
             result = cast(dict[str, bool | str], result)
 
-            result["moisture_source"] = SOURCE_NAME
-            result["moisture_source_detail"] = self.requires().get_model()
+            result["moistures_source"] = SOURCE_NAME
+            result["moistures_source_detail"] = self.requires().get_model()
 
             with self.output().open("w") as f:
                 f.write(json.dumps(result, indent=4))
@@ -102,8 +102,8 @@ class TransformShade(LenientTask):
         full_sun: Will this plant grow in full sun?
         part_shade: Will this plant grow in part shade?
         full_shade: Will this plant grow in full shade?
-        shade_source: Always set to "ChatGPT"
-        shade_source_detail: The ChatGPT model which was used
+        shades_source: Always set to "ChatGPT"
+        shades_source_detail: The ChatGPT model which was used
     """
 
     task_namespace = "chatgpt"  # allows tasks of same name in diff packages
@@ -128,8 +128,8 @@ class TransformShade(LenientTask):
             result = build_condition_result(f.read(), question_to_field)
             result = cast(dict[str, bool | str], result)
 
-            result["shade_source"] = SOURCE_NAME
-            result["shade_source_detail"] = self.requires().get_model()
+            result["shades_source"] = SOURCE_NAME
+            result["shades_source_detail"] = self.requires().get_model()
 
             with self.output().open("w") as f:
                 f.write(json.dumps(result, indent=4))

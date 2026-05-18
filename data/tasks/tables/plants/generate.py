@@ -1,7 +1,8 @@
 import csv
 import json
 import os
-from typing import Any
+from dataclasses import dataclass
+from typing import Any, Optional
 
 import luigi
 
@@ -31,12 +32,12 @@ CSV_COLUMNS = [
     "bird_rating",
     "spread_rating",
     "deer_resistance_rating",
-    "moisture_source",
-    "moisture_source_detail",
-    "shade_source",
-    "shade_source_detail",
-    "habit_source",
-    "habit_source_detail",
+    "moistures_source",
+    "moistures_source_detail",
+    "shades_source",
+    "shades_source_detail",
+    "habits_source",
+    "habits_source_detail",
     "usda_source",
     "wiki_source",
     "wildflower_source",
@@ -182,6 +183,14 @@ PLANT_DB_FIELDS = [
 ]
 
 
+@dataclass
+class Difference:
+    field: str
+    old: Any
+    new: Any
+    source: Optional[str]
+
+
 class GeneratePlantsSql(luigi.Task):
     plants_filename: str = luigi.Parameter()  # type: ignore
 
@@ -198,8 +207,10 @@ class GeneratePlantsSql(luigi.Task):
         ]
 
     @staticmethod
-    def get_updated_fields(old: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
-        updated_fields = {}
+    def get_updated_fields(
+        old: dict[str, Any], new: dict[str, Any]
+    ) -> list[Difference]:
+        updated_fields = []
         for field_name, new_value in new.items():
             if field_name not in PLANT_DB_FIELDS:
                 continue
@@ -214,27 +225,35 @@ class GeneratePlantsSql(luigi.Task):
                 new_value.sort()
 
             if str(old_value) != str(new_value):
-                updated_fields[field_name] = new_value
+                updated_fields.append(
+                    Difference(
+                        field=field_name,
+                        old=old_value,
+                        new=new_value,
+                        source=new.get(field_name + "_source", None),
+                    )
+                )
 
         return updated_fields
 
     @staticmethod
-    def to_sql_setters(fields: dict[str, Any]) -> str:
+    def to_sql_setters(diffs: list[Difference]) -> str:
         sql = "SET"
         spaces = "   "
-        for field_name, value in fields.items():
-            if isinstance(value, str):
-                escaped = value.replace("'", "''")
+        for diff in diffs:
+            if isinstance(diff.new, str):
+                escaped = diff.new.replace("'", "''")
                 value_str = f"'{escaped}'"
-            elif isinstance(value, int):
-                value_str = f"{value}"
-            elif isinstance(value, list):
-                value_str = "'" + ",".join(value) + "'"
-            elif value is None:
+            elif isinstance(diff.new, int):
+                value_str = f"{diff.new}"
+            elif isinstance(diff.new, list):
+                value_str = "'" + ",".join(diff.new) + "'"
+            elif diff.new is None:
                 value_str = "null"
             else:
-                raise ValueError(f"unexpected type for {field_name}: {type(value)}")
-            sql += f"{spaces}{field_name} = {value_str},\n"
+                raise ValueError(f"unexpected type for {diff.field}: {type(diff.new)}")
+            source_comment = f", source: {diff.source}" if diff.source else ""
+            sql += f"{spaces}{diff.field} = {value_str}, -- was: {diff.old}{source_comment}\n"
 
             # just being particular about formatting...
             spaces = "      "
@@ -308,20 +327,20 @@ class GeneratePlantsSql(luigi.Task):
                 # TODO: These names aren't always consistent...
                 updated_plant["spread"] = updated_plant.pop("width")
 
-                updated_plant = {
-                    key: value
-                    for key, value in updated_plant.items()
-                    if key in PLANT_DB_FIELDS
-                }
-
                 scientific_name = row["scientific_name"]
                 existing_plant = all_names_to_plant.get(scientific_name.lower(), None)
 
                 if existing_plant is None:
+                    diffs = [
+                        Difference(field=field, old=None, new=value, source=None)
+                        for field, value in updated_plant
+                        if field in PLANT_DB_FIELDS
+                    ]
+
                     out.write(
                         (
                             "INSERT INTO plants \n"
-                            + self.to_sql_setters(updated_plant)
+                            + self.to_sql_setters(diffs)
                             + f",\n    id = {new_name_to_id[scientific_name.lower()]};\n\n"
                         )
                     )

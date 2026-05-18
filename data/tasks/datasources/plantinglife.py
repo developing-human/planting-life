@@ -188,7 +188,7 @@ class ExtractPlants(luigi.Task):
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT id, scientific_name, common_name, bloom, pollinator_rating, bird_rating, "
+            "SELECT id, scientific_name, common_name, bloom, bloom_months, pollinator_rating, bird_rating, "
             + "usda_source, wiki_source, wildflower_source, "
             + "height, spread, spread_rating, deer_resistance_rating, moistures, shades, habits "
             + "FROM plants"
@@ -201,6 +201,7 @@ class ExtractPlants(luigi.Task):
             scientific_name,
             common_name,
             bloom,
+            bloom_months,
             pollinator_rating,
             bird_rating,
             usda_source,
@@ -218,6 +219,7 @@ class ExtractPlants(luigi.Task):
                 "id": id,
                 "common_name": common_name,
                 "bloom": bloom,
+                "bloom_months": list(bloom_months) if bloom_months else [],
                 "pollinator_rating": pollinator_rating,
                 "bird_rating": bird_rating,
                 "usda_source": usda_source,
@@ -296,8 +298,8 @@ class TransformHabit(luigi.Task):
             usda_habits_object = json.load(usda_habits_json)
             pl_habits: list[str] = usda_habits_object["habits"]
 
-            habit_source = usda_habits_object["habit_source"]
-            habit_source_detail = usda_habits_object["habit_source_detail"]
+            habit_source = usda_habits_object["habits_source"]
+            habit_source_detail = usda_habits_object["habits_source_detail"]
 
             if "tree" in pl_habits and "shrub" in pl_habits:
                 chatgpt_height_object = json.load(chatgpt_height_json)
@@ -318,8 +320,8 @@ class TransformHabit(luigi.Task):
 
             result = {
                 "habits": pl_habits,
-                "habit_source": habit_source,
-                "habit_source_detail": habit_source_detail,
+                "habits_source": habit_source,
+                "habits_source_detail": habit_source_detail,
             }
 
             with self.output()[0].open("w") as f:

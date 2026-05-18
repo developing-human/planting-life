@@ -242,8 +242,8 @@ class TransformHabit(luigi.Task):
 
             result = {
                 "habits": habits,
-                "habit_source": SOURCE_NAME,
-                "habit_source_detail": source_detail.read(),
+                "habits_source": SOURCE_NAME,
+                "habits_source_detail": source_detail.read(),
             }
 
             with self.output().open("w") as f:

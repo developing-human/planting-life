@@ -1,4 +1,5 @@
 import json
+import re
 import time
 
 import luigi
@@ -103,8 +104,8 @@ class TransformMoisture(LenientTask):
         low_moisture: Will this plant grow in low moisture?
         medium_moisture: Will this plant grow in medium moisture?
         high_moisture: Will this plant grow in high moisture?
-        moisture_source: Always set to "Wildflower"
-        moisture_source_detail: The wildflower.org url where this data was found
+        moistures_source: Always set to "Wildflower"
+        moistures_source_detail: The wildflower.org url where this data was found
 
     If file does not exist or parsing fails, writes a blank output file.
     """
@@ -127,6 +128,14 @@ class TransformMoisture(LenientTask):
             # Find "Soil Moisture:" in the html, moistures are in next element
             wf_moistures = soup.find("strong", string="Soil Moisture:")
 
+            # If wildflower had this plant, but not moisture info, write an
+            # empty file. This marks the task complete, but it will be
+            # interpreted as wildflower not having this data.
+            if not wf_moistures:
+                with self.output().open("w") as _:
+                    pass
+                return
+
             if wf_moistures:
                 wf_moistures = wf_moistures.next_sibling.strip()
 
@@ -136,8 +145,8 @@ class TransformMoisture(LenientTask):
                 result["low_moisture"] = "Dry" in wf_moistures
                 result["medium_moisture"] = "Moist" in wf_moistures
                 result["high_moisture"] = "Wet" in wf_moistures
-                result["moisture_source"] = SOURCE_NAME
-                result["moisture_source_detail"] = source_detail.read()
+                result["moistures_source"] = SOURCE_NAME
+                result["moistures_source_detail"] = source_detail.read()
 
                 remaining = (
                     wf_moistures.replace("Dry", "")
@@ -164,8 +173,8 @@ class TransformShade(LenientTask):
         full_sun: Will this plant grow in full sun?
         part_shade: Will this plant grow in part shade?
         full_shade: Will this plant grow in full shade?
-        shade_source: Always set to "Wildflower"
-        shade_source_detail: The wildflower.org url where this data was found
+        shades_source: Always set to "Wildflower"
+        shades_source_detail: The wildflower.org url where this data was found
 
     If file does not exist or parsing fails, writes a blank output file.
     """
@@ -190,9 +199,18 @@ class TransformShade(LenientTask):
                 "strong", string="Light Requirement:"
             ).next_sibling.strip()
 
+            # If wildflower had this plant, but not shade info, write an
+            # empty file. This marks the task complete, but it will be
+            # interpreted as wildflower not having this data.
+            if not wf_shades:
+                with self.output().open("w") as _:
+                    pass
+                return
+
             # Because "Shade" is a substring of "Part Shade" wf_shades is
             # split into a list before converting to our format
-            wf_shades = [s.strip() for s in wf_shades.split(",")]
+            # Also, sometimes "Part" and "Shade" have multiple spaces between them, so deal with that :)
+            wf_shades = [re.sub(r"\W+", " ", s.strip()) for s in wf_shades.split(",")]
 
             # Convert wildflower shades to our data format
             result = {}
@@ -200,8 +218,8 @@ class TransformShade(LenientTask):
                 result["full_sun"] = "Sun" in wf_shades
                 result["part_shade"] = "Part Shade" in wf_shades
                 result["full_shade"] = "Shade" in wf_shades
-                result["shade_source"] = SOURCE_NAME
-                result["shade_source_detail"] = source_detail.read()
+                result["shades_source"] = SOURCE_NAME
+                result["shades_source_detail"] = source_detail.read()
 
             # Write formatted JSON, for easier troubleshooting
             with self.output().open("w") as f:
