@@ -238,8 +238,7 @@ class GeneratePlantsSql(luigi.Task):
 
     @staticmethod
     def to_sql_setters(diffs: list[Difference]) -> str:
-        sql = "SET"
-        spaces = "   "
+        lines = []
         for diff in diffs:
             if isinstance(diff.new, str):
                 escaped = diff.new.replace("'", "''")
@@ -252,13 +251,15 @@ class GeneratePlantsSql(luigi.Task):
                 value_str = "null"
             else:
                 raise ValueError(f"unexpected type for {diff.field}: {type(diff.new)}")
+
             source_comment = f", source: {diff.source}" if diff.source else ""
-            sql += f"{spaces}{diff.field} = {value_str}, -- was: {diff.old}{source_comment}\n"
+            sql = f"{diff.field} = {value_str}, -- was: {diff.old}{source_comment}"
+            lines.append(sql)
 
-            # just being particular about formatting...
-            spaces = "      "
+        # drop the comma on the last setter
+        lines[-1] = lines[-1].replace(", --", " --")
 
-        return sql.rstrip(",\n ")
+        return "SET   " + "\n      ".join(lines)
 
     @staticmethod
     def to_conditions(
